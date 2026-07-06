@@ -1,0 +1,352 @@
+{
+  "entities": {
+    "SocialAccount": {
+      "title": "Social Account",
+      "description": "Connected social media account credentials",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "platform": { "type": "string" },
+        "status": { "type": "string" }
+      },
+      "required": ["id", "platform", "status"]
+    },
+    "SocialPost": {
+      "title": "Social Post",
+      "description": "Content for social media publishing",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "status": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "title", "status", "createdAt"]
+    },
+    "SocialMediaAnalytics": {
+      "title": "Social Media Analytics",
+      "description": "Performance data for automated social media posts",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "articleId": { "type": "string" },
+        "platform": { "type": "string" },
+        "reach": { "type": "number" },
+        "clicks": { "type": "number" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["articleId", "platform", "reach", "clicks", "timestamp"]
+    },
+    "NewsItem": {
+      "title": "News Item",
+      "description": "Sport news, featured headlines, and breaking matches bulletins",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "summary": { "type": "string" },
+        "image": { "type": "string" },
+        "category": { "type": "string" },
+        "slug": { "type": "string" },
+        "views": { "type": "number" },
+        "publishedAt": { "type": "string", "format": "date-time" },
+        "featured": { "type": "boolean" },
+        "breaking": { "type": "boolean" },
+        "status": { "type": "string" }
+      },
+      "required": ["id", "title", "summary", "image", "category", "slug", "views", "publishedAt"]
+    },
+    "TeamKnowledge": {
+      "title": "Team Knowledge",
+      "description": "Rich generated knowledge about a sports team",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "content": { "type": "string" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "content", "updatedAt"]
+    },
+    "Translation": {
+      "title": "Translation",
+      "description": "Arabic translation for entities",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "english": { "type": "string" },
+        "arabic": { "type": "string" },
+        "type": { "type": "string" }
+      },
+      "required": ["id", "english", "arabic", "type"]
+    },
+    "Prediction": {
+      "title": "Prediction",
+      "description": "User match score predictions",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "matchId": { "type": "string" },
+        "userId": { "type": "string" },
+        "homeScore": { "type": "number" },
+        "awayScore": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "matchId", "userId", "homeScore", "awayScore", "createdAt"]
+    },
+    "MatchAiContent": {
+      "title": "Match AI Content",
+      "description": "Upgraded, factual, expanded AI generated match coverage",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "summary": { "type": "string" },
+        "preview": { "type": "string" },
+        "analysis": { "type": "string" },
+        "headToHeadAnalysis": { "type": "string" },
+        "matchImportance": { "type": "string" },
+        "competitionOverview": { "type": "string" },
+        "searchKeywords": { "type": "array", "items": { "type": "string" } },
+        "seoKeywords": { "type": "array", "items": { "type": "string" } },
+        "faq": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "question": { "type": "string" },
+              "answer": { "type": "string" }
+            }
+          }
+        },
+        "teamHistory": {
+          "type": "object",
+          "properties": {
+            "home": { "type": "string" },
+            "away": { "type": "string" }
+          }
+        },
+        "keyPlayers": {
+          "type": "object",
+          "properties": {
+            "home": { "type": "array", "items": { "type": "string" } },
+            "away": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "matchStartTime": { "type": "string" },
+        "isMatchFinished": { "type": "boolean" },
+        "generatedAt": { "type": "string", "format": "date-time" },
+        "dataSources": { "type": "array", "items": { "type": "string" } },
+        "version": { "type": "string" }
+      },
+      "required": ["title", "summary", "preview", "analysis", "faq", "searchKeywords", "generatedAt"]
+    },
+    "ApiProvider": {
+      "title": "API Provider",
+      "description": "Enterprise grade API key provider config",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "key": { "type": "string" },
+        "provider": { "type": "string" },
+        "quotaDaily": { "type": "number" },
+        "quotaMonthly": { "type": "number" },
+        "usedToday": { "type": "number" },
+        "usedMonth": { "type": "number" },
+        "priority": { "type": "number" },
+        "active": { "type": "boolean" },
+        "fallbackProvider": { "type": "string" },
+        "status": { "type": "string" },
+        "statusMessage": { "type": "string" },
+        "latency": { "type": "number" },
+        "costPerCall": { "type": "number" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "name", "key", "provider", "quotaDaily", "quotaMonthly", "usedToday", "usedMonth", "priority", "active"]
+    },
+    "ApiRouting": {
+      "title": "API Routing",
+      "description": "Routing configuration for API sections",
+      "type": "object",
+      "properties": {
+        "worldCup": { "type": "string" },
+        "premierLeague": { "type": "string" },
+        "arabMatches": { "type": "string" },
+        "news": { "type": "string" },
+        "players": { "type": "string" },
+        "teams": { "type": "string" },
+        "stats": { "type": "string" },
+        "streaming": { "type": "string" }
+      },
+      "required": ["worldCup", "premierLeague", "arabMatches", "news", "players", "teams", "stats", "streaming"]
+    },
+    "ApiLogV2": {
+      "title": "API Log V2",
+      "description": "Dynamic log of executed API calls for analytics and cost analysis",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "providerId": { "type": "string" },
+        "providerName": { "type": "string" },
+        "endpoint": { "type": "string" },
+        "method": { "type": "string" },
+        "category": { "type": "string" },
+        "statusCode": { "type": "number" },
+        "latency": { "type": "number" },
+        "cost": { "type": "number" },
+        "status": { "type": "string" },
+        "errorMessage": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "providerId", "endpoint", "method", "category", "statusCode", "latency", "timestamp"]
+    },
+    "Match": {
+      "title": "Match",
+      "description": "Enterprise football match record",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "homeTeam": { "type": "object" },
+        "awayTeam": { "type": "object" },
+        "status": { "type": "string", "enum": ["Draft", "Pending Review", "Approved", "Published", "Archived", "Cancelled"] },
+        "editorialStatus": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "isDeleted": { "type": "boolean" },
+        "deletedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "status"]
+    },
+    "MatchVersion": {
+      "title": "Match Version",
+      "description": "Snapshot of a match record for version history",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "matchId": { "type": "string" },
+        "editorId": { "type": "string" },
+        "editorName": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "data": { "type": "object" },
+        "previousData": { "type": "object" },
+        "changedFields": { "type": "array", "items": { "type": "string" } },
+        "note": { "type": "string" }
+      },
+      "required": ["id", "matchId", "editorId", "timestamp", "data"]
+    },
+    "MatchAuditLog": {
+      "title": "Match Audit Log",
+      "description": "Detailed log of actions performed on matches",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "matchId": { "type": "string" },
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "action": { "type": "string", "enum": ["Create", "Update", "Delete", "Publish", "Archive", "Restore", "Approve", "Reject", "Duplicate", "BulkAction"] },
+        "details": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "matchId", "userId", "action", "timestamp"]
+    },
+    "MatchLock": {
+      "title": "Match Lock",
+      "description": "Locking mechanism to prevent simultaneous editing",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "expiresAt": { "type": "string", "format": "date-time" },
+        "editingSince": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "expiresAt"]
+    },
+    "MatchFollow": {
+      "title": "Match Follow",
+      "description": "User subscription to match goal notifications",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "matchId": { "type": "string" },
+        "topic": { "type": "string" },
+        "active": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "matchId", "topic", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/social_accounts/{accountId}": {
+      "schema": { "$ref": "SocialAccount" },
+      "description": "Collection of connected social media accounts"
+    },
+    "/social_posts/{postId}": {
+      "schema": { "$ref": "SocialPost" },
+      "description": "Collection of generated social media posts"
+    },
+    "/social_media_analytics/{analyticsId}": {
+      "schema": { "$ref": "SocialMediaAnalytics" },
+      "description": "Collection of social media performance data"
+    },
+    "/news/{newsId}": {
+      "schema": { "$ref": "NewsItem" },
+      "description": "Sports news articles with publishing status"
+    },
+    "/team_knowledge/{teamId}": {
+      "schema": { "$ref": "TeamKnowledge" },
+      "description": "Collection of generated team knowledge articles"
+    },
+    "/teams_translations/{id}": {
+      "schema": { "$ref": "Translation" },
+      "description": "Arabic translations for teams"
+    },
+    "/countries_translations/{id}": {
+      "schema": { "$ref": "Translation" },
+      "description": "Arabic translations for countries"
+    },
+    "/leagues_translations/{id}": {
+      "schema": { "$ref": "Translation" },
+      "description": "Arabic translations for leagues"
+    },
+    "/predictions/{predictionId}": {
+      "schema": { "$ref": "Prediction" },
+      "description": "Collection of user match predictions"
+    },
+    "/match_ai_content/{matchId}": {
+      "schema": { "$ref": "MatchAiContent" },
+      "description": "Upgraded, factual, expanded AI generated match coverage"
+    },
+    "/api_providers/{providerId}": {
+      "schema": { "$ref": "ApiProvider" },
+      "description": "Enterprise grade API key provider list"
+    },
+    "/settings/api_routing": {
+      "schema": { "$ref": "ApiRouting" },
+      "description": "Routing mapping for sports sections"
+    },
+    "/api_logs_v2/{logId}": {
+      "schema": { "$ref": "ApiLogV2" },
+      "description": "Dynamic tracking of executed API requests"
+    },
+    "/matches/{matchId}": {
+      "schema": { "$ref": "Match" },
+      "description": "Primary football matches collection with editorial status"
+    },
+    "/match_versions/{versionId}": {
+      "schema": { "$ref": "MatchVersion" },
+      "description": "Historical versions of match documents"
+    },
+    "/match_audit_logs/{logId}": {
+      "schema": { "$ref": "MatchAuditLog" },
+      "description": "Enterprise audit trail for match operations"
+    },
+    "/match_locks/{matchId}": {
+      "schema": { "$ref": "MatchLock" },
+      "description": "Concurrency locks for match editing"
+    },
+    "/match_follows/{followId}": {
+      "schema": { "$ref": "MatchFollow" },
+      "description": "User match goal notification subscriptions"
+    }
+  }
+}

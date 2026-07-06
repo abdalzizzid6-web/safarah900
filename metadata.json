@@ -1,0 +1,8 @@
+{
+  "name": "صافرة 90",
+  "description": "تطبيق رياضي متكامل يقدم تغطية مباشرة للمباريات، جداول دقيقة، وأخبار رياضية مدعومة بالذكاء الاصطناعي على korea90.xyz، مع إشعارات ذكية لكافة الدوريات العالمية.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

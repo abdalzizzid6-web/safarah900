@@ -85,20 +85,6 @@ function getTitleSimilarity(s1: string, s2: string): number {
 async function downloadAndCacheImage(url: string | undefined, providerId: string): Promise<string> {
   if (!url) return "/data/rss_fallback.jpg";
   try {
-    const dirPath = path.join(process.cwd(), "public", "data", "rss_images");
-    if (!fs.existsSync(dirPath)) {
-      fs.mkdirSync(dirPath, { recursive: true });
-    }
-
-    const fileHash = crypto.createHash("md5").update(url).digest("hex");
-    const fileName = `${providerId}_${fileHash}.jpg`;
-    const localPath = path.join(dirPath, fileName);
-    const publicUrl = `/data/rss_images/${fileName}`;
-
-    if (fs.existsSync(localPath)) {
-      return publicUrl;
-    }
-
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 8000);
     const res = await fetch(url, { headers: { 'User-Agent': rssHeaders['User-Agent'] }, signal: controller.signal });
@@ -106,8 +92,15 @@ async function downloadAndCacheImage(url: string | undefined, providerId: string
 
     if (!res.ok) throw new Error(`Image fetch failed: ${res.status}`);
     const buffer = Buffer.from(await res.arrayBuffer());
-    fs.writeFileSync(localPath, buffer);
-    return publicUrl;
+    
+    // Check if the downloaded image is too small (e.g. tracking pixel or tiny icon)
+    if (buffer.length < 5000) {
+      console.warn(`[RSS Image Service] Image too small (${buffer.length} bytes), skipping: ${url}`);
+      return "/data/rss_fallback.jpg";
+    }
+
+    // Return the original URL directly to prevent ephemeral filesystem loss on Cloud Run
+    return url;
   } catch (err: any) {
     console.warn(`[RSS Image Service] Failed to cache image: ${url}. Error: ${err.message}`);
     return "/data/rss_fallback.jpg"; // Sports premium fallback illustration

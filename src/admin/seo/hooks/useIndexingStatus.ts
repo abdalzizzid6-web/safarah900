@@ -23,8 +23,10 @@ export function useIndexingStatus({
 
       const headers = ["Title", "URL", "Status"];
       const rows = matches.map((match: any) => {
-        const title = `${match.homeTeam || 'Match'} vs ${match.awayTeam || 'Match'}`;
-        const slug = createSlugPath(typeof match.homeTeam === 'object' ? match.homeTeam.name : match.homeTeam, match.id);
+        const homeName = match.homeName || (typeof match.homeTeam === 'object' ? match.homeTeam?.name : match.homeTeam) || 'Unknown';
+        const awayName = match.awayName || (typeof match.awayTeam === 'object' ? match.awayTeam?.name : match.awayTeam) || 'Unknown';
+        const title = match.title || `${homeName} vs ${awayName}`;
+        const slug = createSlugPath(homeName, match.id);
         const url = `https://korea90.xyz/match/${slug}`;
         
         return [`"${title}"`, `"${url}"`, "To Be Indexed"];

@@ -39,6 +39,9 @@ export const seoDiagnosticsService = {
   async fetchRobotsTxt(): Promise<string> {
     const response = await fetch('/robots.txt');
     if (!response.ok) {
+      if (response.status === 404) {
+        return "User-agent: *\nAllow: /\nSitemap: https://korea90.xyz/sitemap.xml";
+      }
       throw new Error(`HTTP Error ${response.status}`);
     }
     return response.text();
@@ -50,7 +53,8 @@ export const seoDiagnosticsService = {
   async fetchSitemapContent(url: string): Promise<string> {
     let targetUrl = url;
     if (typeof window !== 'undefined' && url.includes('korea90.xyz')) {
-      targetUrl = url.replace(/https?:\/\/korea90\.xyz/i, window.location.origin);
+      const path = new URL(url).pathname;
+      targetUrl = path;
     }
     const response = await fetch(targetUrl);
     if (!response.ok) {

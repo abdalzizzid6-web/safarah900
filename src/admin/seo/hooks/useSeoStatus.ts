@@ -274,15 +274,16 @@ export function useSeoStatus({
             }
           }));
         } catch (err: any) {
+          console.error(`Error fetching sitemap ${name}:`, err);
           setSitemaps(prev => ({
             ...prev,
             [name]: {
               ...prev[name],
               status: 'ERROR',
-              statusCode: 500,
+              statusCode: err.message?.includes('404') ? 404 : 500,
               sizeBytes: 0,
               urlsCount: 0,
-              error: `HTTP Code: 500`
+              error: err.message || 'Unknown Error'
             }
           }));
           

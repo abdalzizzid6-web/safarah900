@@ -192,6 +192,7 @@ export class MatchesRepositoryV2 extends BaseRepository<Match> {
           if ('homeTeam' in item || 'utcDate' in item || 'fixture' in item || 'teams' in item) {
             const id = (item as any).id || (item as any).fixture?.id || (item as any)._id || 'unknown';
             const normalized = this.mapFirestoreMatch(String(id), item as DocumentData);
+            if (!normalized) return null;
             return this.adjustMatchStatus(normalized);
           }
         }
@@ -208,6 +209,7 @@ export class MatchesRepositoryV2 extends BaseRepository<Match> {
       if ('homeTeam' in obj || 'utcDate' in obj || 'fixture' in obj || 'teams' in obj) {
         const id = obj.id || obj.fixture?.id || obj._id || 'unknown';
         const normalized = this.mapFirestoreMatch(String(id), obj as DocumentData);
+        if (!normalized) return null;
         const adjusted = this.adjustMatchStatus(normalized);
         
         if (adjusted.isHidden) {
@@ -223,10 +225,11 @@ export class MatchesRepositoryV2 extends BaseRepository<Match> {
   /**
    * Mapping logic for Firestore match data to unified Match type
    */
-  public mapFirestoreMatch(id: string, data: DocumentData): Match {
+  public mapFirestoreMatch(id: string, data: DocumentData): Match | null {
     const normalized = normalizeMatch(id, data);
-    if (normalized.homeName === 'قيد التحديد' && normalized.awayName === 'قيد التحديد') {
-        console.warn(`[MatchesRepositoryV2] Match ${id} has placeholder names. Raw data:`, data);
+    if (!normalized) {
+        console.warn(`[MatchesRepositoryV2] Match ${id} failed normalization.`);
+        return null;
     }
     return normalized;
   }
@@ -330,7 +333,7 @@ export class MatchesRepositoryV2 extends BaseRepository<Match> {
 
         const q = query(collection(db, this.collectionName), ...constraints);
         const snapshot = await getDocs(q);
-        return snapshot.docs.map(docSnap => this.mapFirestoreMatch(docSnap.id, docSnap.data()));
+        return snapshot.docs.map(docSnap => this.mapFirestoreMatch(docSnap.id, docSnap.data())).filter(Boolean) as Match[];
       }
     );
   }
@@ -354,7 +357,7 @@ export class MatchesRepositoryV2 extends BaseRepository<Match> {
             limit(50)
           );
           const snapshot = await getDocs(q);
-          return snapshot.docs.map(docSnap => this.mapFirestoreMatch(docSnap.id, docSnap.data()));
+          return snapshot.docs.map(docSnap => this.mapFirestoreMatch(docSnap.id, docSnap.data())).filter(Boolean) as Match[];
         }
       );
 
@@ -398,7 +401,7 @@ export class MatchesRepositoryV2 extends BaseRepository<Match> {
     telemetry.logFirestoreRead('matches_admin_subscription');
     const q = query(collection(db, this.collectionName), orderBy('startTime', 'desc'), limit(100));
     return onSnapshot(q, (snapshot) => {
-      const matches = snapshot.docs.map(docSnap => this.mapFirestoreMatch(docSnap.id, docSnap.data()));
+      const matches = snapshot.docs.map(docSnap => this.mapFirestoreMatch(docSnap.id, docSnap.data())).filter(Boolean) as Match[];
       callback(matches);
     }, (error: any) => {
       if (error.message?.includes('quota') || error.code === 'resource-exhausted') {
@@ -418,7 +421,8 @@ export class MatchesRepositoryV2 extends BaseRepository<Match> {
     const docRef = doc(db, this.collectionName, id);
     return onSnapshot(docRef, (docSnap) => {
       if (docSnap.exists()) {
-        callback(this.mapFirestoreMatch(docSnap.id, docSnap.data()));
+        const match = this.mapFirestoreMatch(docSnap.id, docSnap.data());
+        callback(match);
       } else {
         callback(null);
       }
@@ -492,7 +496,7 @@ export class MatchesRepositoryV2 extends BaseRepository<Match> {
           limit(50)
         );
         const snapshot = await getDocs(q);
-        return snapshot.docs.map(docSnap => this.mapFirestoreMatch(docSnap.id, docSnap.data()));
+        return snapshot.docs.map(docSnap => this.mapFirestoreMatch(docSnap.id, docSnap.data())).filter(Boolean) as Match[];
       }
     );
   }
@@ -507,12 +511,12 @@ export class MatchesRepositoryV2 extends BaseRepository<Match> {
         telemetry.logFirestoreRead('results');
         const q = query(
           collection(db, this.collectionName),
-          where('status', 'in', ['FT', 'AET', 'PEN']),
+          where('status', 'in', ['FT', 'AET', 'PEN', 'Archived']),
           orderBy('startTime', 'desc'),
           limit(50)
         );
         const snapshot = await getDocs(q);
-        return snapshot.docs.map(docSnap => this.mapFirestoreMatch(docSnap.id, docSnap.data()));
+        return snapshot.docs.map(docSnap => this.mapFirestoreMatch(docSnap.id, docSnap.data())).filter(Boolean) as Match[];
       }
     );
   }

@@ -28,7 +28,8 @@ export abstract class BaseRepository<T> {
       return [];
     }
     try {
-      const q = query(collection(db, this.collectionName), limit(limitVal));
+      const safeLimit = Math.min(limitVal, 100);
+      const q = query(collection(db, this.collectionName), limit(safeLimit));
       const querySnapshot = await getDocs(q);
       return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as T));
     } catch (e: any) {
@@ -145,7 +146,9 @@ export abstract class BaseRepository<T> {
       return [];
     }
     try {
-      const q = query(collection(db, this.collectionName), ...constraints);
+      // Append safety limit at the end of custom query constraints to prevent unbounded scanning
+      const safeConstraints = [...constraints, limit(100)];
+      const q = query(collection(db, this.collectionName), ...safeConstraints);
       const querySnapshot = await getDocs(q);
       return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as T));
     } catch (e: any) {

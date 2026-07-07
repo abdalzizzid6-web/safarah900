@@ -33,6 +33,7 @@ import {
 import { auth } from '../firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import InstallAppButton from './InstallAppButton';
+import { triggerHapticVibration } from '../utils/haptics';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -101,6 +102,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   }
 
   const handleAction = (item: any) => {
+    triggerHapticVibration(15);
     if (item.name === 'البحث') {
       const event = new CustomEvent('open-search');
       window.dispatchEvent(event);
@@ -174,28 +176,59 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                           {item.isAction ? (
                             <button
                               onClick={() => handleAction(item)}
-                              className="w-full flex items-center justify-between p-4 rounded-2xl hover:bg-white/5 text-gray-400 hover:text-white transition-all group"
+                              className="w-full text-right block cursor-pointer outline-none"
                             >
-                              <div className="flex items-center gap-4">
-                                <item.icon size={20} className="group-hover:text-primary transition-colors" />
-                                <span className="text-sm font-bold">{item.name}</span>
-                              </div>
+                              <motion.div
+                                whileTap={{ 
+                                  scale: 0.96, 
+                                  rotate: [0, -1.5, 1.5, -1.5, 1.5, 0],
+                                  x: [0, -1, 1, -1, 1, 0],
+                                  transition: { duration: 0.25 }
+                                }}
+                                className="flex items-center justify-between p-4 rounded-2xl hover:bg-white/5 text-gray-400 hover:text-white transition-all group"
+                              >
+                                <div className="flex items-center gap-4">
+                                  <item.icon 
+                                    size={20} 
+                                    strokeWidth={1.75}
+                                    className="group-hover:text-primary transition-colors" 
+                                  />
+                                  <span className="text-sm font-bold">{item.name}</span>
+                                </div>
+                              </motion.div>
                             </button>
                           ) : (
                             <Link
                               to={item.path}
-                              onClick={onClose}
-                              className={`flex items-center justify-between p-4 rounded-2xl transition-all group ${
-                                isActive 
-                                  ? 'bg-primary/10 text-primary border border-primary/20' 
-                                  : 'text-gray-400 hover:bg-white/5 hover:text-white'
-                              }`}
+                              onClick={() => {
+                                triggerHapticVibration(15);
+                                onClose();
+                              }}
+                              className="block"
                             >
-                              <div className="flex items-center gap-4">
-                                <item.icon size={20} className={isActive ? 'text-primary' : 'group-hover:text-primary transition-colors'} />
-                                <span className="text-sm font-bold">{item.name}</span>
-                              </div>
-                              {isActive && <div className="w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_8px_var(--color-primary)]" />}
+                              <motion.div
+                                whileTap={{ 
+                                  scale: 0.96, 
+                                  rotate: [0, -1.5, 1.5, -1.5, 1.5, 0],
+                                  x: [0, -1, 1, -1, 1, 0],
+                                  transition: { duration: 0.25 }
+                                }}
+                                className={`flex items-center justify-between p-4 rounded-2xl transition-all group relative ${
+                                  isActive 
+                                    ? 'bg-primary/10 text-primary border border-primary/20' 
+                                    : 'text-gray-400 hover:bg-white/5 hover:text-white'
+                                }`}
+                              >
+                                <div className="flex items-center gap-4">
+                                  <item.icon 
+                                    size={20} 
+                                    strokeWidth={isActive ? 2.5 : 1.75}
+                                    className={isActive ? 'text-primary' : 'group-hover:text-primary transition-colors'} 
+                                  />
+                                  <span className="text-sm font-bold">{item.name}</span>
+                                </div>
+                                {isActive && <div className="w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_8px_var(--color-primary)]" />}
+                              </motion.div>
                             </Link>
                           )}
                         </div>

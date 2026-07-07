@@ -161,6 +161,12 @@ const Schedule = React.memo(function Schedule() {
   }, [activeTab, todayMatchesQuery, liveMatchesQuery, fixturesQuery, resultsQuery]);
 
   const matches = Array.isArray(currentQuery.data) ? currentQuery.data : [];
+  useEffect(() => {
+    console.log(`[Schedule Debug] activeTab: ${activeTab}, selectedDate: ${selectedDate}, matches count: ${matches.length}`);
+    if (matches.length > 0) {
+      console.log("[Schedule Debug] First match:", matches[0]);
+    }
+  }, [matches, activeTab, selectedDate]);
   const isCurrentlyLoading = currentQuery.isLoading;
   const isRefreshing = currentQuery.isFetching;
 
@@ -191,11 +197,13 @@ const Schedule = React.memo(function Schedule() {
   // 2. Logic: Process and Filter matches
   const processedMatches = useMemo(() => {
     let result = [...matches];
+    console.log(`[Schedule Debug] Before filtering: ${result.length} matches.`);
 
     // Filter by Tab (if not already filtered by API)
     if (activeTab === 'LIVE') {
       result = result.filter(m => m.status === 'LIVE' || m.isLive);
     }
+    console.log(`[Schedule Debug] After tab filter: ${result.length} matches.`);
 
     // Filter by Selected League (supports both major leagues config aliases and exact matches)
     if (selectedLeague !== 'ALL') {
@@ -215,6 +223,7 @@ const Schedule = React.memo(function Schedule() {
         return String(mLeagueName).toLowerCase().trim() === String(selectedLeague).toLowerCase().trim();
       });
     }
+    console.log(`[Schedule Debug] After league filter: ${result.length} matches.`);
 
     // Filter by Search Query (Team names or League names)
     if (searchQuery.trim()) {
@@ -226,6 +235,7 @@ const Schedule = React.memo(function Schedule() {
         return home.includes(q) || away.includes(q) || league.includes(q);
       });
     }
+    console.log(`[Schedule Debug] After search filter: ${result.length} matches.`);
 
     // Sorting: Favorites first, then by time
     return result.sort((a, b) => {

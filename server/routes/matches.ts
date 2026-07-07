@@ -7,6 +7,7 @@ import { validateBody, MatchStatsSchema } from "../middleware/admin";
 import { proxyCache } from "../firestore/cache";
 import { serverCache } from "../utils/cache";
 import { generateMatchContent, generateLineupAnalysis } from "../services/aiContentService";
+import { normalizeMatch } from "../utils/normalizer";
 
 const router = express.Router();
 
@@ -19,8 +20,10 @@ const TIME_30_DAYS = 30 * 24 * 60 * 60 * 1000;
 // ----- CORE MATCHES ENDPOINTS TO PREVENT FIRESTORE FALLBACK SPAM ----- //
 
 router.get("/", async (req, res) => {
+  console.log("[Matches API] Handler called for /", req.query);
   const { date, status, limit } = req.query;
   let matches = serverCache.readStaticFile<any[]>('matches.json') || [];
+  console.log("[Matches API] Total matches loaded:", matches.length);
   
   // Also try to fetch latest from Firestore if possible, but respect quota
   if (!isFirestoreQuotaExceeded) {
@@ -82,7 +85,7 @@ router.get("/", async (req, res) => {
     }
   }
 
-  return res.json(matches);
+  return res.json(matches.map(normalizeMatch).filter(m => !m.isHidden));
 });
 
 router.get("/live", (req, res) => {
@@ -106,12 +109,12 @@ router.get("/live", (req, res) => {
     }
   }
 
-  return res.json(liveMatches);
+  return res.json(liveMatches.map(normalizeMatch).filter(m => !m.isHidden));
 });
 
 router.get("/fixtures", (req, res) => {
   const { date, limit } = req.query;
-  let matches = serverCache.readStaticFile<any[]>('matches.json') || [];
+  const matches = (serverCache.readStaticFile<any[]>('matches.json') || []).map(normalizeMatch).filter(m => !m.isHidden);
   
   let fixtures = matches.filter(m => 
     m.status === 'NS' || m.status === 'SCHEDULED' || m.status === 'TIMED'
@@ -125,7 +128,7 @@ router.get("/fixtures", (req, res) => {
 
   if (date && typeof date === 'string') {
     fixtures = fixtures.filter(m => {
-      const matchDateStr = (m.utcDate || m.startTime || '').split('T')[0];
+      const matchDateStr = m.utcDate.split('T')[0];
       return matchDateStr === date;
     });
   }
@@ -142,10 +145,10 @@ router.get("/fixtures", (req, res) => {
 
 router.get("/results", (req, res) => {
   const { date, limit } = req.query;
-  let matches = serverCache.readStaticFile<any[]>('matches.json') || [];
+  const matches = (serverCache.readStaticFile<any[]>('matches.json') || []).map(normalizeMatch).filter(m => !m.isHidden);
   
   let results = matches.filter(m => 
-    ['FT', 'AET', 'PEN', 'FINISHED'].includes(m.status)
+    ['FT', 'AET', 'PEN', 'FINISHED', 'Finished'].includes(m.status)
   );
 
   // Results are sorted descending (most recent first)
@@ -157,7 +160,7 @@ router.get("/results", (req, res) => {
 
   if (date && typeof date === 'string') {
     results = results.filter(m => {
-      const matchDateStr = (m.utcDate || m.startTime || '').split('T')[0];
+      const matchDateStr = m.utcDate.split('T')[0];
       return matchDateStr === date;
     });
   }
@@ -207,14 +210,22 @@ router.get("/:matchId", async (req, res) => {
   const match = staticMatches.find(m => String(m.id) === matchId);
   
   if (match) {
-    return res.json(match);
+    const normalized = normalizeMatch(match);
+    if (normalized.isHidden) {
+        return res.status(404).json({ error: "Match hidden/invalid" });
+    }
+    return res.json(normalized);
   }
 
   if (!isFirestoreQuotaExceeded) {
     try {
       const doc = await firestore.collection('matches').doc(matchId).get();
       if (doc.exists) {
-        return res.json({ id: doc.id, ...doc.data() });
+        const normalized = normalizeMatch({ id: doc.id, ...doc.data() });
+        if (normalized.isHidden) {
+            return res.status(404).json({ error: "Match hidden/invalid" });
+        }
+        return res.json(normalized);
       }
     } catch (e) {
       if (isFirebaseQuotaError(e)) {

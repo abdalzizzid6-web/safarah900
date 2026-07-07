@@ -15,6 +15,22 @@ export default defineConfig(({ mode }) => {
         includeAssets: ['favicon.ico', 'icon-192.png', 'icon-512.png', 'app-icon.png'],
         workbox: {
           maximumFileSizeToCacheInBytes: 5000000, // 5MB
+          runtimeCaching: [
+            {
+              urlPattern: ({ url }) => url.pathname.includes('/api/matches/live'),
+              handler: 'NetworkFirst',
+              options: {
+                cacheName: 'live-matches-cache',
+                expiration: {
+                  maxEntries: 50,
+                  maxAgeSeconds: 60 * 60 * 2, // 2 hours
+                },
+                cacheableResponse: {
+                  statuses: [0, 200],
+                },
+              },
+            },
+          ],
           navigateFallbackDenylist: [
             /^\/api\//, 
             /^\/export-download\//, 

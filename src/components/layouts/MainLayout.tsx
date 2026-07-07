@@ -22,6 +22,7 @@ import { useSettings } from '../../context/SettingsContext';
 import { auth } from '../../firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import NotificationCenter from '../NotificationCenter';
+import { triggerHapticVibration } from '../../utils/haptics';
 import WhistleIcon from '../ui/WhistleIcon';
 import SearchModal from '../SearchModal';
 import Sidebar from '../Sidebar';
@@ -236,11 +237,23 @@ export default function MainLayout({ children }: MainLayoutProps) {
               <li key={item.path} className="list-none flex-1">
                 <Link 
                   to={item.path}
+                  onClick={() => triggerHapticVibration(15)}
                   className="flex flex-col items-center gap-1 group py-2 relative transition-all duration-300"
                 >
-                  <div className={`relative p-2 rounded-xl transition-all duration-300 ${isActive ? 'bg-primary text-black scale-110 shadow-lg shadow-primary/30' : 'text-gray-400 group-hover:text-gray-200'}`}>
-                    <Icon className="w-5 h-5" />
-                  </div>
+                  <motion.div 
+                    whileTap={{ 
+                      scale: 0.88, 
+                      rotate: [0, -4, 4, -4, 4, 0],
+                      x: [0, -1.5, 1.5, -1.5, 1.5, 0],
+                      transition: { duration: 0.25 }
+                    }}
+                    className={`relative p-2 rounded-xl transition-all duration-300 ${isActive ? 'bg-primary text-black scale-110 shadow-lg shadow-primary/30' : 'text-gray-400 group-hover:text-gray-200'}`}
+                  >
+                    <Icon 
+                      strokeWidth={isActive ? 2.5 : 1.75}
+                      className="w-5 h-5" 
+                    />
+                  </motion.div>
                   <span className={`text-[10px] font-black tracking-tighter ${isActive ? 'text-primary' : 'text-gray-500'} md:block transition-colors`}>
                     {item.name}
                   </span>

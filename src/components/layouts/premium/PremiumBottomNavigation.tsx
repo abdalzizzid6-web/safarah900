@@ -2,6 +2,7 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Home, Calendar, Trophy, Menu } from 'lucide-react';
 import { motion } from 'motion/react';
+import { triggerHapticVibration } from '../../../utils/haptics';
 
 export default function PremiumBottomNavigation() {
   const location = useLocation();
@@ -24,11 +25,23 @@ export default function PremiumBottomNavigation() {
             <li key={item.path} className="list-none flex-1 relative">
               <Link 
                 to={item.path}
+                onClick={() => triggerHapticVibration(15)}
                 className="flex flex-col items-center gap-1 group py-2 relative transition-all duration-300"
               >
-                <div className="relative z-10 p-2 rounded-xl transition-all duration-300">
-                  <Icon className={`w-6 h-6 transition-colors duration-300 ${isActive ? 'text-black' : 'text-text-secondary group-hover:text-text'}`} />
-                </div>
+                <motion.div 
+                  whileTap={{ 
+                    scale: 0.88, 
+                    rotate: [0, -4, 4, -4, 4, 0],
+                    x: [0, -1.5, 1.5, -1.5, 1.5, 0],
+                    transition: { duration: 0.25 }
+                  }}
+                  className="relative z-10 p-2 rounded-xl transition-all duration-300"
+                >
+                  <Icon 
+                    strokeWidth={isActive ? 2.5 : 1.75}
+                    className={`w-6 h-6 transition-colors duration-300 ${isActive ? 'text-black' : 'text-text-secondary group-hover:text-text'}`} 
+                  />
+                </motion.div>
                 {isActive && (
                   <motion.div 
                     layoutId="active-bottom-nav" 
@@ -47,3 +60,4 @@ export default function PremiumBottomNavigation() {
     </nav>
   );
 }
+

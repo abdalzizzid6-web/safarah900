@@ -5,6 +5,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth } from '../../../firebase';
 import { useSettings } from '../../../context/SettingsContext';
+import { triggerHapticVibration } from '../../../utils/haptics';
 
 interface PremiumSidebarProps {
   isOpen: boolean;
@@ -71,18 +72,35 @@ export default function PremiumSidebar({ isOpen, onClose }: PremiumSidebarProps)
                   <Link
                     key={item.path}
                     to={item.path}
-                    onClick={onClose}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group ${
-                      isActive 
-                        ? 'bg-primary/10 text-primary border border-primary/20' 
-                        : 'text-text hover:bg-surface-hover border border-transparent'
-                    }`}
+                    onClick={() => {
+                      triggerHapticVibration(15);
+                      onClose();
+                    }}
+                    className="block"
                   >
-                    <Icon size={20} className={isActive ? 'text-primary' : 'text-text-secondary group-hover:text-text transition-colors'} />
-                    <span className="font-medium">{item.label}</span>
-                    {isActive && (
-                      <motion.div layoutId="active-sidebar-pill" className="absolute left-4 w-1.5 h-6 bg-primary rounded-full" />
-                    )}
+                    <motion.div
+                      whileTap={{ 
+                        scale: 0.95, 
+                        rotate: [0, -1.5, 1.5, -1.5, 1.5, 0],
+                        x: [0, -1, 1, -1, 1, 0],
+                        transition: { duration: 0.25 }
+                      }}
+                      className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group relative ${
+                        isActive 
+                          ? 'bg-primary/10 text-primary border border-primary/20' 
+                          : 'text-text hover:bg-surface-hover border border-transparent'
+                      }`}
+                    >
+                      <Icon 
+                        size={20} 
+                        strokeWidth={isActive ? 2.5 : 1.75}
+                        className={isActive ? 'text-primary' : 'text-text-secondary group-hover:text-text transition-colors'} 
+                      />
+                      <span className="font-medium">{item.label}</span>
+                      {isActive && (
+                        <motion.div layoutId="active-sidebar-pill" className="absolute left-4 w-1.5 h-6 bg-primary rounded-full" />
+                      )}
+                    </motion.div>
                   </Link>
                 );
               })}
@@ -92,11 +110,24 @@ export default function PremiumSidebar({ isOpen, onClose }: PremiumSidebarProps)
                   <p className="px-4 text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider">الإدارة</p>
                   <Link
                     to="/admin/dashboard"
-                    onClick={onClose}
-                    className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-error hover:bg-error/10 border border-transparent hover:border-error/20"
+                    onClick={() => {
+                      triggerHapticVibration(15);
+                      onClose();
+                    }}
+                    className="block"
                   >
-                    <ShieldAlert size={20} />
-                    <span className="font-medium">لوحة التحكم</span>
+                    <motion.div
+                      whileTap={{ 
+                        scale: 0.95, 
+                        rotate: [0, -1.5, 1.5, -1.5, 1.5, 0],
+                        x: [0, -1, 1, -1, 1, 0],
+                        transition: { duration: 0.25 }
+                      }}
+                      className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-error hover:bg-error/10 border border-transparent hover:border-error/20"
+                    >
+                      <ShieldAlert size={20} strokeWidth={2} />
+                      <span className="font-medium">لوحة التحكم</span>
+                    </motion.div>
                   </Link>
                 </div>
               )}
@@ -105,22 +136,30 @@ export default function PremiumSidebar({ isOpen, onClose }: PremiumSidebarProps)
             <div className="p-4 border-t border-border">
               <Link 
                 to="/profile"
-                onClick={onClose}
-                className="flex items-center gap-3 p-3 rounded-xl hover:bg-surface-hover transition-colors"
+                onClick={() => {
+                  triggerHapticVibration(15);
+                  onClose();
+                }}
+                className="block"
               >
-                <div className="w-10 h-10 rounded-full bg-surface border border-border overflow-hidden">
-                  {user?.photoURL ? (
-                    <img src={user.photoURL} alt="Avatar" className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-text-secondary">
-                      <Settings size={20} />
-                    </div>
-                  )}
-                </div>
-                <div>
-                  <p className="text-sm font-bold text-text">{user?.displayName || 'حسابي'}</p>
-                  <p className="text-xs text-text-secondary">{user?.email || 'إعدادات الحساب'}</p>
-                </div>
+                <motion.div 
+                  whileTap={{ scale: 0.96 }}
+                  className="flex items-center gap-3 p-3 rounded-xl hover:bg-surface-hover transition-colors"
+                >
+                  <div className="w-10 h-10 rounded-full bg-surface border border-border overflow-hidden">
+                    {user?.photoURL ? (
+                      <img src={user.photoURL} alt="Avatar" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-text-secondary">
+                        <Settings size={20} />
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-text">{user?.displayName || 'حسابي'}</p>
+                    <p className="text-xs text-text-secondary">{user?.email || 'إعدادات الحساب'}</p>
+                  </div>
+                </motion.div>
               </Link>
             </div>
           </motion.div>

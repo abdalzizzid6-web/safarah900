@@ -6,6 +6,9 @@ const apiClient = axios.create({
 });
 
 apiClient.interceptors.request.use((config) => {
+  if (config.url && config.url.startsWith('/api/')) {
+    config.baseURL = '';
+  }
   return config;
 });
 

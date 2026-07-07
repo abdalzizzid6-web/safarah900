@@ -204,13 +204,13 @@ export default function MatchesDashboard() {
           result = result.filter(m => ['Live', 'Half Time', 'Second Half', 'Extra Time', 'Penalties'].includes(m.status));
           break;
         case 'TODAY':
-          result = result.filter(m => (m.startTime || m.utcDate || '').startsWith(todayStr));
+          result = result.filter(m => (m.startTime || m.utcDate || '').toString().startsWith(todayStr));
           break;
         case 'TOMORROW':
-          result = result.filter(m => (m.startTime || m.utcDate || '').startsWith(tomorrowStr));
+          result = result.filter(m => (m.startTime || m.utcDate || '').toString().startsWith(tomorrowStr));
           break;
         case 'UPCOMING':
-          result = result.filter(m => (m.startTime || m.utcDate || '') > todayStr && !['Finished', 'Postponed', 'Cancelled', 'Abandoned'].includes(m.status));
+          result = result.filter(m => (m.startTime || m.utcDate || '').toString() > todayStr && !['Finished', 'Postponed', 'Cancelled', 'Abandoned'].includes(m.status));
           break;
         case 'FINISHED':
           result = result.filter(m => m.status === 'Finished');

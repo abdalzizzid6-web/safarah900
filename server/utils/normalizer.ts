@@ -126,7 +126,13 @@ export const normalizeMatch = (data: any): NormalizedMatch => {
     status: data.status || 'NS',
     league,
     leagueName,
-    utcDate: data.utcDate || data.startTime || new Date().toISOString(),
+    utcDate: (() => {
+      let d = data.utcDate || data.startTime;
+      if (!d || typeof d === 'object' || String(d) === "[object Object]") {
+        return new Date().toISOString();
+      }
+      return String(d);
+    })(),
     slug: slug,
     isHidden: isInvalid,
     metadata: {

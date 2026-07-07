@@ -23,8 +23,8 @@ export function useIndexingStatus({
 
       const headers = ["Title", "URL", "Status"];
       const rows = matches.map((match: any) => {
-        const homeName = match.homeName || (typeof match.homeTeam === 'object' ? match.homeTeam?.name : match.homeTeam) || 'Unknown';
-        const awayName = match.awayName || (typeof match.awayTeam === 'object' ? match.awayTeam?.name : match.awayTeam) || 'Unknown';
+        const homeTeamObj = match.homeTeam; const homeName = (typeof match.homeName === 'string' && match.homeName) ? match.homeName : (homeTeamObj && typeof homeTeamObj === 'object' ? (homeTeamObj.name || homeTeamObj.englishName || homeTeamObj.arabicName || 'Unknown') : (typeof homeTeamObj === 'string' ? homeTeamObj : 'Unknown'));
+        const awayTeamObj = match.awayTeam; const awayName = (typeof match.awayName === 'string' && match.awayName) ? match.awayName : (awayTeamObj && typeof awayTeamObj === 'object' ? (awayTeamObj.name || awayTeamObj.englishName || awayTeamObj.arabicName || 'Unknown') : (typeof awayTeamObj === 'string' ? awayTeamObj : 'Unknown'));
         const title = match.title || `${homeName} vs ${awayName}`;
         const slug = createSlugPath(homeName, match.id);
         const url = `https://korea90.xyz/match/${slug}`;

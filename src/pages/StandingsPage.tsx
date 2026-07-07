@@ -9,6 +9,7 @@ import {
 import { worldCupService } from '../services/worldCupService';
 import { Link } from 'react-router-dom';
 import ImageResolver from '../components/ui/ImageResolver';
+import SEO from '../components/SEO';
 
 interface Team {
   id: number;
@@ -142,6 +143,10 @@ export default function StandingsPage() {
 
   return (
     <div className="min-h-screen bg-[#060608] text-white selection:bg-[#d4af37]/30 selection:text-white" style={{ direction: 'rtl' }}>
+      <SEO 
+        title="جدول ترتيب الدوريات والبطولات الكبرى" 
+        description="متابعة لحظية لجدول ترتيب الدوري الإنجليزي الممتاز، الدوري الإسباني، الإيطالي، الألماني، الفرنسي، وكأس العالم 2026. نقاط، مباريات، أهداف وإحصائيات محدثة."
+      />
       
       {/* Decorative Brand Header Pattern */}
       <div className="relative pt-24 pb-12 overflow-hidden border-b border-white/5 bg-gradient-to-b from-[#18150f]/20 to-transparent">

@@ -121,7 +121,7 @@ router.get("/sitemap-matches.xml", handleSitemap('matches', async () => {
       loc: `${host}/match/${slug}`,
       changefreq: 'daily',
       priority: '0.8',
-      lastmod: data.startTime || new Date().toISOString()
+      lastmod: (data.startTime?.toDate?.() || (data.startTime ? new Date(data.startTime._seconds * 1000) : new Date())).toISOString()
     });
   });
   return urls;
@@ -175,7 +175,7 @@ router.get("/sitemap-news.xml", handleSitemap('news', async () => {
       loc: `${host}/news/${news.slug}`,
       changefreq: 'monthly',
       priority: '0.9',
-      lastmod: data.publishDate || data.updatedAt || new Date().toISOString()
+      lastmod: (data.publishDate?.toDate?.() || data.updatedAt?.toDate?.() || (data.publishDate ? new Date(data.publishDate._seconds * 1000) : (data.updatedAt ? new Date(data.updatedAt._seconds * 1000) : new Date()))).toISOString()
     });
   });
   return urls;

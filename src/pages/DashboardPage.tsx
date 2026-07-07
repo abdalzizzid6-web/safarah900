@@ -3,6 +3,7 @@ import { io } from 'socket.io-client';
 import { useQuery } from '@tanstack/react-query';
 import { LayoutDashboard, Users, Trophy, Newspaper, Video, Activity, Zap, BarChart3, Loader2, DatabaseIcon, Calendar, ChevronLeft, ChevronRight, Search } from 'lucide-react';
 import { dashboardService } from '../services/dashboardService';
+import SEO from '../components/SEO';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, PieChart, Pie, Cell } from 'recharts';
 import { UserRole, Match } from '../types';
 import { matchService } from '../services/matchService';
@@ -230,6 +231,7 @@ export default function DashboardPage() {
 
   return (
     <div className="p-6 space-y-6">
+      <SEO title="لوحة التحكم" noindex={true} />
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-black text-white">Dashboard Pro</h1>
         <div className="flex gap-2">

@@ -67,7 +67,7 @@ export default function MatchAnalysisPage() {
 
     // Calculate URLs for internal links
     const matchSlug = slug || createSlugPath(`${rawHomeName} vs ${rawAwayName}`, matchAny.id);
-    const matchUrl = `https://safara90.com/match/${matchSlug}/analysis`;
+    const matchUrl = `https://korea90.xyz/match/${matchSlug}/analysis`;
 
     // Slugs for teams and league
     const homeTeamId = matchAny.homeTeamDetails?.id || (typeof matchAny.homeTeam === 'object' ? matchAny.homeTeam.id : matchAny.homeTeam);
@@ -114,7 +114,7 @@ export default function MatchAnalysisPage() {
         headline: seoTitle,
         description: seoDesc,
         datePublished: typeof match.startTime === 'string' ? match.startTime : new Date().toISOString(),
-        image: match.homeLogo || `https://safara90.com/android-512.png`
+        image: match.homeLogo || `https://korea90.xyz/android-512.png`
     };
 
     return (

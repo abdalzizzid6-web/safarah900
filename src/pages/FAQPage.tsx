@@ -1,6 +1,7 @@
 import React from 'react';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import { HelpCircle, ChevronDown, ChevronUp } from 'lucide-react';
+import SEO from '../components/SEO';
 
 const FAQItem = ({ question, answer }: { question: string; answer: string }) => {
   const [isOpen, setIsOpen] = React.useState(false);
@@ -54,6 +55,12 @@ export default function FAQPage() {
 
   return (
     <div className="space-y-12 py-8">
+      <SEO 
+        title="الأسئلة الشائعة" 
+        description="كل ما تريد معرفته عن منصة صافرة 90 واستخداماتها ومميزاتها التقنية المتطورة. البث المباشر، إحصائيات كأس العالم، والخدمات الرياضية المتكاملة."
+        faq={faqs}
+      />
+
       <div className="text-center space-y-4">
         <div className="inline-flex p-4 bg-primary/10 rounded-3xl text-primary mb-2">
           <HelpCircle size={48} />
@@ -79,5 +86,3 @@ export default function FAQPage() {
     </div>
   );
 }
-
-import { AnimatePresence } from 'motion/react';

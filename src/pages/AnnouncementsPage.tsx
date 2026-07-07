@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'motion/react';
 import { Megaphone, Calendar, ChevronLeft } from 'lucide-react';
+import SEO from '../components/SEO';
 
 const AnnouncementCard = ({ date, title, content, tag }: { date: string, title: string, content: string, tag: string }) => (
   <motion.div 
@@ -57,6 +58,10 @@ export default function AnnouncementsPage() {
 
   return (
     <div className="space-y-12 py-8">
+      <SEO 
+        title="مركز الإعلانات والتحديثات" 
+        description="تابع آخر التحديثات والأنباء، إعلانات الصيانة الدورية، والتحسينات البرمجية التي نطلقها تباعاً في منصة صافرة 90 لتجربة استخدام فائقة الجودة."
+      />
       <div className="flex flex-col md:flex-row items-end justify-between gap-6">
         <div className="space-y-4 text-right">
           <div className="inline-flex p-3 bg-red-500/10 rounded-2xl text-red-500 mb-2">

@@ -14,7 +14,7 @@ const generateMetaHtml = (
   imageUrl: string = `${BASE_URL}/logo.png`,
   jsonLd: any = null,
   type: string = 'website',
-  author: string = 'Kooora90',
+  author: string = 'Safara90',
 ) => {
   const jsonLdScript = jsonLd ? `<script type="application/ld+json">${JSON.stringify(jsonLd)}</script>` : '';
   
@@ -31,7 +31,7 @@ const generateMetaHtml = (
     <meta property="og:type" content="${type}" />
     <meta property="og:url" content="${url}" />
     <meta property="og:image" content="${imageUrl}" />
-    <meta property="og:site_name" content="Kooora90" />
+    <meta property="og:site_name" content="Safara90" />
     
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
@@ -67,8 +67,8 @@ export const seoMiddleware = async (req: Request, res: Response, next: NextFunct
   };
 
   const currentUrl = `${BASE_URL}${req.path}`;
-  let title = 'كورة 90 | بث مباشر وأخبار المباريات';
-  let description = 'موقع كورة 90 يقدم لكم تغطية شاملة لجميع المباريات، بث مباشر، نتائج، إحصائيات، وأخبار كرة القدم لحظة بلحظة.';
+  let title = 'صافرة 90 | بث مباشر وأخبار المباريات';
+  let description = 'موقع صافرة 90 يقدم لكم تغطية شاملة لجميع المباريات، بث مباشر، نتائج، إحصائيات، وأخبار كرة القدم لحظة بلحظة.';
   let imageUrl = `${BASE_URL}/logo.png`;
   let type = 'website';
   let jsonLd: any = null;
@@ -79,7 +79,7 @@ export const seoMiddleware = async (req: Request, res: Response, next: NextFunct
       jsonLd = {
         "@context": "https://schema.org",
         "@type": "WebSite",
-        "name": "كورة 90",
+        "name": "صافرة 90",
         "url": BASE_URL,
         "potentialAction": {
           "@type": "SearchAction",
@@ -100,8 +100,8 @@ export const seoMiddleware = async (req: Request, res: Response, next: NextFunct
           const awayTeam = data.awayTeamName || (typeof data.awayTeam === 'object' ? data.awayTeam.name : data.awayTeam) || 'فريق 2';
           const league = data.leagueName || (typeof data.league === 'object' ? data.league.name : data.league) || 'بطولة';
           
-          title = `مباراة ${homeTeam} ضد ${awayTeam} - ${league} | كورة 90`;
-          description = `تابع تفاصيل مباراة ${homeTeam} و ${awayTeam} في ${league}. البث المباشر، التشكيلات، والنتائج لحظة بلحظة على كورة 90.`;
+          title = `مباراة ${homeTeam} ضد ${awayTeam} - ${league} | صافرة 90`;
+          description = `تابع تفاصيل مباراة ${homeTeam} و ${awayTeam} في ${league}. البث المباشر، التشكيلات، والنتائج لحظة بلحظة على صافرة 90.`;
           type = 'SportsEvent';
           
           jsonLd = {
@@ -118,7 +118,7 @@ export const seoMiddleware = async (req: Request, res: Response, next: NextFunct
           const isWcPattern = matchId.includes('2026-m-') || matchId.includes('2022-m-') || matchId.startsWith('wc-');
           if (!isWcPattern) {
             status = 404;
-            title = 'الصفحة غير موجودة | كورة 90';
+            title = 'الصفحة غير موجودة | صافرة 90';
           }
         }
       }
@@ -131,7 +131,7 @@ export const seoMiddleware = async (req: Request, res: Response, next: NextFunct
         const doc = await firestore.collection('news').doc(newsId).get();
         if (doc.exists) {
           const data = doc.data() || {};
-          title = `${data.title || 'أخبار الرياضة'} | كورة 90`;
+          title = `${data.title || 'أخبار الرياضة'} | صافرة 90`;
           description = data.summary || data.snippet || (data.content ? data.content.substring(0, 150) : '') || title;
           imageUrl = data.imageUrl || data.image || imageUrl;
           type = 'article';
@@ -144,7 +144,7 @@ export const seoMiddleware = async (req: Request, res: Response, next: NextFunct
             "datePublished": data.publishedAt || data.date || new Date().toISOString(),
             "author": [{
               "@type": "Organization",
-              "name": data.source || "كورة 90"
+              "name": data.source || "صافرة 90"
             }]
           };
         }
@@ -155,8 +155,8 @@ export const seoMiddleware = async (req: Request, res: Response, next: NextFunct
       const leagueId = getIdFromSlug(slug);
       
       if (leagueId) {
-        title = `تفاصيل ومباريات البطولة | كورة 90`;
-        description = `تابع أحدث مباريات وترتيب وأخبار البطولة على كورة 90.`;
+        title = `تفاصيل ومباريات البطولة | صافرة 90`;
+        description = `تابع أحدث مباريات وترتيب وأخبار البطولة على صافرة 90.`;
         jsonLd = {
             "@context": "https://schema.org",
             "@type": "SportsOrganization",
@@ -169,8 +169,8 @@ export const seoMiddleware = async (req: Request, res: Response, next: NextFunct
       const teamId = getIdFromSlug(slug);
       
       if (teamId) {
-        title = `أخبار ومباريات الفريق | كورة 90`;
-        description = `تابع أحدث مباريات وأخبار فريقك المفضل على كورة 90.`;
+        title = `أخبار ومباريات الفريق | صافرة 90`;
+        description = `تابع أحدث مباريات وأخبار فريقك المفضل على صافرة 90.`;
         jsonLd = {
             "@context": "https://schema.org",
             "@type": "SportsTeam",
@@ -178,10 +178,10 @@ export const seoMiddleware = async (req: Request, res: Response, next: NextFunct
         };
       }
     } else if (req.path === '/news') {
-      title = 'أخبار الرياضة | كورة 90';
-      description = 'تابع أحدث أخبار كرة القدم المحلية والعالمية، انتقالات، تصريحات، وتقارير حصرية على كورة 90.';
+      title = 'أخبار الرياضة | صافرة 90';
+      description = 'تابع أحدث أخبار كرة القدم المحلية والعالمية، انتقالات، تصريحات، وتقارير حصرية على صافرة 90.';
     } else if (req.path === '/world-cup-2026') {
-      title = 'كأس العالم 2026 | كورة 90';
+      title = 'كأس العالم 2026 | صافرة 90';
       description = 'تغطية شاملة لبطولة كأس العالم 2026، المباريات، المجموعات، والإحصائيات.';
     }
 

@@ -788,8 +788,8 @@ export async function bootstrap() {
           const awayTeam = data.awayTeamName || (typeof data.awayTeam === 'object' ? data.awayTeam.name : data.awayTeam) || 'فريق 2';
           const league = data.leagueName || (typeof data.league === 'object' ? data.league.name : data.league) || 'بطولة';
           
-          const title = `مباراة ${homeTeam} ضد ${awayTeam} - ${league} | كورة 90`;
-          const description = `تابع تفاصيل مباراة ${homeTeam} و ${awayTeam} في ${league}. البث المباشر، التشكيلات، والنتائج لحظة بلحظة على كورة 90.`;
+          const title = `مباراة ${homeTeam} ضد ${awayTeam} - ${league} | صافرة 90`;
+          const description = `تابع تفاصيل مباراة ${homeTeam} و ${awayTeam} في ${league}. البث المباشر، التشكيلات، والنتائج لحظة بلحظة على صافرة 90.`;
           
           html = html.replace(/<title>.*?<\/title>/, `<title>${title}</title>`);
           html = html.replace(/<meta name="description" content=".*?" \/>/, `<meta name="description" content="${description}" />`);
@@ -846,14 +846,14 @@ export async function bootstrap() {
         let html = fs.readFileSync(path.join(distPath, 'index.html'), 'utf-8');
         const data = newsDoc;
         const title = data.seo?.metaTitle || data.title || 'خبر رياضي';
-        const description = data.seo?.metaDescription || data.excerpt || data.content?.substring(0, 160) || 'تفاصيل الخبر الرياضي على كورة 90';
+        const description = data.seo?.metaDescription || data.excerpt || data.content?.substring(0, 160) || 'تفاصيل الخبر الرياضي على صافرة 90';
         const image = data.featuredImage?.url || '/logo-master.png';
 
-        html = html.replace(/<title>.*?<\/title>/, `<title>${title} | كورة 90</title>`);
+        html = html.replace(/<title>.*?<\/title>/, `<title>${title} | صافرة 90</title>`);
         html = html.replace(/<meta name="description" content=".*?" \/>/, `<meta name="description" content="${description}" />`);
 
         const ogTags = `
-          <meta property="og:title" content="${title} | كورة 90" />
+          <meta property="og:title" content="${title} | صافرة 90" />
           <meta property="og:description" content="${description}" />
           <meta property="og:type" content="article" />
           <meta property="og:url" content="https://korea90.xyz/news/${slug}" />

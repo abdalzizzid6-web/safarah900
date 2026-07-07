@@ -74,7 +74,7 @@ export default function MatchDetailView() {
     const awayName = translationService.translateTeam(rawAwayName);
     const seoTitle = `مباراة ${homeName} ضد ${awayName} | تحليل، تشكيلات، وبث مباشر`;
     const seoDesc = aiContent?.summary || `تغطية شاملة لمباراة ${homeName} و${awayName} تتضمن التحليل الفني، التشكيلات الرسمية، مجريات اللقاء والإحصائيات المباشرة.`;
-    const matchUrl = `https://safara90.com/match/${id}`;
+    const matchUrl = `https://korea90.xyz/match/${id}`;
 
     const hasStreamingLinks = match.streamingLinks && match.streamingLinks.length > 0;
     const currentLink = hasStreamingLinks ? match.streamingLinks![selectedLinkIndex] : null;

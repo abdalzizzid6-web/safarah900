@@ -92,8 +92,8 @@ export function normalizeMatch(id: string, data: any): Match {
     const tla = getTeamField(source, 'tla');
     if (tla && tla.length >= 2 && !isPlaceholder(tla)) return tla;
 
-    // IF IT'S STILL A PLACEHOLDER, use the localized TBD
-    return 'قيد التحديد';
+    // IF IT'S STILL A PLACEHOLDER, use the rawName if available, otherwise "قيد التحديد"
+    return rawName || 'قيد التحديد';
   };
 
   const homeName = resolveTeamName(rawHomeName, homeTeamSource);
@@ -117,8 +117,8 @@ export function normalizeMatch(id: string, data: any): Match {
   const leagueName = translateLeagueName(rawLeagueName) || rawLeagueName || 'بطولة غير متوفرة';
 
   // 3. Score validation
-  const homeScore = data.homeScore ?? (data.score?.home ?? (data.score?.fullTime?.home ?? (data.goals?.home ?? 0)));
-  const awayScore = data.awayScore ?? (data.score?.away ?? (data.score?.fullTime?.away ?? (data.goals?.away ?? 0)));
+  const homeScore = data.homeScore ?? (data.score?.home ?? (data.score?.fullTime?.home ?? (data.goals?.home ?? null)));
+  const awayScore = data.awayScore ?? (data.score?.away ?? (data.score?.fullTime?.away ?? (data.goals?.away ?? null)));
   const halfTimeHome = data.halfTimeHome ?? (data.score?.halfTime?.home ?? undefined);
   const halfTimeAway = data.halfTimeAway ?? (data.score?.halfTime?.away ?? undefined);
 

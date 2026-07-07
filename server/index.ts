@@ -811,6 +811,64 @@ export async function bootstrap() {
       }
     });
 
+    // Cache variables for news pages SEO meta
+    const newsSsoCache: Record<string, { data: any, expiry: number }> = {};
+
+    app.get('/news/:slug', async (req, res) => {
+      const { slug } = req.params;
+      const newsId = getIdFromSlug(slug);
+
+      if (!newsId) {
+        return res.sendFile(path.join(distPath, 'index.html'));
+      }
+
+      try {
+        const nowMs = Date.now();
+        let newsDoc: any = null;
+
+        if (newsSsoCache[newsId] && newsSsoCache[newsId].expiry > nowMs) {
+          newsDoc = newsSsoCache[newsId].data;
+        } else {
+          const doc = await firestore.collection('news').doc(newsId).get();
+          if (doc.exists) {
+            newsDoc = { id: doc.id, ...doc.data(), exists: true };
+            newsSsoCache[newsId] = { data: newsDoc, expiry: nowMs + 30 * 60 * 1000 }; // 30 min cache
+          } else {
+            newsDoc = { exists: false };
+            newsSsoCache[newsId] = { data: newsDoc, expiry: nowMs + 10 * 60 * 1000 }; // 10 min cache
+          }
+        }
+
+        if (!newsDoc.exists) {
+          return res.status(404).sendFile(path.join(distPath, 'index.html'));
+        }
+
+        let html = fs.readFileSync(path.join(distPath, 'index.html'), 'utf-8');
+        const data = newsDoc;
+        const title = data.seo?.metaTitle || data.title || 'خبر رياضي';
+        const description = data.seo?.metaDescription || data.excerpt || data.content?.substring(0, 160) || 'تفاصيل الخبر الرياضي على كورة 90';
+        const image = data.featuredImage?.url || '/logo-master.png';
+
+        html = html.replace(/<title>.*?<\/title>/, `<title>${title} | كورة 90</title>`);
+        html = html.replace(/<meta name="description" content=".*?" \/>/, `<meta name="description" content="${description}" />`);
+
+        const ogTags = `
+          <meta property="og:title" content="${title} | كورة 90" />
+          <meta property="og:description" content="${description}" />
+          <meta property="og:type" content="article" />
+          <meta property="og:url" content="https://korea90.xyz/news/${slug}" />
+          <meta property="og:image" content="${image}" />
+          <link rel="canonical" href="https://korea90.xyz/news/${slug}" />
+        `;
+        html = html.replace('</head>', `${ogTags}</head>`);
+
+        res.send(html);
+      } catch (e) {
+        console.error(`[SEO Error] Failed to process news meta for ${slug}:`, e);
+        res.sendFile(path.join(distPath, 'index.html'));
+      }
+    });
+
     app.get('*', (req, res) => {
       res.sendFile(path.join(distPath, 'index.html'));
     });

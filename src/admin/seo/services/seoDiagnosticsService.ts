@@ -48,7 +48,11 @@ export const seoDiagnosticsService = {
    * Fetch and inspect a specific sitemap xml
    */
   async fetchSitemapContent(url: string): Promise<string> {
-    const response = await fetch(url);
+    let targetUrl = url;
+    if (typeof window !== 'undefined' && url.includes('korea90.xyz')) {
+      targetUrl = url.replace(/https?:\/\/korea90\.xyz/i, window.location.origin);
+    }
+    const response = await fetch(targetUrl);
     if (!response.ok) {
       throw new Error(`HTTP Error ${response.status}`);
     }

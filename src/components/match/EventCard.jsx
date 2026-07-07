@@ -48,14 +48,14 @@ export default function EventCard({ event }) {
   };
 
   // Check if this is a global status event like Half time & Full time
-  const isGlobalEvent = ['HALF_TIME', 'FULL_TIME'].includes(event.type);
+  const isGlobalEvent = ['HALF_TIME', 'FULL_TIME'].includes(event?.type);
 
   if (isGlobalEvent) {
     return (
       <div className="flex flex-col items-center justify-center w-full my-6 text-center animate-fade-in">
         <div className="bg-slate-900/60 border border-white/10 px-6 py-2.5 rounded-2xl max-w-xs shadow-lg backdrop-blur-md">
           <p className="text-[10px] text-emerald-400 font-black tracking-widest mb-0.5">
-            {event.type === 'HALF_TIME' ? 'استراحة منتصف الوقت' : 'صافرة النهاية الرئيسية'}
+            {event?.type === 'HALF_TIME' ? 'استراحة منتصف الوقت' : 'صافرة النهاية الرئيسية'}
           </p>
           <h4 className="text-xs font-black text-white">{event.detail}</h4>
           {event.minute && (
@@ -85,8 +85,8 @@ export default function EventCard({ event }) {
             <span className="text-[10px] font-black tracking-wider bg-slate-950 px-2.5 py-1 text-gray-400 border border-white/5 rounded-lg">
               {event.minute}
             </span>
-            <div className={`w-7 h-7 rounded-xl border flex items-center justify-center ${getEventBg(event.type)}`}>
-              {getEventIcon(event.type)}
+            <div className={`w-7 h-7 rounded-xl border flex items-center justify-center ${getEventBg(event?.type)}`}>
+              {getEventIcon(event?.type)}
             </div>
           </div>
 

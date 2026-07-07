@@ -552,11 +552,11 @@ function getSeededMeetings(
   awayLogo: string
 ): Meeting[] {
   // If it's a legendary match-up, return real historic stats!
-  const isArgFra = (rawHome.toLowerCase().includes('argentina') && rawAway.toLowerCase().includes('france')) || 
-                   (rawAway.toLowerCase().includes('argentina') && rawHome.toLowerCase().includes('france'));
+  const isArgFra = (rawHome?.toLowerCase()?.includes('argentina') && rawAway?.toLowerCase()?.includes('france')) || 
+                   (rawAway?.toLowerCase()?.includes('argentina') && rawHome?.toLowerCase()?.includes('france'));
                    
-  const isArgBra = (rawHome.toLowerCase().includes('argentina') && rawAway.toLowerCase().includes('brazil')) ||
-                   (rawAway.toLowerCase().includes('argentina') && rawHome.toLowerCase().includes('brazil'));
+  const isArgBra = (rawHome?.toLowerCase()?.includes('argentina') && rawAway?.toLowerCase()?.includes('brazil')) ||
+                   (rawAway?.toLowerCase()?.includes('argentina') && rawHome?.toLowerCase()?.includes('brazil'));
 
   if (isArgFra) {
     return [

@@ -16,24 +16,24 @@ import { HomePageRenderer } from '../../core/cms/HomePageRenderer';
 
 // Centralized Component Map
 const ComponentMap: Record<string, React.FC<any>> = {
-  [BlockType.HERO]: ({ block, match }) => match ? <PremiumHeroSection key={block.id} match={match} /> : null,
-  [BlockType.LIVE_MATCHES]: ({ block }) => <PremiumLiveMatchesList key={block.id} title={block.title} maxItems={block.dataConfig?.maxItems} />,
-  [BlockType.TODAY_MATCHES]: ({ block }) => <PremiumMatchesScheduleSection key={block.id} title={block.title} type={block.type} maxItems={block.dataConfig?.maxItems} />,
-  [BlockType.TOMORROW_MATCHES]: ({ block }) => <PremiumMatchesScheduleSection key={block.id} title={block.title} type={block.type} maxItems={block.dataConfig?.maxItems} />,
-  [BlockType.FINISHED_MATCHES]: ({ block }) => <PremiumMatchesScheduleSection key={block.id} title={block.title} type={block.type} maxItems={block.dataConfig?.maxItems} />,
-  [BlockType.BENTO_ACTIONS]: ({ block }) => <PremiumStories key={block.id} />,
-  [BlockType.LATEST_NEWS]: ({ block }) => <PremiumNewsSection key={block.id} title={block.title} category={block.dataConfig?.filterNewsCategory} />,
-  [BlockType.FEATURED_NEWS]: ({ block }) => <PremiumNewsSection key={block.id} title={block.title} category={block.dataConfig?.filterNewsCategory} />,
-  [BlockType.TRENDING_NEWS]: ({ block }) => <PremiumNewsSection key={block.id} title={block.title} category={block.dataConfig?.filterNewsCategory} />,
-  [BlockType.BREAKING_NEWS]: ({ block }) => <PremiumNewsSection key={block.id} title={block.title} category={block.dataConfig?.filterNewsCategory} />,
-  [BlockType.LEAGUE_STANDINGS]: ({ block }) => <PremiumStandingsPreview key={block.id} title={block.title} leagueId={Number(block.dataConfig?.leagueId || 39)} leagueName={block.dataConfig?.leagueName} />,
-  [BlockType.LEAGUES]: ({ block }) => <PremiumCompetitionsSection key={block.id} title={block.title} />,
-  [BlockType.TOP_PLAYERS]: ({ block }) => <PremiumTopPlayersSection key={block.id} title={block.title} />,
-  [BlockType.TOP_GOALSCORERS]: ({ block }) => <div key={block.id} className="p-4 border border-white/10 rounded-xl">كتلة أفضل هدافي الدوري (قريباً)</div>,
-  [BlockType.POLLS]: ({ block }) => <div key={block.id} className="p-4 border border-white/10 rounded-xl">كتلة الاستفتاء (قريباً)</div>,
-  [BlockType.ADS]: () => null, // Placeholder for Ads
-  [BlockType.VIDEOS]: () => null, // Placeholder for Videos
-  [BlockType.CUSTOM_WIDGETS]: ({ block }) => block.dataConfig?.customHtmlCode ? <div key={block.id} dangerouslySetInnerHTML={{ __html: block.dataConfig.customHtmlCode }} /> : null,
+  HERO: ({ block, match }) => match ? <PremiumHeroSection key={block.id} match={match} /> : null,
+  LIVE_MATCHES: ({ block }) => <PremiumLiveMatchesList key={block.id} title={block.title} maxItems={(block.dataConfig as any)?.maxItems} />,
+  TODAY_MATCHES: ({ block }) => <PremiumMatchesScheduleSection key={block.id} title={block.title} type={block.type} maxItems={(block.dataConfig as any)?.maxItems} />,
+  TOMORROW_MATCHES: ({ block }) => <PremiumMatchesScheduleSection key={block.id} title={block.title} type={block.type} maxItems={(block.dataConfig as any)?.maxItems} />,
+  FINISHED_MATCHES: ({ block }) => <PremiumMatchesScheduleSection key={block.id} title={block.title} type={block.type} maxItems={(block.dataConfig as any)?.maxItems} />,
+  BENTO_ACTIONS: ({ block }) => <PremiumStories key={block.id} />,
+  LATEST_NEWS: ({ block }) => <PremiumNewsSection key={block.id} title={block.title} category={(block.dataConfig as any)?.filterNewsCategory} />,
+  FEATURED_NEWS: ({ block }) => <PremiumNewsSection key={block.id} title={block.title} category={(block.dataConfig as any)?.filterNewsCategory} />,
+  TRENDING_NEWS: ({ block }) => <PremiumNewsSection key={block.id} title={block.title} category={(block.dataConfig as any)?.filterNewsCategory} />,
+  BREAKING_NEWS: ({ block }) => <PremiumNewsSection key={block.id} title={block.title} category={(block.dataConfig as any)?.filterNewsCategory} />,
+  LEAGUE_STANDINGS: ({ block }) => <PremiumStandingsPreview key={block.id} title={block.title} leagueId={Number((block.dataConfig as any)?.leagueId || 39)} leagueName={(block.dataConfig as any)?.leagueName} />,
+  LEAGUES: ({ block }) => <PremiumCompetitionsSection key={block.id} title={block.title} />,
+  TOP_PLAYERS: ({ block }) => <PremiumTopPlayersSection key={block.id} title={block.title} />,
+  TOP_GOALSCORERS: ({ block }) => <div key={block.id} className="p-4 border border-white/10 rounded-xl">كتلة أفضل هدافي الدوري (قريباً)</div>,
+  POLLS: ({ block }) => <div key={block.id} className="p-4 border border-white/10 rounded-xl">كتلة الاستفتاء (قريباً)</div>,
+  ADS: () => null, // Placeholder for Ads
+  VIDEOS: () => null, // Placeholder for Videos
+  CUSTOM_WIDGETS: ({ block }) => (block.dataConfig as any)?.customHtmlCode ? <div key={block.id} dangerouslySetInnerHTML={{ __html: (block.dataConfig as any).customHtmlCode }} /> : null,
 };
 
 const BlockRenderer = ({ block, featuredMatch }: { block: any, featuredMatch: any }) => {

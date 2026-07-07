@@ -26,8 +26,8 @@ export default function AIPredictionWidget({ match }) {
             awayTeam: awayName,
             league: match.competition?.name || 'League',
             status: match.status,
-            homeScore: match.score?.fullTime.home,
-            awayScore: match.score?.fullTime.away,
+            homeScore: match.score?.fullTime?.home,
+            awayScore: match.score?.fullTime?.away,
           }),
         });
         const data = await response.json();

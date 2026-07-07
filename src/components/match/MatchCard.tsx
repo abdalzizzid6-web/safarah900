@@ -126,16 +126,16 @@ export default function MatchCard({ match }: MatchCardProps) {
             <div className="flex flex-col items-center gap-0.5">
               <div className="flex items-center justify-center gap-2 bg-black/40 border border-white/5 px-3 py-1 rounded-xl">
                 <span className={cn("text-base font-black tracking-tight", isLive ? "text-emerald-400" : "text-white")}>
-                  {match.score.home}
+                  {match.score?.home}
                 </span>
                 <span className="text-gray-600 text-xs font-black">:</span>
                 <span className={cn("text-base font-black tracking-tight", isLive ? "text-emerald-400" : "text-white")}>
-                  {match.score.away}
+                  {match.score?.away}
                 </span>
               </div>
-              {match.score.halfTimeHome !== undefined && (
+              {match.score?.halfTimeHome !== undefined && (
                 <span className="text-[9px] text-gray-500 font-bold">
-                  الشوط الأول ({match.score.halfTimeHome} - {match.score.halfTimeAway})
+                  الشوط الأول ({match.score?.halfTimeHome} - {match.score?.halfTimeAway})
                 </span>
               )}
             </div>

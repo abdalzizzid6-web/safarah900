@@ -102,12 +102,20 @@ router.get("/sitemap-matches.xml", handleSitemap('matches', async () => {
   const urls: any[] = [];
   // Order by startTime desc for most recent matches
   const snap = await collections.matches().orderBy('startTime', 'desc').limit(500).get();
+  console.log(`[SEO DEBUG] Found ${snap.size} match documents in Firestore`);
   snap.forEach(doc => {
     const data = doc.data();
     const match = normalizeMatch({ ...data, id: doc.id });
     
     // Ensure slug is created from normalized names
-    const slug = createSlugPath(`${match.homeTeam} vs ${match.awayTeam}`, match.id);
+    const slug = createSlugPath(`${match.homeName} vs ${match.awayName}`, match.id);
+    if (doc.id === 'wc-537390') {
+      console.log(`[SEO DEBUG] Normalized match for wc-537390:`, {
+        homeName: match.homeName,
+        awayName: match.awayName,
+        slug
+      });
+    }
     
     urls.push({
       loc: `${host}/match/${slug}`,

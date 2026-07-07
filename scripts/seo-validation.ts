@@ -41,7 +41,8 @@ async function runValidation() {
       const urls = $('loc').map((i, el) => $(el).text()).get().slice(0, 3); // Sample 3 per sitemap
       
       for (const url of urls) {
-        const result = await validateUrl(url);
+        const localUrl = url.replace('https://korea90.xyz', host);
+        const result = await validateUrl(localUrl);
         console.log(`URL: ${result.url}`);
         console.log(`  - Status: ${result.status}`);
         if(result.status === 200) {

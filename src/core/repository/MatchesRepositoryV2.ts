@@ -224,7 +224,11 @@ export class MatchesRepositoryV2 extends BaseRepository<Match> {
    * Mapping logic for Firestore match data to unified Match type
    */
   public mapFirestoreMatch(id: string, data: DocumentData): Match {
-    return normalizeMatch(id, data);
+    const normalized = normalizeMatch(id, data);
+    if (normalized.homeName === 'قيد التحديد' && normalized.awayName === 'قيد التحديد') {
+        console.warn(`[MatchesRepositoryV2] Match ${id} has placeholder names. Raw data:`, data);
+    }
+    return normalized;
   }
 
 

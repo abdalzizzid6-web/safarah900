@@ -245,6 +245,8 @@ export interface Match {
   showInSlider?: boolean;
 
   // Backward compatibility fields for legacy components
+  homeName?: string;
+  awayName?: string;
   homeLogo?: string;
   awayLogo?: string;
   homeScore?: number;

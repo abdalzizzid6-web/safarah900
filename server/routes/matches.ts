@@ -2,8 +2,6 @@
 import express from "express";
 import { firestore, isFirebaseQuotaError, isFirestoreQuotaExceeded, setFirestoreQuotaExceeded } from "../firestore/collections";
 import { getDocWithFallback } from "../firestore/withFallback";
-import { authMiddleware } from "../middleware/auth";
-import { validateBody, MatchStatsSchema } from "../middleware/admin";
 import { proxyCache } from "../firestore/cache";
 import { serverCache } from "../utils/cache";
 import { generateMatchContent, generateLineupAnalysis } from "../services/aiContentService";
@@ -745,23 +743,6 @@ router.post("/:matchId/analyze-lineup", async (req, res) => {
     }
     res.status(500).json({ error: error?.message || String(error) });
   }
-});
-
-router.post("/stats", authMiddleware('admin'), validateBody(MatchStatsSchema), async (req, res) => {
-  try {
-    const { homeTeam, awayTeam, status, league } = req.body;
-    const matchId = `${league || 'match'}-${homeTeam}-${awayTeam}`.toLowerCase().replace(/\s+/g, '-');
-    
-    // Logic for updating stats...
-    res.json({ success: true, message: "Stats updated successfully" });
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-router.post("/refresh", async (req, res) => {
-  // Logic for manual match refresh
-  res.json({ success: true });
 });
 
 router.get("/proxy/:matchId", async (req, res) => {

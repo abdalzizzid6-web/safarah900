@@ -58,7 +58,7 @@ app.use((req, res, next) => {
 app.use("/", seoRoutes);
 
 app.get("/robots.txt", (req, res) => {
-  const host = "https://korea90.xyz";
+  const host = (process.env.BASE_URL || `https://${req.get('host')}`).replace(/\/$/, '');
   res.header('Content-Type', 'text/plain; charset=utf-8');
   res.send(`User-agent: *
 Allow: /

@@ -48,25 +48,105 @@ You MUST follow these rules strictly:
 4. Fill every property in the requested schema.
 
 You must provide a structured JSON response with the following fields: 
-headline, summary, fullAnalysis, tacticalAnalysis, keyPlayers (home array, away array), predictedResult, probabilities (homeWin, draw, awayWin), formationAnalysis, strengths (home array, away array), weaknesses (home array, away array), injuries, historicalMeetings, seoTitle, seoDescription, schema, slug.
+title, summary, preview, matchImportance, competitionOverview, analysis, teamHistory (home, away), headToHeadAnalysis, keyPlayers (home array, away array), predictedResult, probabilities (homeWin, draw, awayWin), formationAnalysis, strengths (home array, away array), weaknesses (home array, away array), injuries, historicalMeetings, seoTitle, seoDescription, seoKeywords (array), schema, slug, faq (array of {question, answer}).
   `;
 
   let content: any;
   
   try {
     const result = await generateContentWithRetry({
-      model: "gemini-3.5-flash",
+      model: "gemini-1.5-flash",
       contents: prompt,
       config: {
-        systemInstruction: "You are an expert sports data analyst. Return JSON.",
+        systemInstruction: "You are an expert sports data analyst. Return JSON matching the schema.",
         responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            title: { type: Type.STRING },
+            summary: { type: Type.STRING },
+            preview: { type: Type.STRING },
+            matchImportance: { type: Type.STRING },
+            competitionOverview: { type: Type.STRING },
+            analysis: { type: Type.STRING },
+            teamHistory: {
+              type: Type.OBJECT,
+              properties: {
+                home: { type: Type.STRING },
+                away: { type: Type.STRING }
+              },
+              required: ["home", "away"]
+            },
+            headToHeadAnalysis: { type: Type.STRING },
+            keyPlayers: {
+              type: Type.OBJECT,
+              properties: {
+                home: { type: Type.ARRAY, items: { type: Type.STRING } },
+                away: { type: Type.ARRAY, items: { type: Type.STRING } }
+              },
+              required: ["home", "away"]
+            },
+            predictedResult: { type: Type.STRING },
+            probabilities: {
+              type: Type.OBJECT,
+              properties: {
+                homeWin: { type: Type.NUMBER },
+                draw: { type: Type.NUMBER },
+                awayWin: { type: Type.NUMBER }
+              },
+              required: ["homeWin", "draw", "awayWin"]
+            },
+            formationAnalysis: { type: Type.STRING },
+            strengths: {
+              type: Type.OBJECT,
+              properties: {
+                home: { type: Type.ARRAY, items: { type: Type.STRING } },
+                away: { type: Type.ARRAY, items: { type: Type.STRING } }
+              },
+              required: ["home", "away"]
+            },
+            weaknesses: {
+              type: Type.OBJECT,
+              properties: {
+                home: { type: Type.ARRAY, items: { type: Type.STRING } },
+                away: { type: Type.ARRAY, items: { type: Type.STRING } }
+              },
+              required: ["home", "away"]
+            },
+            injuries: { type: Type.STRING },
+            historicalMeetings: { type: Type.STRING },
+            seoTitle: { type: Type.STRING },
+            seoDescription: { type: Type.STRING },
+            seoKeywords: { type: Type.ARRAY, items: { type: Type.STRING } },
+            schema: { type: Type.STRING },
+            slug: { type: Type.STRING },
+            faq: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  question: { type: Type.STRING },
+                  answer: { type: Type.STRING }
+                },
+                required: ["question", "answer"]
+              }
+            }
+          },
+          required: [
+            "title", "summary", "preview", "matchImportance", "competitionOverview", "analysis", 
+            "teamHistory", "headToHeadAnalysis", "keyPlayers", "predictedResult", "probabilities", 
+            "formationAnalysis", "strengths", "weaknesses", "seoTitle", "seoDescription", 
+            "seoKeywords", "slug", "faq"
+          ]
+        }
       }
     });
 
     content = JSON.parse(result.text || "{}");
   } catch (error: any) {
-    console.error(`[AI Generation Failed]:`, error);
-    throw new Error("Failed to generate analysis");
+    console.error(`[AI Generation Failed] for match ${matchId}:`, error?.message || error);
+    // Propagate the specific error if possible to help with debugging
+    throw new Error(`Failed to generate analysis: ${error?.message || "Unknown error"}`);
   }
 
   // Save to unified ai_match_predictions with strict persistence
@@ -129,11 +209,11 @@ You must fill every property in the requested schema. If Gemini API is healthy, 
   `;
 
   let analysis: any;
-  let dataSource = "gemini-3.5-flash";
+  let dataSource = "gemini-1.5-flash";
 
   try {
     const result = await generateContentWithRetry({
-      model: "gemini-3.5-flash",
+      model: "gemini-1.5-flash",
       contents: prompt,
       config: {
         systemInstruction: "You are an elite football head-coach, tactician and sports analyst. You analyze team lineups, match-ups, and tactical sheets with extreme realism, using professional Arabic sports terminology. Output only pure JSON.",
@@ -174,9 +254,9 @@ You must fill every property in the requested schema. If Gemini API is healthy, 
             probabilities: {
               type: Type.OBJECT,
               properties: {
-                homeWin: { type: Type.INTEGER, description: "Home team win percentage (e.g., 45)" },
-                draw: { type: Type.INTEGER, description: "Draw percentage (e.g., 25)" },
-                awayWin: { type: Type.INTEGER, description: "Away team win percentage (e.g., 30)" }
+                homeWin: { type: Type.NUMBER, description: "Home team win percentage (e.g., 45)" },
+                draw: { type: Type.NUMBER, description: "Draw percentage (e.g., 25)" },
+                awayWin: { type: Type.NUMBER, description: "Away team win percentage (e.g., 30)" }
               },
               required: ["homeWin", "draw", "awayWin"]
             },

@@ -21,9 +21,10 @@ export default defineConfig(({ mode }) => {
               handler: 'NetworkFirst',
               options: {
                 cacheName: 'live-matches-cache',
+                networkTimeoutSeconds: 3, // Fallback to cache quickly if network is slow
                 expiration: {
-                  maxEntries: 50,
-                  maxAgeSeconds: 60 * 60 * 2, // 2 hours
+                  maxEntries: 10,
+                  maxAgeSeconds: 30, // Only cache for 30 seconds to keep data fresh
                 },
                 cacheableResponse: {
                   statuses: [0, 200],

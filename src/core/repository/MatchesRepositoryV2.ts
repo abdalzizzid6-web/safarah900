@@ -28,6 +28,7 @@ import {
 import { translateTeamName, translateLeagueName } from '../../utils/arabicTeamNames';
 import { worldCupService } from '../../services/worldCupService';
 import { normalizeMatch } from '../utils/matchNormalization';
+import { networkDiagnostic } from '../../utils/networkDiagnostic';
 
 const mapWCMatchToMatch = (wcMatch: any): Match => {
   return normalizeMatch(wcMatch.id, {
@@ -242,9 +243,11 @@ export class MatchesRepositoryV2 extends BaseRepository<Match> {
     cacheKey: string,
     apiEndpoint: string,
     apiParams: Record<string, any> = {},
-    firestoreFallbackFn: () => Promise<T>
+    firestoreFallbackFn: () => Promise<T>,
+    ttlMs: number = 300000 // Default 5 minutes
   ): Promise<T> {
     const startTime = performance.now();
+    const requestId = networkDiagnostic.logRequest(apiEndpoint, { params: apiParams });
 
     // Check memory/local cache first
     const cached = cacheManager.get(cacheKey);
@@ -253,6 +256,16 @@ export class MatchesRepositoryV2 extends BaseRepository<Match> {
       try {
         const parsed = typeof cached === 'string' ? JSON.parse(cached) : cached;
         telemetry.logResponseTime(performance.now() - startTime);
+        
+        if (requestId) {
+          networkDiagnostic.logResponse(requestId, { 
+            status: 200, 
+            statusText: 'OK (Cache)', 
+            headers: { 'x-cache-status': 'HIT' },
+            data: parsed 
+          }, true);
+        }
+        
         return this.adjustMatchesData(parsed) as T;
       } catch (e) {
         console.warn(`[MatchesRepositoryV2] Failed to parse cache for ${cacheKey}`, e);
@@ -269,12 +282,21 @@ export class MatchesRepositoryV2 extends BaseRepository<Match> {
       const response = await retryManager.withRetry(fetchFn, 2);
       
       const responseData = response.data;
-      cacheManager.set(cacheKey, responseData, true); // save with local storage persistence
+      cacheManager.set(cacheKey, responseData, ttlMs, true); // save with TTL and persistence
       
       telemetry.logResponseTime(performance.now() - startTime);
+      
+      if (requestId) {
+        networkDiagnostic.logResponse(requestId, response, true);
+      }
+      
       return this.adjustMatchesData(responseData);
     } catch (apiError: any) {
       telemetry.logError('API_CALL_FAILURE', apiError);
+      
+      if (requestId) {
+        networkDiagnostic.logError(requestId, apiError);
+      }
       
       // If API fails, try Firestore fallback ONLY if quota is not already known to be exceeded
       if (!telemetry.isFirestoreQuotaExceeded()) {
@@ -358,7 +380,8 @@ export class MatchesRepositoryV2 extends BaseRepository<Match> {
           );
           const snapshot = await getDocs(q);
           return snapshot.docs.map(docSnap => this.mapFirestoreMatch(docSnap.id, docSnap.data())).filter(Boolean) as Match[];
-        }
+        },
+        30000 // 30 seconds TTL for live matches
       );
 
       // Merge and align using a Map

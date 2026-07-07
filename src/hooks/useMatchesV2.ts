@@ -49,7 +49,9 @@ export function useLiveMatches() {
     queryKey: MATCHES_QUERY_KEYS.live(),
     queryFn: async ({ signal }) => {
       if (signal?.aborted) throw new Error('Query cancelled');
-      return await matchService.getLiveMatches();
+      const data = await matchService.getLiveMatches();
+      console.log(`[useLiveMatches Hook] Received ${data?.length || 0} matches from service`);
+      return data;
     },
     staleTime: 30 * 1000,       // 30 seconds stale
     gcTime: 10 * 60 * 1000,     // 10 minutes cache duration

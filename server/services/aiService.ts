@@ -30,7 +30,7 @@ export async function generateContentWithRetry(params: {
   const modelCandidates = [params.model];
   
   // Robust pool of fallback models in optimal order of free-tier quotas and reliability
-  const pool = ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-2.0-flash-lite-preview-02-05", "gemini-1.5-pro"];
+  const pool = ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-2.0-flash-exp"];
   for (const candidate of pool) {
     if (candidate !== params.model) {
       modelCandidates.push(candidate);
@@ -42,16 +42,19 @@ export async function generateContentWithRetry(params: {
   let lastError: any = null;
 
   for (let i = 0; i < uniqueModels.length; i++) {
-    const model = uniqueModels[i];
+    const modelName = uniqueModels[i];
     const isLastModel = i === uniqueModels.length - 1;
     let delay = 1000; // start with 1 second backoff
     
     for (let attempt = 0; attempt < maxRetries; attempt++) {
       try {
-        const response = await ai.models.generateContent({
-          ...params,
-          model,
+        const generativeModel = ai.getGenerativeModel({
+          model: modelName,
+          generationConfig: params.config
         });
+        
+        const result = await generativeModel.generateContent(params.contents);
+        const response = await result.response;
         return response;
       } catch (error: any) {
         lastError = error;
@@ -60,11 +63,7 @@ export async function generateContentWithRetry(params: {
         const isRateLimit = errorMessage.includes("429") || errorMessage.includes("RESOURCE_EXHAUSTED") || isQuotaLimit;
         const isServerUnavailable = errorMessage.includes("503") || errorMessage.includes("UNAVAILABLE") || errorMessage.includes("demand");
         
-        // Log cleanly to console using info/sync categories so we don't trip automated monitoring tools
-        if (!isLastModel) {
-        } else {
-          console.warn(`[AI Sync Warning] Final candidate ${model} did not respond: ${errorMessage}`);
-        }
+        console.warn(`[AI Service] Model ${modelName} failed (attempt ${attempt + 1}): ${errorMessage}`);
         
         if (isQuotaLimit || isServerUnavailable) {
           // If the model is quota-limited, exhausted, or experiences high demand, immediately try the next model without wasting latency

@@ -88,13 +88,49 @@ router.get("/", async (req, res) => {
   return res.json(matches.map(normalizeMatch).filter(m => !m.isHidden));
 });
 
-router.get("/live", (req, res) => {
+router.get("/live", async (req, res) => {
   const { limit } = req.query;
-  let matches = serverCache.readStaticFile<any[]>('matches.json') || [];
+  const requestId = Math.random().toString(36).substring(7);
+  const startTime = Date.now();
   
-  let liveMatches = matches.filter(m => 
-    m.status === 'LIVE' || m.status === 'IN_PLAY' || m.isLive === true
-  );
+  console.log(`[Live API][${requestId}] Request received. Limit: ${limit}`);
+  
+  let matches = serverCache.readStaticFile<any[]>('matches.json') || [];
+  let dataSource = "static-file";
+  
+  // Also try to fetch latest from Firestore if possible, but respect quota
+  if (!isFirestoreQuotaExceeded) {
+    try {
+      // Find matches where status is live/in-play
+      const snap = await firestore.collection('matches')
+        .where('status', 'in', ['LIVE', 'IN_PLAY', '1H', '2H', 'HT', 'ET', 'P'])
+        .limit(50)
+        .get();
+        
+      if (!snap.empty) {
+        const firestoreMatches = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        console.log(`[Live API][${requestId}] Found ${firestoreMatches.length} live matches in Firestore.`);
+        
+        // Merge: prefer Firestore matches
+        const matchesMap = new Map();
+        matches.forEach(m => matchesMap.set(String(m.id), m));
+        firestoreMatches.forEach(m => matchesMap.set(String(m.id), m));
+        matches = Array.from(matchesMap.values());
+        dataSource = "firestore-merged";
+      }
+    } catch (e) {
+      if (isFirebaseQuotaError(e)) {
+        setFirestoreQuotaExceeded(true);
+      }
+      console.warn(`[Live API][${requestId}] Firestore lookup failed, using static only:`, e);
+    }
+  }
+
+  let liveMatches = matches.filter(m => {
+    const match = normalizeMatch(m);
+    return match.status === 'LIVE' || match.status === 'IN_PLAY' || match.isLive === true || 
+           ['1H', '2H', 'HT', 'ET', 'P'].includes(match.status);
+  });
 
   liveMatches.sort((a, b) => {
     const aTime = new Date(a.startTime || a.utcDate || 0).getTime();
@@ -109,7 +145,17 @@ router.get("/live", (req, res) => {
     }
   }
 
-  return res.json(liveMatches.map(normalizeMatch).filter(m => !m.isHidden));
+  const results = liveMatches.map(normalizeMatch).filter(m => !m.isHidden);
+  const latency = Date.now() - startTime;
+
+  res.set('X-Data-Source', dataSource);
+  res.set('X-Request-Id', requestId);
+  res.set('X-Latency-Ms', latency.toString());
+  res.set('X-Match-Count', results.length.toString());
+
+  console.log(`[Live API][${requestId}] Returning ${results.length} matches. Source: ${dataSource}. Latency: ${latency}ms`);
+
+  return res.json(results);
 });
 
 router.get("/fixtures", (req, res) => {

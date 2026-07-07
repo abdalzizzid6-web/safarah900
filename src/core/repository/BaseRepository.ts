@@ -11,7 +11,8 @@ import {
   setDoc,
   query, 
   QueryConstraint,
-  writeBatch
+  writeBatch,
+  limit
 } from 'firebase/firestore';
 
 export abstract class BaseRepository<T> {
@@ -21,13 +22,14 @@ export abstract class BaseRepository<T> {
     this.collectionName = collectionName;
   }
 
-  async getAll(): Promise<T[]> {
+  async getAll(limitVal: number = 50): Promise<T[]> {
     if (telemetry.isFirestoreQuotaExceeded()) {
       console.warn(`[BaseRepository] Skipping getAll for ${this.collectionName} due to quota exhaustion.`);
       return [];
     }
     try {
-      const querySnapshot = await getDocs(collection(db, this.collectionName));
+      const q = query(collection(db, this.collectionName), limit(limitVal));
+      const querySnapshot = await getDocs(q);
       return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as T));
     } catch (e: any) {
       if (e.message?.includes('quota') || e.code === 'resource-exhausted') {

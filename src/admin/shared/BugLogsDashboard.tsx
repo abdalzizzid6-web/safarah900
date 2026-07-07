@@ -113,7 +113,8 @@ export default function BugLogsDashboard() {
   const handleClearAllLogs = async () => {
     try {
       if (!confirm('تحذير! سيتم مسح كافة سجلات الأخطاء المخزنة في قاعدة البيانات نهائياً. هل تود الاستمرار؟')) return;
-      const snapshot = await getDocs(collection(db, 'error_logs'));
+      const q = query(collection(db, 'error_logs'), limit(250));
+      const snapshot = await getDocs(q);
       const batch = writeBatch(db);
       snapshot.docs.forEach((docSnap) => {
         batch.delete(docSnap.ref);

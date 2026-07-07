@@ -1,7 +1,7 @@
 import { BaseRepository } from './BaseRepository';
 import { telemetry } from '../monitoring/telemetry';
 import { db } from '../../firebase';
-import { doc, setDoc, getDoc, collection, query, orderBy, getDocs, where, deleteDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, collection, query, orderBy, getDocs, where, deleteDoc, limit } from 'firebase/firestore';
 import cacheManager from '../api/cacheManager';
 import { 
   LeagueSettings, 
@@ -28,7 +28,7 @@ export class CmsRepositoryV2 extends BaseRepository<any> {
         return cached.data;
       }
 
-      const snap = await getDocs(collection(db, 'cms_leagues'));
+      const snap = await getDocs(query(collection(db, 'cms_leagues'), limit(50)));
       const list = snap.docs.map(d => ({ id: d.id, ...d.data() } as LeagueSettings));
       const sorted = list.sort((a, b) => (a.order || 0) - (b.order || 0));
       
@@ -68,7 +68,7 @@ export class CmsRepositoryV2 extends BaseRepository<any> {
         return cached.data;
       }
 
-      const snap = await getDocs(collection(db, 'cms_teams'));
+      const snap = await getDocs(query(collection(db, 'cms_teams'), limit(100)));
       const list = snap.docs.map(d => ({ id: d.id, ...d.data() } as TeamSettings));
       const sorted = list.sort((a, b) => (a.order || 0) - (b.order || 0));
       
@@ -108,7 +108,7 @@ export class CmsRepositoryV2 extends BaseRepository<any> {
         return cached.data;
       }
 
-      const snap = await getDocs(collection(db, 'cms_channels_servers'));
+      const snap = await getDocs(query(collection(db, 'cms_channels_servers'), limit(100)));
       const list = snap.docs.map(d => ({ id: d.id, ...d.data() } as ChannelServerSettings));
       const sorted = list.sort((a, b) => (a.priority || 0) - (b.priority || 0));
       
@@ -182,7 +182,8 @@ export class CmsRepositoryV2 extends BaseRepository<any> {
 
       const q = query(
         collection(db, 'homepage_blocks'),
-        orderBy('displayOrder', 'asc')
+        orderBy('displayOrder', 'asc'),
+        limit(50)
       );
       const snap = await getDocs(q);
       const list = snap.docs.map(d => ({ id: d.id, ...d.data() } as HomepageBlock));

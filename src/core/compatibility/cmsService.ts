@@ -72,7 +72,7 @@ export const cmsService = {
     }
 
     try {
-      const snap = await getDocs(collection(db, 'cms_leagues'));
+      const snap = await getDocs(query(collection(db, 'cms_leagues'), limit(50)));
       const list = snap.docs.map(docDoc => ({ id: docDoc.id, ...docDoc.data() } as LeagueSettings));
       // sort by order, then name
       list.sort((a, b) => (a.order || 0) - (b.order || 0));
@@ -112,7 +112,7 @@ export const cmsService = {
     if (cached) return cached;
 
     try {
-      const snap = await getDocs(collection(db, 'cms_match_overrides'));
+      const snap = await getDocs(query(collection(db, 'cms_match_overrides'), limit(100)));
       const overrides: Record<string, any> = {};
       snap.docs.forEach(docDoc => {
         overrides[docDoc.id] = { id: docDoc.id, ...docDoc.data() };
@@ -144,7 +144,7 @@ export const cmsService = {
     if (cached) return cached;
 
     try {
-      const snap = await getDocs(collection(db, 'cms_teams'));
+      const snap = await getDocs(query(collection(db, 'cms_teams'), limit(100)));
       const list = snap.docs.map(docDoc => ({ id: docDoc.id, ...docDoc.data() } as TeamSettings));
       list.sort((a, b) => (a.order || 0) - (b.order || 0));
       setCache('teams', list, memoryCache, STORAGE_PREFIX + 'teams');
@@ -201,7 +201,7 @@ export const cmsService = {
     }
 
     try {
-      const snap = await getDocs(collection(db, 'cms_channels_servers'));
+      const snap = await getDocs(query(collection(db, 'cms_channels_servers'), limit(100)));
       const list = snap.docs.map(docDoc => ({ id: docDoc.id, ...docDoc.data() } as ChannelServerSettings));
       list.sort((a, b) => (a.priority || 0) - (b.priority || 0));
       setCache('channels', list, memoryCache, STORAGE_PREFIX + 'channels');

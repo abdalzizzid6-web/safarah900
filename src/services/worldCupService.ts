@@ -362,7 +362,7 @@ export const worldCupService = {
       if (cached && (Date.now() - cached.timestamp < CACHE_TTL)) {
         overridesSnap = cached.data;
       } else {
-        const snap = await getDocs(collection(db, 'cms_match_overrides'));
+        const snap = await getDocs(query(collection(db, 'cms_match_overrides'), limit(100)));
         overridesSnap = snap.docs.map(doc => ({ id: String(doc.id), data: doc.data() }));
         memoryCache.set(cacheKey, { data: overridesSnap, timestamp: Date.now() });
       }
@@ -780,7 +780,7 @@ export const worldCupService = {
       if (cached && (Date.now() - cached.timestamp < CACHE_TTL)) {
         overridesSnap = cached.data;
       } else {
-        const snap = await getDocs(collection(db, 'cms_teams'));
+        const snap = await getDocs(query(collection(db, 'cms_teams'), limit(100)));
         overridesSnap = snap.docs.map(doc => ({ id: String(doc.id), data: doc.data() }));
         memoryCache.set(cacheKey, { data: overridesSnap, timestamp: Date.now() });
       }

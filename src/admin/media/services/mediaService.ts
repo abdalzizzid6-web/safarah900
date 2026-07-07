@@ -316,7 +316,7 @@ class MediaService {
     }
 
     try {
-      const querySnapshot = await getDocs(collection(db, 'media_folders'));
+      const querySnapshot = await getDocs(query(collection(db, 'media_folders'), limit(100)));
       const folders: MediaFolder[] = [];
       querySnapshot.forEach((d) => {
         folders.push({ id: d.id, ...d.data() } as MediaFolder);
@@ -401,7 +401,7 @@ class MediaService {
     }
 
     try {
-      const querySnapshot = await getDocs(collection(db, 'media_collections'));
+      const querySnapshot = await getDocs(query(collection(db, 'media_collections'), limit(100)));
       const collections: MediaCollection[] = [];
       querySnapshot.forEach((d) => {
         collections.push({ id: d.id, ...d.data() } as MediaCollection);

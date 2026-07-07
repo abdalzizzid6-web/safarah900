@@ -665,7 +665,34 @@ export class MatchesRepositoryV2 extends BaseRepository<Match> {
     if (!telemetry.isFirestoreQuotaExceeded()) {
       try {
         telemetry.logFirestoreRead('standings');
-        const snapshot = await getDocs(collection(db, 'standings'));
+        let snapshot;
+        if (leagueId) {
+          const docRef = doc(db, 'standings', String(leagueId));
+          const docSnap = await getDoc(docRef);
+          if (docSnap.exists()) {
+            const data = { id: docSnap.id, ...docSnap.data() };
+            cacheManager.set(cacheKey, [data], true);
+            return [data];
+          }
+          const q = query(
+            collection(db, 'standings'),
+            where('leagueId', '==', String(leagueId)),
+            limit(10)
+          );
+          snapshot = await getDocs(q);
+          if (snapshot.empty) {
+            const qNumeric = query(
+              collection(db, 'standings'),
+              where('leagueId', '==', Number(leagueId)),
+              limit(10)
+            );
+            snapshot = await getDocs(qNumeric);
+          }
+        }
+        if (!snapshot || snapshot.empty) {
+          const q = query(collection(db, 'standings'), limit(50));
+          snapshot = await getDocs(q);
+        }
         const list = snapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }));
         let filtered = list;
         if (leagueId) {

@@ -16,7 +16,7 @@ export const notificationService = {
       const token = await getToken(messaging, { vapidKey });
       if (token) {
         const tokensRef = collection(db, 'fcm_tokens');
-        const q = query(tokensRef, where('token', '==', token));
+        const q = query(tokensRef, where('token', '==', token), limit(1));
         const snap = await getDocs(q);
         
         if (snap.empty) {
@@ -85,7 +85,8 @@ export const notificationService = {
       const q = query(
         collection(db, 'notifications'),
         where('targetUids', 'array-contains', userId),
-        where('isRead', '==', false)
+        where('isRead', '==', false),
+        limit(100)
       );
       const snap = await getDocs(q);
       const batch = writeBatch(db);

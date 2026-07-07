@@ -809,7 +809,7 @@ export default function Profile() {
               { name: 'ليفربول', logo: 'https://media.api-sports.io/football/teams/40.png' },
               { name: 'مانشستر سيتي', logo: 'https://media.api-sports.io/football/teams/50.png' },
             ].map(team => {
-              const isFav = profile?.favoriteTeams.includes(team.name);
+              const isFav = profile?.favoriteTeams?.includes(team.name);
               return (
                 <button
                   key={team.name}

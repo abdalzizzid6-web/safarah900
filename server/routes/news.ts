@@ -56,7 +56,8 @@ router.get("/", async (req, res) => {
   // If Firestore is available, merge/fetch latest
   if (!isFirestoreQuotaExceeded) {
     try {
-      let query: any = firestore.collection('news').where('status', '==', status);
+      const statuses = status === 'PUBLISHED' ? ['PUBLISHED', 'APPROVED'] : [status];
+      let query: any = firestore.collection('news').where('status', 'in', statuses);
       
       if (category) {
         query = query.where('categories', 'array-contains', category);
@@ -64,17 +65,24 @@ router.get("/", async (req, res) => {
         query = query.where('tags', 'array-contains', tag);
       }
       
-      const snap = await query.orderBy('publishDate', 'desc').limit(Number(limit)).get();
+      const snap = await query.orderBy('publishDate', 'desc').limit(Number(limit) * 2).get(); // Fetch more and filter
       const firestoreArticles = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       
-      if (firestoreArticles.length > 0) {
-        const newsMap = new Map();
-        articles.forEach(a => newsMap.set(String(a.id), a));
-        firestoreArticles.forEach(a => newsMap.set(String(a.id), a));
-        articles = Array.from(newsMap.values()).sort((a, b) => 
-          new Date(b.publishDate || 0).getTime() - new Date(a.publishDate || 0).getTime()
-        ).slice(0, Number(limit));
-      }
+      // Filter out invalid articles (empty/0 titles/content)
+      const validFirestoreArticles = firestoreArticles.filter(a =>
+        a.title && a.title !== "0" && a.title.trim() !== "" &&
+        a.content && (typeof a.content === 'object' ? (a.content.fullText && a.content.fullText !== "0" && a.content.fullText.trim() !== "") : (a.content !== "0" && a.content.trim() !== ""))
+      );
+      
+      articles = [...articles, ...validFirestoreArticles];
+      
+      // Remove duplicates
+      const newsMap = new Map();
+      articles.forEach(a => newsMap.set(String(a.id), a));
+      
+      articles = Array.from(newsMap.values()).sort((a, b) => 
+        new Date(b.publishDate || 0).getTime() - new Date(a.publishDate || 0).getTime()
+      ).slice(0, Number(limit));
     } catch (e) {
       if (isFirebaseQuotaError(e)) {
         setFirestoreQuotaExceeded(true);

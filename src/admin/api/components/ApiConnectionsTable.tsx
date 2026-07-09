@@ -92,6 +92,11 @@ const ApiConnectionRow: React.FC<{
               </span>
             ))
           )}
+          {prov.allowedLeagues && prov.allowedLeagues.length > 0 && (
+            <div className="flex flex-wrap gap-1 mt-1">
+               <span className="text-[10px] bg-blue-900/20 border border-blue-800 text-blue-300 px-1.5 py-0.5 rounded font-medium">الدوريات: {prov.allowedLeagues.join(', ')}</span>
+            </div>
+          )}
         </div>
 
         <div className="text-xs space-y-1 text-gray-400">

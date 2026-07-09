@@ -55,7 +55,7 @@ title, summary, preview, matchImportance, competitionOverview, analysis, teamHis
   
   try {
     const result = await generateContentWithRetry({
-      model: "gemini-1.5-flash",
+      model: "gemini-2.0-flash",
       contents: prompt,
       config: {
         systemInstruction: "You are an expert sports data analyst. Return JSON matching the schema.",
@@ -209,11 +209,11 @@ You must fill every property in the requested schema. If Gemini API is healthy, 
   `;
 
   let analysis: any;
-  let dataSource = "gemini-1.5-flash";
+  let dataSource = "gemini-2.0-flash";
 
   try {
     const result = await generateContentWithRetry({
-      model: "gemini-1.5-flash",
+      model: "gemini-2.0-flash",
       contents: prompt,
       config: {
         systemInstruction: "You are an elite football head-coach, tactician and sports analyst. You analyze team lineups, match-ups, and tactical sheets with extreme realism, using professional Arabic sports terminology. Output only pure JSON.",

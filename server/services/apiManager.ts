@@ -281,6 +281,39 @@ class ApiManagerService {
   }
 
   /**
+   * Adds a new provider configuration.
+   */
+  public async addProvider(provider: ApiProviderDoc): Promise<void> {
+    await firestore.collection('api_providers').doc(provider.id).set(provider);
+    await this.loadConfig(true);
+  }
+
+  /**
+   * Updates an existing provider configuration.
+   */
+  public async updateProvider(providerId: string, updates: Partial<ApiProviderDoc>): Promise<void> {
+    await firestore.collection('api_providers').doc(providerId).update(updates);
+    await this.loadConfig(true);
+  }
+
+  /**
+   * Deletes a provider configuration.
+   */
+  public async deleteProvider(providerId: string): Promise<void> {
+    await firestore.collection('api_providers').doc(providerId).delete();
+    await this.loadConfig(true);
+  }
+
+  /**
+   * Updates routing configuration.
+   */
+  public async updateRoute(category: string, providerName: string): Promise<void> {
+    const routing = { ...this.routingCache, [category]: providerName };
+    await firestore.collection('settings').doc('api_routing').set(routing, { merge: true });
+    this.routingCache = routing as ApiRoutingDoc;
+  }
+
+  /**
    * Resolves the best key and provider for a category.
    */
   public async getActiveKeyForCategory(category: string, forcedProvider?: string): Promise<{ key: string; providerDoc: ApiProviderDoc; targetProviderName: string }> {

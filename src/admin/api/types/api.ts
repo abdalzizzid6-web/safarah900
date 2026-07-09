@@ -17,6 +17,7 @@ export interface ApiProvider {
   costPerCall: number;
   updatedAt: string;
   categories?: string[];
+  allowedLeagues?: string[];
 }
 
 export type ApiConnection = ApiProvider;

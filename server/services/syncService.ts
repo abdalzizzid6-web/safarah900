@@ -17,7 +17,7 @@ export async function syncSportsDataWithAI(target: 'MATCHES' = 'MATCHES') {
     
     // Pattern using robust retry helper
     const matchResult = await generateContentWithRetry({
-      model: "gemini-1.5-flash", // Updated to valid model
+      model: "gemini-2.0-flash", // Updated to valid model
       contents: matchPrompt,
     });
     // ... logic for parsing and batch writing to Firestore (matches)

@@ -3,7 +3,7 @@ import { registerMatchDiagnostics } from '../utils/matchDiagnostics';
 
 const apiClient = axios.create({
   baseURL: '/api', // Proxy
-  timeout: 10000,
+  timeout: 20000,
 });
 
 // Register diagnostics

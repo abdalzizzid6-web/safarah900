@@ -205,6 +205,17 @@ export const ConnectionDetailsDialog: React.FC<ConnectionDetailsDialogProps> = R
           </div>
 
           <div>
+            <label className="text-xs text-gray-400 block mb-1 font-bold">الدوريات المسموحة (قم بالفصل بينها بفاصلة)</label>
+            <input
+              type="text"
+              value={provider.allowedLeagues?.join(', ') || ''}
+              onChange={(e) => onChange({ ...provider, allowedLeagues: e.target.value.split(',').map(l => l.trim()).filter(l => l) })}
+              placeholder="مثال: Premier League, La Liga, Champions League"
+              className="w-full bg-[#1A1A1D] border border-gray-800 rounded-lg py-2 px-3 text-sm text-white font-mono focus:outline-none focus:border-[#FF003C] transition"
+            />
+          </div>
+
+          <div>
             <label className="text-xs text-gray-400 block mb-1 font-bold">سيرفر الاستدعاء الاحتياطي أو المخصص (Fallback Endpoint / URL)</label>
             <input
               type="text"

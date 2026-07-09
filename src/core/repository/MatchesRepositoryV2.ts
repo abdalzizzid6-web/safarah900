@@ -111,7 +111,10 @@ export class MatchesRepositoryV2 extends BaseRepository<Match> {
 
     try {
       const matchTime = new Date(dateStr).getTime();
-      if (isNaN(matchTime)) return match;
+      if (isNaN(matchTime)) {
+        console.warn(`[AdjustStatus] Match ${match.id} has invalid startTime: ${dateStr}`);
+        return match;
+      }
 
       const now = Date.now();
       const durationMinutes = 115; // 90 mins match + 15 mins HT + 10 mins added/extra prep time

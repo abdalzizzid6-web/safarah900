@@ -30,7 +30,7 @@ export async function generateContentWithRetry(params: {
   const modelCandidates = [params.model];
   
   // Robust pool of fallback models in optimal order of free-tier quotas and reliability
-  const pool = ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-2.0-flash-exp"];
+  const pool = ["gemini-3.5-flash", "gemini-3.1-pro-preview"];
   for (const candidate of pool) {
     if (candidate !== params.model) {
       modelCandidates.push(candidate);
@@ -43,18 +43,16 @@ export async function generateContentWithRetry(params: {
 
   for (let i = 0; i < uniqueModels.length; i++) {
     const modelName = uniqueModels[i];
-    const isLastModel = i === uniqueModels.length - 1;
     let delay = 1000; // start with 1 second backoff
     
     for (let attempt = 0; attempt < maxRetries; attempt++) {
       try {
-        const generativeModel = ai.getGenerativeModel({
+        const response = await ai.models.generateContent({
           model: modelName,
-          generationConfig: params.config
+          contents: params.contents,
+          config: params.config
         });
         
-        const result = await generativeModel.generateContent(params.contents);
-        const response = await result.response;
         return response;
       } catch (error: any) {
         lastError = error;

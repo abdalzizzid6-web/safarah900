@@ -1,0 +1,35 @@
+export interface Match {
+  id: string;
+  providerId: string;
+  provider: string;
+  league: string;
+  season: string;
+  round: string;
+  stage: string;
+  status: string;
+  kickoffTime: Date;
+  timestamp: number;
+  timezone: string;
+  elapsed: number;
+  homeTeam: { id: string; name: string; logo: string };
+  awayTeam: { id: string; name: string; logo: string };
+  homeScore: number;
+  awayScore: number;
+  halftime: { home: number; away: number };
+  fulltime: { home: number; away: number };
+  penalties: { home: number; away: number } | null;
+  venue: string;
+  referee: string;
+  events: any[];
+  statistics: any[];
+  lineups: any[];
+  coaches: { home: string; away: string };
+  formations: { home: string; away: string };
+  injuries: any[];
+  cards: any[];
+  substitutions: any[];
+  odds: any;
+  broadcasters: string[];
+  lastUpdated: Date;
+  cacheUntil: Date;
+}

@@ -1,9 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { db } from '../../../firebase';
-import { collection, getDocs, addDoc, query, orderBy, limit } from 'firebase/firestore';
+import { repositories } from '../../../core/repository';
 import { NewsTag } from '../types';
-
-const TAGS_COLLECTION = 'news_tags';
 
 export function useNewsTags() {
   const [tags, setTags] = useState<NewsTag[]>([]);
@@ -12,15 +9,11 @@ export function useNewsTags() {
 
   const loadTags = useCallback(async () => {
     try {
-      const q = query(collection(db, TAGS_COLLECTION), orderBy('name', 'asc'), limit(200));
-      const snapshot = await getDocs(q);
-      const list: NewsTag[] = [];
-      snapshot.forEach(doc => {
-        list.push({ id: doc.id, ...doc.data() } as NewsTag);
-      });
-      setTags(list);
+      const data = await repositories.newsTags.getAll(200);
+      setTags(data.sort((a, b) => a.name.localeCompare(b.name)));
     } catch (err: any) {
       console.error('Error loading tags:', err);
+      setError(err.message);
     } finally {
       setLoading(false);
     }
@@ -45,8 +38,8 @@ export function useNewsTags() {
         createdAt: new Date().toISOString()
       };
 
-      const docRef = await addDoc(collection(db, TAGS_COLLECTION), newTag);
-      const created: NewsTag = { id: docRef.id, ...newTag };
+      const createdId = await repositories.newsTags.create(newTag);
+      const created: NewsTag = { id: createdId, ...newTag };
       
       setTags(prev => [...prev, created].sort((a, b) => a.name.localeCompare(b.name)));
       return created;

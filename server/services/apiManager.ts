@@ -1,7 +1,8 @@
 import { firestore } from '../firestore/collections';
 import { getAuth } from 'firebase-admin/auth';
+import { IApiConfigProvider, ApiProviderConfig } from '../../core-engine/contracts/infrastructure/IApiConfigProvider';
 
-export interface ApiProviderDoc {
+export interface ApiProviderDoc extends ApiProviderConfig {
   id: string;
   name: string;
   key: string;
@@ -62,8 +63,8 @@ export function mapCategoryToUserCategory(category: string): string {
 }
 
 // In-memory caching for performance & rate-limiting Firestore reads/writes
-class ApiManagerService {
-  private providersCache: ApiProviderDoc[] = [];
+class ApiManagerService implements IApiConfigProvider {
+  providersCache: ApiProviderDoc[] = [];
   private routingCache: ApiRoutingDoc | null = null;
   private lastFetchTime = 0;
   private readonly CACHE_TTL = 10 * 60 * 1000; // 10 minutes (Increased from 30s to save quota)
@@ -81,6 +82,10 @@ class ApiManagerService {
   private startFlushInterval() {
     if (this.flushInterval) clearInterval(this.flushInterval);
     this.flushInterval = setInterval(() => this.flushDataToFirestore(), 5 * 60 * 1000); // Flush every 5 minutes
+  }
+
+  public getProvidersCache(): ApiProviderConfig[] {
+    return this.providersCache;
   }
 
   /**
@@ -476,6 +481,21 @@ class ApiManagerService {
         found.latency = log.latency;
         // Buffer latency update
         this.pendingLatencyUpdates[log.providerId] = log.latency;
+
+        // Smart Circuit Breaker Engine: Automatically degrade providers with extremely high latency
+        if (log.latency > 5000 && found.status === 'healthy') {
+             console.warn(`[Circuit Breaker] Provider ${found.name} latency spiked to ${log.latency}ms. Marking as degraded.`);
+             this.reportKeyFailure(found.id, 'degraded', `High latency detected: ${log.latency}ms`);
+        } else if (log.latency < 2000 && found.status === 'degraded') {
+             // Auto-recover if it's currently just degraded
+             found.status = 'healthy';
+             found.statusMessage = 'Recovered from high latency';
+             firestore.collection('api_providers').doc(found.id).update({
+                 status: 'healthy',
+                 statusMessage: 'Recovered from high latency',
+                 updatedAt: new Date().toISOString()
+             }).catch(e => console.error('[Circuit Breaker] Auto-recovery update failed:', e));
+        }
       }
     }
   }

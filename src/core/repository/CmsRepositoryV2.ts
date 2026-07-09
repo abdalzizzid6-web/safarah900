@@ -10,6 +10,7 @@ import {
   HomepageConfig,
   HomepageBlock 
 } from '../../types';
+import { apiManagementRepository } from '../api-management';
 
 const CACHE_TTL = 5 * 60 * 1000;
 
@@ -21,41 +22,18 @@ export class CmsRepositoryV2 extends BaseRepository<any> {
   // Leagues Management
   async getLeagues(): Promise<LeagueSettings[]> {
     telemetry.logApiCall('CmsRepositoryV2.getLeagues');
-    try {
-      const cacheKey = 'cms_leagues';
-      const cached = cacheManager.get(cacheKey);
-      if (cached && cached.timestamp && (Date.now() - cached.timestamp < CACHE_TTL)) {
-        return cached.data;
-      }
-
-      const snap = await getDocs(query(collection(db, 'cms_leagues'), limit(50)));
-      const list = snap.docs.map(d => ({ id: d.id, ...d.data() } as LeagueSettings));
-      const sorted = list.sort((a, b) => (a.order || 0) - (b.order || 0));
-      
-      cacheManager.set(cacheKey, { data: sorted, timestamp: Date.now() }, false);
-      return sorted;
-    } catch (e) {
-      telemetry.logError('CMS_GET_LEAGUES_FAILURE', e);
-      throw e;
-    }
+    return apiManagementRepository.leagueRepository.getLeagues();
   }
 
   async getLeaguesMap(): Promise<Record<string, LeagueSettings>> {
-    const list = await this.getLeagues();
-    const map: Record<string, LeagueSettings> = {};
-    list.forEach(l => { map[l.id] = l; });
-    return map;
+    return apiManagementRepository.leagueRepository.getLeaguesMap();
   }
 
   async updateLeague(id: string, settings: Partial<LeagueSettings>) {
     telemetry.logApiCall('CmsRepositoryV2.updateLeague');
-    try {
-      const payload = { ...settings, id: String(id), updatedAt: new Date().toISOString() };
-      await setDoc(doc(db, 'cms_leagues', String(id)), payload, { merge: true });
-    } catch (e) {
-      telemetry.logError('CMS_UPDATE_LEAGUE_FAILURE', e);
-      throw e;
-    }
+    const existing = await apiManagementRepository.leagueRepository.getLeagueById(id);
+    if (!existing) throw new Error('League not found');
+    await apiManagementRepository.leagueRepository.updateLeague({ ...existing, ...settings, id: String(id) } as any);
   }
 
   // Teams Management
@@ -72,7 +50,7 @@ export class CmsRepositoryV2 extends BaseRepository<any> {
       const list = snap.docs.map(d => ({ id: d.id, ...d.data() } as TeamSettings));
       const sorted = list.sort((a, b) => (a.order || 0) - (b.order || 0));
       
-      cacheManager.set(cacheKey, { data: sorted, timestamp: Date.now() }, false);
+      cacheManager.set(cacheKey, { data: sorted, timestamp: Date.now() }, CACHE_TTL, false);
       return sorted;
     } catch (e) {
       telemetry.logError('CMS_GET_TEAMS_FAILURE', e);
@@ -112,7 +90,7 @@ export class CmsRepositoryV2 extends BaseRepository<any> {
       const list = snap.docs.map(d => ({ id: d.id, ...d.data() } as ChannelServerSettings));
       const sorted = list.sort((a, b) => (a.priority || 0) - (b.priority || 0));
       
-      cacheManager.set(cacheKey, { data: sorted, timestamp: Date.now() }, false);
+      cacheManager.set(cacheKey, { data: sorted, timestamp: Date.now() }, CACHE_TTL, false);
       return sorted;
     } catch (e) {
       telemetry.logError('CMS_GET_CHANNELS_FAILURE', e);
@@ -188,7 +166,7 @@ export class CmsRepositoryV2 extends BaseRepository<any> {
       const snap = await getDocs(q);
       const list = snap.docs.map(d => ({ id: d.id, ...d.data() } as HomepageBlock));
       
-      cacheManager.set(cacheKey, { data: list, timestamp: Date.now() }, false);
+      cacheManager.set(cacheKey, { data: list, timestamp: Date.now() }, CACHE_TTL, false);
       return list;
     } catch (e) {
       telemetry.logError('CMS_GET_HOMEPAGE_BLOCKS_FAILURE', e);

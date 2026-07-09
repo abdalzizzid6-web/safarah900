@@ -11,6 +11,49 @@ import { normalizeMatch } from "../utils/normalizer";
 
 const router = express.Router();
 
+async function getEnabledLeaguesCached(): Promise<Record<string, any>> {
+  const cacheKey = "enabled_leagues_settings";
+  const cached = serverCache.get<Record<string, any>>(cacheKey);
+  if (cached) return cached;
+
+  try {
+    const snap = await firestore.collection('cms_leagues').get();
+    const map: Record<string, any> = {};
+    snap.docs.forEach(doc => {
+      const data = doc.data();
+      map[doc.id] = data;
+    });
+    serverCache.set(cacheKey, map, 15 * 60 * 1000); // 15 mins cache TTL to reduce document reads
+    return map;
+  } catch (err) {
+    console.warn("[Matches API] Failed to fetch cms_leagues for filtering, using empty fallback:", err);
+    return {};
+  }
+}
+
+async function filterMatchesByEnabledLeagues(normalizedMatches: any[]): Promise<any[]> {
+  try {
+    const cmsMap = await getEnabledLeaguesCached();
+    const CORE_DEFAULT_LEAGUE_IDS = ['307', '39', '140', '2', '135', '78', '61'];
+    
+    return normalizedMatches.filter(m => {
+      const leagueId = String(m.league?.id || m.leagueId || '');
+      
+      // Look up in CMS
+      const setting = cmsMap[leagueId];
+      if (setting) {
+        return setting.enabled !== false;
+      }
+      
+      // Default to true for core defaults, false for others
+      return CORE_DEFAULT_LEAGUE_IDS.includes(leagueId);
+    });
+  } catch (err) {
+    console.error("[FilterMatches] Error during filtering:", err);
+    return normalizedMatches; // Fallback to avoid complete empty state on error
+  }
+}
+
 // Memory cache for AI content and lineups to minimize Firestore reads and mitigate Quota Exceeded errors (Rule 3, 20)
 const aiContentCache: Record<string, { data: any; expiry: number }> = {};
 
@@ -20,14 +63,21 @@ const TIME_30_DAYS = 30 * 24 * 60 * 60 * 1000;
 // ----- CORE MATCHES ENDPOINTS TO PREVENT FIRESTORE FALLBACK SPAM ----- //
 
 router.get("/", async (req, res) => {
-  console.log("[Matches API] Handler called for /", req.query);
   const { date, status, limit } = req.query;
+  const cacheKey = `matches_aggregated_${date || 'all'}_${status || 'all'}_${limit || 'none'}`;
+  
+  // Try memory cache first to protect Firestore (Rule 3, 4, 11)
+  const cachedData = serverCache.get<any[]>(cacheKey);
+  if (cachedData) {
+    return res.json(cachedData);
+  }
+
   let matches = serverCache.readStaticFile<any[]>('matches.json') || [];
-  console.log("[Matches API] Total matches loaded:", matches.length);
   
   // Also try to fetch latest from Firestore if possible, but respect quota
   if (!isFirestoreQuotaExceeded) {
     try {
+      // Limit to 20 to strictly respect Rule 4
       const snap = await firestore.collection('matches').orderBy('startTime', 'desc').limit(20).get();
       const firestoreMatches = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       
@@ -85,15 +135,27 @@ router.get("/", async (req, res) => {
     }
   }
 
-  return res.json(matches.map(normalizeMatch).filter(m => !m.isHidden));
+  const normalized = matches.map(normalizeMatch).filter(m => !m.isHidden);
+  const filtered = await filterMatchesByEnabledLeagues(normalized);
+  
+  // Store in cache for 5 minutes (Rule 6)
+  serverCache.set(cacheKey, filtered, 5 * 60 * 1000);
+  
+  return res.json(filtered);
 });
 
 router.get("/live", async (req, res) => {
   const { limit } = req.query;
+  const cacheKey = `matches_live_aggregated_${limit || 'none'}`;
+  
+  // Cache check first (Rule 5 - Live data allowed but still cached for 30s)
+  const cachedData = serverCache.get<any[]>(cacheKey);
+  if (cachedData) {
+    return res.json(cachedData);
+  }
+
   const requestId = Math.random().toString(36).substring(7);
   const startTime = Date.now();
-  
-  console.log(`[Live API][${requestId}] Request received. Limit: ${limit}`);
   
   let matches = serverCache.readStaticFile<any[]>('matches.json') || [];
   let dataSource = "static-file";
@@ -104,7 +166,7 @@ router.get("/live", async (req, res) => {
       // Find matches where status is live/in-play
       const snap = await firestore.collection('matches')
         .where('status', 'in', ['LIVE', 'IN_PLAY', '1H', '2H', 'HT', 'ET', 'P'])
-        .limit(50)
+        .limit(20) // Strict Rule 4
         .get();
         
       if (!snap.empty) {
@@ -146,12 +208,17 @@ router.get("/live", async (req, res) => {
   }
 
 // ...
-  const results = liveMatches.map(normalizeMatch).filter(m => !m.isHidden);
+  const normalized = liveMatches.map(normalizeMatch).filter(m => !m.isHidden);
+  const results = await filterMatchesByEnabledLeagues(normalized);
+  
+  // Cache for 30s as per Rule 5 (Live data)
+  serverCache.set(cacheKey, results, 30 * 1000);
+  
   const latency = Date.now() - startTime;
 
   // Shadow Validation
-  import('../../core-engine/application/services/ShadowValidationService').then(({ ShadowValidationService }) => {
-    new ShadowValidationService().validateLiveMatches(liveMatches);
+  import('../compositionRoot').then(({ shadowValidationService }) => {
+    shadowValidationService.validateLiveMatches(liveMatches);
   }).catch(e => console.error('[Shadow Validation] Failed to import:', e));
 
   res.set('X-Data-Source', dataSource);
@@ -165,7 +232,7 @@ router.get("/live", async (req, res) => {
   return res.json(results);
 });
 
-router.get("/fixtures", (req, res) => {
+router.get("/fixtures", async (req, res) => {
   const { date, limit } = req.query;
   const matches = (serverCache.readStaticFile<any[]>('matches.json') || []).map(normalizeMatch).filter(m => !m.isHidden);
   
@@ -193,10 +260,11 @@ router.get("/fixtures", (req, res) => {
     }
   }
 
-  return res.json(fixtures);
+  const filtered = await filterMatchesByEnabledLeagues(fixtures);
+  return res.json(filtered);
 });
 
-router.get("/results", (req, res) => {
+router.get("/results", async (req, res) => {
   const { date, limit } = req.query;
   const matches = (serverCache.readStaticFile<any[]>('matches.json') || []).map(normalizeMatch).filter(m => !m.isHidden);
   
@@ -225,7 +293,8 @@ router.get("/results", (req, res) => {
     }
   }
 
-  return res.json(results);
+  const filtered = await filterMatchesByEnabledLeagues(results);
+  return res.json(filtered);
 });
 
 // Memory Cache to completely protect Firestore Quotas
@@ -767,8 +836,14 @@ router.post("/stats", authMiddleware('admin'), validateBody(MatchStatsSchema), a
 });
 
 router.post("/refresh", async (req, res) => {
-  // Logic for manual match refresh
-  res.json({ success: true });
+  try {
+    const { syncMatchesFromAPI } = await import("../services/syncService");
+    const result = await syncMatchesFromAPI();
+    res.json(result);
+  } catch (error: any) {
+    console.error("[Refresh API] Sync failed:", error);
+    res.status(500).json({ error: error.message });
+  }
 });
 
 router.get("/proxy/:matchId", async (req, res) => {

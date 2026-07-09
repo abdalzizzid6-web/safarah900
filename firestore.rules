@@ -2,14 +2,12 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // 1. Global Safety Net
     match /{document=**} {
       allow read, write: if false;
     }
 
     function isSignedIn() { return request.auth != null; }
     function isAdmin() { 
-      // Check database role for admin
       return isSignedIn() && (
         exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['SUPER_ADMIN', 'ADMIN', 'super_admin', 'admin'])
@@ -36,17 +34,13 @@ service cloud.firestore {
 
     match /users/{userId} {
       allow read: if isSignedIn() && (request.auth.uid == userId || isAdmin());
-      // Users can create their own profile
       allow create: if isSignedIn() && request.auth.uid == userId;
-      // Users can update their own profile, but NOT their role
       allow update: if isSignedIn() && request.auth.uid == userId && 
                        (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['role']));
       allow delete: if isSignedIn() && isAdmin();
     }
 
     match /settings/{settingId} {
-      // Configuration, branding, and world cup settings are public (anyone can read to render the app)
-      // data_sources setting includes API keys and is isEditor only
       allow read: if (settingId in ['branding', 'config', 'world_cup']) || (isSignedIn() && isEditor());
       allow write: if isSignedIn() && isEditor();
     }
@@ -253,7 +247,6 @@ service cloud.firestore {
       allow delete: if isSignedIn() && isEditor();
     }
 
-    // Additional Missing Collections Rules to satisfy Dashboard and stats queries
     match /system_stats/{id} {
       allow read: if isSignedIn() && isAuthor();
       allow write: if isSignedIn() && isEditor();
@@ -450,13 +443,25 @@ service cloud.firestore {
       allow delete: if isSignedIn() && (resource.data.userId == request.auth.uid || isEditor());
     }
 
-    // 14. RSS Imports & News Sources
     match /rss_imports/{articleId} {
       allow read: if true;
       allow write: if isSignedIn() && isEditor();
     }
 
-    // 15. Experience Builder (Homepage V2) Collections
+    match /sync_settings/{id} {
+      allow read, write: if isSignedIn() && isEditor();
+    }
+
+    match /sync_jobs/{id} {
+      allow create: if isSignedIn() && isEditor();
+      allow read: if isSignedIn() && isEditor();
+      allow update, delete: if false;
+    }
+
+    match /api_keys/{id} {
+      allow read, write: if isSignedIn() && isEditor();
+    }
+
     match /homepage_blocks/{blockId} {
       allow read: if true;
       allow write: if isSignedIn() && isEditor();
@@ -472,8 +477,5 @@ service cloud.firestore {
       allow write: if isSignedIn() && isEditor();
     }
 
-    match /homepage_history/{historyId} {
-      allow read, write: if isSignedIn() && isEditor();
-    }
   }
 }

@@ -79,7 +79,7 @@ export const ApiManagementDashboard: React.FC = () => {
                 <td className="py-3 px-4 text-gray-400">{provider.provider}</td>
                 <td className="py-3 px-4 font-mono text-xs">{provider.allowedLeagues?.join(', ') || 'الكل'}</td>
                 <td className="py-3 px-4">
-                  <button onClick={() => toggleActive(provider.id)} className="cursor-pointer">
+                  <button onClick={() => toggleActive(provider)} className="cursor-pointer">
                     {provider.active ? <ToggleRight className="text-green-500 w-6 h-6" /> : <ToggleLeft className="text-gray-500 w-6 h-6" />}
                   </button>
                 </td>

@@ -5,6 +5,8 @@ import { Monitor, Tablet, Smartphone } from 'lucide-react';
 interface BlockFormTabContentProps {
   title: string;
   setTitle: (val: string) => void;
+  titleEn: string;
+  setTitleEn: (val: string) => void;
   type: BlockType;
   setType: (val: BlockType) => void;
   subtitle: string;
@@ -34,6 +36,8 @@ interface BlockFormTabContentProps {
 export const BlockFormTabContent: React.FC<BlockFormTabContentProps> = ({
   title,
   setTitle,
+  titleEn,
+  setTitleEn,
   type,
   setType,
   subtitle,
@@ -61,10 +65,10 @@ export const BlockFormTabContent: React.FC<BlockFormTabContentProps> = ({
 }) => {
   return (
     <div className="space-y-6 animate-fadeIn text-right">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
         {/* Section Title */}
         <div className="space-y-2">
-          <label className="text-xs font-bold text-gray-400 block">العنوان المعروض (Section Title)</label>
+          <label className="text-xs font-bold text-gray-400 block">العنوان بالعربية (Title Arabic)</label>
           <input 
             type="text"
             className="w-full bg-[#070b11] border border-white/10 rounded-xl px-4 py-3 text-xs focus:border-primary focus:outline-none transition text-right" 
@@ -72,6 +76,18 @@ export const BlockFormTabContent: React.FC<BlockFormTabContentProps> = ({
             value={title} 
             onChange={(e) => setTitle(e.target.value)}
             required
+          />
+        </div>
+
+        {/* Section Title English */}
+        <div className="space-y-2 text-left" dir="ltr">
+          <label className="text-xs font-bold text-gray-400 block text-left">العنوان بالإنجليزية (Title English)</label>
+          <input 
+            type="text"
+            className="w-full bg-[#070b11] border border-white/10 rounded-xl px-4 py-3 text-xs focus:border-primary focus:outline-none transition text-left" 
+            placeholder="e.g. Live Matches Today" 
+            value={titleEn} 
+            onChange={(e) => setTitleEn(e.target.value)}
           />
         </div>
 

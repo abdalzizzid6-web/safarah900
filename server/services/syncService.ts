@@ -1,47 +1,60 @@
-
 import { firestore, isFirebaseAdminReady } from "../firestore/collections";
-import { getAi, generateContentWithRetry } from "./aiService";
+import { generateAndWriteCacheFiles } from "../firestore/cache";
+import { matchRepository } from "../compositionRoot";
 
-let isSyncingAI = false;
-let deletedMatchesCache: Set<string> | null = null;
-let lastCacheFetch = 0;
-const CACHE_TTL = 10 * 60 * 1000; // 10 minutes
-
-export async function syncSportsDataWithAI(target: 'MATCHES' = 'MATCHES') {
-  if (!isFirebaseAdminReady || !process.env.GEMINI_API_KEY) return;
-  if (isSyncingAI) return;
-  isSyncingAI = true;
-  try {
-    const todayStr = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
-    const matchPrompt = `Today is ${todayStr}. Search for major football matches...`;
+export async function syncMatchesFromAPI() {
+    if (!isFirebaseAdminReady) return { success: false, message: "Firebase not ready" };
     
-    // Pattern using robust retry helper
-    const matchResult = await generateContentWithRetry({
-      model: "gemini-2.0-flash", // Updated to valid model
-      contents: matchPrompt,
-    });
-    // ... logic for parsing and batch writing to Firestore (matches)
-  } catch (e: any) {
-    console.error("AI Sync Error:", e);
-  } finally {
-    isSyncingAI = false;
-  }
+    console.log("[SyncService] Starting match sync from API...");
+    const today = new Date();
+    const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000);
+    const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000);
+    
+    const days = [yesterday, today, tomorrow];
+    let totalSynced = 0;
+    
+    try {
+        for (const date of days) {
+            const dateStr = date.toISOString().split('T')[0];
+            console.log(`[SyncService] Fetching matches for ${dateStr}...`);
+            // Use repository instead of creating a new adapter
+            const matches = await matchRepository.getMatchesByDate(date);
+            console.log(`[SyncService] Fetched ${matches.length} matches for ${dateStr}.`);
+            
+            if (matches.length > 0) {
+                const batch = firestore.batch();
+                matches.forEach(m => {
+                    const ref = firestore.collection('matches').doc(String(m.id));
+                    // Ensure utcDate and startTime are present for the cache generator query
+                    const firestoreData = {
+                        ...m,
+                        startTime: m.kickoffTime,
+                        utcDate: m.kickoffTime,
+                        updatedAt: new Date(),
+                        lastSyncAt: new Date(),
+                        syncStatus: 'synced'
+                    };
+                    batch.set(ref, firestoreData, { merge: true });
+                });
+                await batch.commit();
+                totalSynced += matches.length;
+            }
+        }
+        
+        console.log(`[SyncService] Total matches synced: ${totalSynced}. Regenerating cache...`);
+        await generateAndWriteCacheFiles();
+        return { success: true, count: totalSynced };
+    } catch (error: any) {
+        console.error("[SyncService] Sync failed:", error);
+        return { success: false, error: error.message };
+    }
+}
+
+// Keep existing exports if they were used, but they were mostly empty/placeholders
+export async function syncSportsDataWithAI(target: 'MATCHES' = 'MATCHES') {
+    // Placeholder implementation
 }
 
 export async function syncFromSource(source: any) {
-  if (!source.enabled) return;
-  try {
-    const now = Date.now();
-    if (!deletedMatchesCache || now - lastCacheFetch > CACHE_TTL) {
-      const deletedSnapshot = await firestore.collection('deleted_matches').get();
-      deletedMatchesCache = new Set(deletedSnapshot.docs.map(doc => doc.id));
-      lastCacheFetch = now;
-    }
-    const deletedMatchIds = deletedMatchesCache;
-
-    // Provider specific logic (FOOTBALL_API, THESPORTSDB, FOOTBALL_DATA, GEMINI)
-    // ... logic from server.ts 4501-4770
-  } catch (error: any) {
-    console.error(`[Source Engine] Sync failed for ${source.name}:`, error.message);
-  }
+    // Placeholder implementation
 }

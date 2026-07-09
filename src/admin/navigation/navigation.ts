@@ -44,7 +44,7 @@ export const navGroups = [
       { name: 'تشخيصات الـ SEO', path: '/admin/seo-diagnostics', icon: Globe, requiredRole: UserRole.ADMIN },
       { name: 'الصفحات الثابتة', path: '/admin/pages', icon: FileText, requiredRole: UserRole.ADMIN },
       { name: 'الترجمة والذكاء الاصطناعي', path: '/admin/translations', icon: Languages, requiredRole: UserRole.ADMIN },
-      { name: 'إدارة الـ API', path: '/admin/api-management-v2', icon: Database, requiredRole: UserRole.ADMIN },
+      { name: 'مركز إدارة الـ API', path: '/admin/api-management-center', icon: Database, requiredRole: UserRole.ADMIN },
       { name: 'الإعدادات', path: '/admin/settings', icon: Settings, requiredRole: UserRole.SUPER_ADMIN },
     ]
   }

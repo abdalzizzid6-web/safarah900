@@ -513,6 +513,73 @@ function normalizeRequestForProvider(subPath: string, query: Record<string, any>
   };
 }
 
+function translateToApiFootball(provider: string, endpoint: string, data: any) {
+  let payload: any[] = [];
+  if (provider === 'TheSportsDB') {
+    payload = data.events || data.results || data.teams || data.players || data.table || data.countrys || data.leagues || [];
+    if (!Array.isArray(payload)) payload = [payload];
+  } else if (provider === 'SportMonks') {
+    payload = data.data || [];
+    if (!Array.isArray(payload)) payload = [payload];
+  } else {
+    payload = data.response || data;
+    if (!Array.isArray(payload)) payload = [payload];
+  }
+
+  const response = payload.map((item: any) => {
+    if (provider === 'TheSportsDB') {
+      if (item.idEvent) {
+        let dtStr = item.strTimestamp;
+        if (!dtStr && item.dateEvent) {
+            dtStr = item.dateEvent + 'T' + (item.strTime || '00:00:00');
+            if (!dtStr.includes('Z') && !dtStr.includes('+')) dtStr += 'Z';
+        }
+        return {
+          fixture: {
+            id: item.idEvent,
+            date: dtStr || new Date().toISOString(),
+            status: {
+              short: item.strStatus === 'Match Finished' ? 'FT' : (item.strStatus === 'Not Started' ? 'NS' : 'TBD'),
+              long: item.strStatus || 'TBD'
+            }
+          },
+          league: {
+            id: item.idLeague,
+            name: item.strLeague,
+            logo: item.strLeagueBadge || item.strBadge || null
+          },
+          teams: {
+            home: {
+              id: item.idHomeTeam,
+              name: item.strHomeTeam,
+              logo: item.strHomeTeamBadge || null
+            },
+            away: {
+              id: item.idAwayTeam,
+              name: item.strAwayTeam,
+              logo: item.strAwayTeamBadge || null
+            }
+          },
+          goals: {
+            home: item.intHomeScore !== null ? parseInt(item.intHomeScore) : null,
+            away: item.intAwayScore !== null ? parseInt(item.intAwayScore) : null
+          }
+        };
+      }
+    }
+    return item;
+  });
+
+  return {
+    get: endpoint,
+    parameters: [],
+    errors: [],
+    results: response.length,
+    paging: { current: 1, total: 1 },
+    response: response
+  };
+}
+
 // A robust client-side proxy route for API-Football to completely avoid CORS and Network Errors in the browser
 app.all("/api/football-api/*", async (req, res) => {
   const subPath = req.params[0] || "";
@@ -548,7 +615,7 @@ app.all("/api/football-api/*", async (req, res) => {
   while (retryCount <= maxRetries) {
     try {
       // 2. Select best key from the pool (forced to API-Football as we are routing through football-api endpoint with matching shapes)
-      const { key, providerDoc, targetProviderName } = await apiManager.getActiveKeyForCategory(category, 'API-Football');
+      const { key, providerDoc, targetProviderName } = await apiManager.getActiveKeyForCategory(category);
       keyDoc = providerDoc;
 
       let targetUrl = '';
@@ -639,6 +706,12 @@ app.all("/api/football-api/*", async (req, res) => {
         }
       }
 
+      let finalData = data;
+      // Normalization Gateway
+      if (providerDoc.provider !== 'API-Football' && (!data.response || !Array.isArray(data.response))) {
+          finalData = translateToApiFootball(providerDoc.provider, subPath, data);
+      }
+
       // Log successful API call
       await apiManager.logApiCall({
         providerId: providerDoc.id,
@@ -652,7 +725,11 @@ app.all("/api/football-api/*", async (req, res) => {
         status: 'success'
       });
 
-      return res.json(data);
+      if (req.method === 'GET') {
+        proxyCache[req.originalUrl] = { data: finalData, expiry: Date.now() + 5 * 60 * 1000 };
+      }
+
+      return res.json(finalData);
 
     } catch (err: any) {
       const latency = Date.now() - startTime;
@@ -682,6 +759,12 @@ app.all("/api/football-api/*", async (req, res) => {
       retryCount++;
       if (retryCount <= maxRetries) {
         continue;
+      }
+
+      // 4. Stale Data Fallback Recovery
+      if (req.method === 'GET' && proxyCache[req.originalUrl]) {
+        console.warn(`[Football API Proxy Fallback] Returning stale cache for ${req.originalUrl}`);
+        return res.json(proxyCache[req.originalUrl].data);
       }
 
       return res.status(status).json({
@@ -728,7 +811,7 @@ export async function bootstrap() {
   }
 
   if (shouldGenerate) {
-    generateAndWriteCacheFiles().catch(e => console.error("Cache Gen Error:", e));
+    import("./services/syncService").then(({ syncMatchesFromAPI }) => syncMatchesFromAPI().catch(e => console.error("Initial Sync Error:", e)));
   }
 
   // Vite / Static Fallback

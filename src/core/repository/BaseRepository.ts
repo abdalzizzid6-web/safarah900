@@ -1,5 +1,6 @@
 import { db } from '../../firebase';
 import { telemetry } from '../monitoring/telemetry';
+import { CacheLayer } from '../api-management/cache/CacheLayer';
 import { 
   collection, 
   doc, 
@@ -23,6 +24,10 @@ export abstract class BaseRepository<T> {
   }
 
   async getAll(limitVal: number = 50): Promise<T[]> {
+    const cacheKey = `${this.collectionName}_all_${limitVal}`;
+    const cached = CacheLayer.get<T[]>(cacheKey);
+    if (cached) return cached;
+
     if (telemetry.isFirestoreQuotaExceeded()) {
       console.warn(`[BaseRepository] Skipping getAll for ${this.collectionName} due to quota exhaustion.`);
       return [];
@@ -31,7 +36,10 @@ export abstract class BaseRepository<T> {
       const safeLimit = Math.min(limitVal, 100);
       const q = query(collection(db, this.collectionName), limit(safeLimit));
       const querySnapshot = await getDocs(q);
-      return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as T));
+      const results = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as T));
+      
+      CacheLayer.set(cacheKey, results, 5); // 5 mins cache
+      return results;
     } catch (e: any) {
       if (e.message?.includes('quota') || e.code === 'resource-exhausted') {
         telemetry.setFirestoreQuotaExceeded(true);
@@ -41,13 +49,20 @@ export abstract class BaseRepository<T> {
   }
 
   async getById(id: string): Promise<T | null> {
+    const cacheKey = `${this.collectionName}_doc_${id}`;
+    const cached = CacheLayer.get<T>(cacheKey);
+    if (cached) return cached;
+
     if (telemetry.isFirestoreQuotaExceeded()) {
       return null;
     }
     try {
       const docRef = doc(db, this.collectionName, id);
       const docSnap = await getDoc(docRef);
-      return docSnap.exists() ? ({ id: docSnap.id, ...docSnap.data() } as T) : null;
+      const result = docSnap.exists() ? ({ id: docSnap.id, ...docSnap.data() } as T) : null;
+      
+      if (result) CacheLayer.set(cacheKey, result, 10); // 10 mins cache for specific docs
+      return result;
     } catch (e: any) {
       if (e.message?.includes('quota') || e.code === 'resource-exhausted') {
         telemetry.setFirestoreQuotaExceeded(true);

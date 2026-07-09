@@ -8,6 +8,8 @@ interface HomepageQuickInspectorProps {
   blocks: any[];
   quickTitle: string;
   setQuickTitle: (val: string) => void;
+  quickTitleEn: string;
+  setQuickTitleEn: (val: string) => void;
   quickSubtitle: string;
   setQuickSubtitle: (val: string) => void;
   quickTitleIcon: string;
@@ -26,6 +28,8 @@ export const HomepageQuickInspector: React.FC<HomepageQuickInspectorProps> = ({
   blocks,
   quickTitle,
   setQuickTitle,
+  quickTitleEn,
+  setQuickTitleEn,
   quickSubtitle,
   setQuickSubtitle,
   quickTitleIcon,
@@ -68,14 +72,24 @@ export const HomepageQuickInspector: React.FC<HomepageQuickInspectorProps> = ({
 
           {/* Inspector Inputs */}
           <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-1.5 text-right">
-                <label className="text-[10px] text-gray-400 font-bold block">عنوان القسم المعروض</label>
+                <label className="text-[10px] text-gray-400 font-bold block">عنوان القسم بالعربية</label>
                 <input
                   type="text"
                   value={quickTitle}
                   onChange={(e) => setQuickTitle(e.target.value)}
-                  className="w-full bg-[#070b11] border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-primary focus:outline-none"
+                  className="w-full bg-[#070b11] border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-primary focus:outline-none text-right"
+                />
+              </div>
+
+              <div className="space-y-1.5 text-left" dir="ltr">
+                <label className="text-[10px] text-gray-400 font-bold block text-left">Title in English</label>
+                <input
+                  type="text"
+                  value={quickTitleEn}
+                  onChange={(e) => setQuickTitleEn(e.target.value)}
+                  className="w-full bg-[#070b11] border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:border-primary focus:outline-none text-left"
                 />
               </div>
 

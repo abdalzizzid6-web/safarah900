@@ -11,7 +11,7 @@ export class ComparisonService {
     const provider = new ApiFootballRealProvider(config);
     const pm = new ProviderManager();
     pm.registerProvider(provider);
-    const repo = new MatchRepository(pm, new CacheManager(), new MatchNormalizer());
+    const repo = new MatchRepository(provider, new CacheManager(), new MatchNormalizer());
     
     // Fetch from new engine
     const coreMatches = await repo.getLiveMatches();

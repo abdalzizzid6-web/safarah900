@@ -13,6 +13,8 @@ export interface NormalizedMatch {
   slug: string;
   isHidden?: boolean;
   metadata?: any;
+  startTime?: any;
+  isLive?: boolean;
 }
 
 export const normalizeMatch = (data: any): NormalizedMatch => {
@@ -20,7 +22,7 @@ export const normalizeMatch = (data: any): NormalizedMatch => {
     if (!field) return '';
     if (typeof field === 'string') return key === 'name' ? field : '';
     if (typeof field === 'object') {
-      if (key === 'id') return field.id || field.teamId || '';
+      if (key === 'id') return (field.id || field.teamId || '').toString();
       if (key === 'name') return field.name || field.shortName || field.displayName || field.teamName || '';
       if (key === 'tla') return field.tla || field.code || '';
       if (key === 'logo') return field.logo || field.crest || field.emblem || field.image || field.url || '';
@@ -50,7 +52,6 @@ export const normalizeMatch = (data: any): NormalizedMatch => {
              lower === 'undefined' ||
              name === 'قيد التحديد';
     };
-
     if (raw && !isPlaceholder(raw)) return raw;
     return 'قيد التحديد';
   };
@@ -100,7 +101,6 @@ export const normalizeMatch = (data: any): NormalizedMatch => {
   // Validation: Only hide if critical data is missing
   const identityResolved = (!!homeName && !!awayName) || matchIsPlaceholder;
   const isInvalid = !data.id || (!data.utcDate && !data.startTime);
-
   let hiddenReason = '';
   if (!data.id) hiddenReason = 'Missing Fixture ID';
   else if (!data.utcDate && !data.startTime) hiddenReason = 'Missing Temporal Data';
@@ -115,8 +115,23 @@ export const normalizeMatch = (data: any): NormalizedMatch => {
   const awaySlug = sanitizeSlugPart(awayName);
   const slug = data.slug || `${homeSlug}-vs-${awaySlug}-${data.id || 'match'}`;
 
+  // Temporal normalization (Handle Firestore Timestamps)
+  const normalizeDate = (d: any) => {
+    if (!d) return new Date().toISOString();
+    if (typeof d === 'object') {
+      if (d._seconds !== undefined) return new Date(d._seconds * 1000).toISOString();
+      if (typeof d.toDate === 'function') return d.toDate().toISOString();
+      if (d instanceof Date) return d.toISOString();
+      // Try to construct from object if it has year/month etc (unlikely but safe)
+      try { return new Date(d).toISOString(); } catch (e) {}
+    }
+    return String(d);
+  };
+
+  const dateValue = normalizeDate(data.utcDate || data.startTime);
+
   return {
-    id: data.id || '',
+    id: String(data.id || ''),
     homeTeam,
     awayTeam,
     homeName,
@@ -126,15 +141,11 @@ export const normalizeMatch = (data: any): NormalizedMatch => {
     status: data.status || 'NS',
     league,
     leagueName,
-    utcDate: (() => {
-      let d = data.utcDate || data.startTime;
-      if (!d || typeof d === 'object' || String(d) === "[object Object]") {
-        return new Date().toISOString();
-      }
-      return String(d);
-    })(),
+    utcDate: dateValue,
     slug: slug,
     isHidden: isInvalid,
+    startTime: data.startTime || data.utcDate || null,
+    isLive: data.isLive || data.status === 'LIVE' || data.status === 'IN_PLAY' || ['1H', '2H', 'HT', 'ET', 'P'].includes(data.status),
     metadata: {
       ...data.metadata,
       hiddenReason,
@@ -144,19 +155,19 @@ export const normalizeMatch = (data: any): NormalizedMatch => {
 };
 
 export const normalizeTeam = (data: any) => ({
-  id: data.id || '',
+  id: String(data.id || ''),
   name: data.name || '',
   slug: data.slug || (data.name || 'team').toLowerCase().replace(/\s+/g, '-'),
 });
 
 export const normalizeLeague = (data: any) => ({
-  id: data.id || '',
+  id: String(data.id || ''),
   name: data.name || '',
   slug: data.slug || (data.name || 'league').toLowerCase().replace(/\s+/g, '-'),
 });
 
 export const normalizeNews = (data: any) => ({
-  id: data.id || '',
+  id: String(data.id || ''),
   title: data.title || '',
   slug: data.seo?.slug || data.slug || data.id,
 });

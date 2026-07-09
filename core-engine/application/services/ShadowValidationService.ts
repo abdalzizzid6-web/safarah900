@@ -4,17 +4,10 @@ import { ApiManagerAdapter } from '../../infrastructure/adapters/ApiManagerAdapt
 import { CacheManager } from '../../infrastructure/cache/CacheManager';
 import { MatchNormalizer } from '../../infrastructure/normalization/MatchNormalizer';
 import { NormalizedMatch } from '../../../server/utils/normalizer';
+import { apiManager } from '../../../server/services/apiManager';
 
 export class ShadowValidationService {
-  private repo: MatchRepository;
-
-  constructor() {
-    this.repo = new MatchRepository(
-      new ApiManagerAdapter(),
-      new CacheManager(),
-      new MatchNormalizer()
-    );
-  }
+  constructor(private repo: MatchRepository) {}
 
   async validateLiveMatches(legacyMatches: NormalizedMatch[]) {
     try {
@@ -55,7 +48,7 @@ export class ShadowValidationService {
 
     extraMatches = core.length - (legacy.length - missingMatches);
 
-    const matchRate = ((legacy.length - (missingMatches + extraMatches)) / legacy.length) * 100;
+    const matchRate = legacy.length > 0 ? ((legacy.length - (missingMatches + extraMatches)) / legacy.length) * 100 : 100;
 
     console.log(`[Shadow Validation] Results:`);
     console.log(`- Total Matches: ${matchCount}`);

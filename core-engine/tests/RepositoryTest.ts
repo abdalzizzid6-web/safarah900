@@ -8,7 +8,7 @@ async function testRepository() {
   const provider = new MockApiFootballProvider();
   const pm = new ProviderManager();
   pm.registerProvider(provider);
-  const repo = new MatchRepository(pm, new CacheManager(), new MatchNormalizer());
+  const repo = new MatchRepository(provider, new CacheManager(), new MatchNormalizer());
   
   const matches = await repo.getLiveMatches();
   console.assert(matches.length === 1, 'Repository test failed');

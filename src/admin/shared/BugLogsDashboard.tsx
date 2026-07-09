@@ -1,16 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  collection, query, orderBy, onSnapshot, doc, 
-  updateDoc, deleteDoc, writeBatch, getDocs, addDoc, limit
-} from 'firebase/firestore';
-import { db } from '../../firebase';
+import { repositories } from '../../core/repository';
 import { 
   Bug, Trash2, CheckCircle2, Search, Clock, RefreshCw, X, 
   AlertCircle, Sparkles, Filter, ShieldAlert, Terminal, Eye,
-  CheckCircle, ArrowLeft, ShieldCheck, Database, Wifi, Shield, Lock, FileJson
+  CheckCircle, ShieldCheck, Database, Wifi, Lock, FileJson
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useError } from '../../context/ErrorContext';
+import { writeBatch, doc } from 'firebase/firestore';
+import { db } from '../../firebase';
 
 interface ErrorLog {
   id: string;
@@ -41,13 +39,8 @@ export default function BugLogsDashboard() {
   const fetchLogs = async () => {
     setLoading(true);
     try {
-      const q = query(collection(db, 'error_logs'), orderBy('timestamp', 'desc'), limit(50));
-      const snapshot = await getDocs(q);
-      const fetchedLogs: ErrorLog[] = [];
-      snapshot.forEach((docSnap) => {
-        fetchedLogs.push({ id: docSnap.id, ...docSnap.data() } as ErrorLog);
-      });
-      setLogs(fetchedLogs);
+      const data = await repositories.errorLogs.getAll(50);
+      setLogs(data as ErrorLog[]);
     } catch (err) {
       console.error("Failed to load logs:", err);
       showError(err);
@@ -77,18 +70,13 @@ export default function BugLogsDashboard() {
   const totalCount = logs.length;
   const pendingCount = logs.filter(l => !l.resolved).length;
   const resolvedCount = logs.filter(l => l.resolved).length;
-
-  const classificationCounts = logs.reduce((acc: Record<string, number>, log) => {
-    acc[log.classification] = (acc[log.classification] || 0) + 1;
-    return acc;
-  }, {});
-
+  
   // Actions
   const handleToggleResolve = async (logId: string, currentStatus: boolean) => {
     try {
-      const logRef = doc(db, 'error_logs', logId);
-      await updateDoc(logRef, { resolved: !currentStatus });
+      await repositories.errorLogs.update(logId, { resolved: !currentStatus });
       showToast(currentStatus ? 'تم نقل الخطأ بنجاح لقائمة الأخطاء النشطة' : 'تم تمييز المشكلة كمحلولة بنجاح ✓', 'success');
+      setLogs(prev => prev.map(l => l.id === logId ? { ...l, resolved: !currentStatus } : l));
       if (selectedLog?.id === logId) {
         setSelectedLog(prev => prev ? { ...prev, resolved: !currentStatus } : null);
       }
@@ -100,8 +88,9 @@ export default function BugLogsDashboard() {
   const handleDeleteLog = async (logId: string) => {
     try {
       if (!confirm('هل أنت متأكد من رغبتك في حذف هذا السجل بشكل نهائي؟')) return;
-      await deleteDoc(doc(db, 'error_logs', logId));
+      await repositories.errorLogs.delete(logId);
       showToast('تم حذف سجل الخطأ بنجاح', 'success');
+      setLogs(prev => prev.filter(l => l.id !== logId));
       if (selectedLog?.id === logId) {
         setSelectedLog(null);
       }
@@ -113,13 +102,14 @@ export default function BugLogsDashboard() {
   const handleClearAllLogs = async () => {
     try {
       if (!confirm('تحذير! سيتم مسح كافة سجلات الأخطاء المخزنة في قاعدة البيانات نهائياً. هل تود الاستمرار؟')) return;
-      const q = query(collection(db, 'error_logs'), limit(250));
-      const snapshot = await getDocs(q);
+      // Using batch because delete all is safer this way
+      const allLogs = await repositories.errorLogs.getAll(250);
       const batch = writeBatch(db);
-      snapshot.docs.forEach((docSnap) => {
-        batch.delete(docSnap.ref);
+      allLogs.forEach((log) => {
+        batch.delete(doc(db, 'error_logs', log.id));
       });
       await batch.commit();
+      setLogs([]);
       showToast('تم تصفية وإفراغ جميع سجلات الأخطاء بنجاح', 'success');
     } catch (err) {
       showError(err);

@@ -1,6 +1,6 @@
 import { TeamDetail } from './teamMapper';
 import { translateTeamName } from '../utils/arabicTeamNames';
-import { teamsRepositoryV2 } from '../core/repository/TeamsRepositoryV2';
+import { apiManagementRepository } from '../core/api-management';
 
 const teamCache = new Map<string, { data: TeamDetail; timestamp: number }>();
 const pendingRequests = new Map<string, Promise<TeamDetail>>();
@@ -29,11 +29,11 @@ export const teamService = {
     const promise = (async () => {
       // First, check Repository for custom teams
       try {
-        const customTeam = await teamsRepositoryV2.getTeam(apiId);
+        const customTeam = await apiManagementRepository.teamRepository.getTeamById(apiId);
         if (customTeam) {
           return {
             ...customTeam as any,
-            name: translateTeamName(customTeam.name)
+            name: translateTeamName(customTeam.nameEN)
           };
         }
       } catch (err) {
@@ -119,7 +119,7 @@ export const teamService = {
     // Also add from repository custom teams
     let customTeams: TeamDetail[] = [];
     try {
-      customTeams = await teamsRepositoryV2.getTeams() as any;
+      customTeams = await apiManagementRepository.teamRepository.getTeams() as any;
     } catch (err) {
       console.error("Error fetching custom teams for search:", err);
     }
@@ -133,7 +133,7 @@ export const teamService = {
 
   async getCustomTeams(): Promise<TeamDetail[]> {
     try {
-      return await teamsRepositoryV2.getTeams() as any;
+      return await apiManagementRepository.teamRepository.getTeams() as any;
     } catch (err) {
       console.error("Error fetching custom teams:", err);
       return [];
@@ -142,7 +142,7 @@ export const teamService = {
 
   async saveCustomTeam(team: TeamDetail): Promise<void> {
     try {
-      await teamsRepositoryV2.saveTeam(team as any);
+      await apiManagementRepository.teamRepository.updateTeam(team as any);
       teamCache.delete(String(team.id));
     } catch (e) {
       console.error("Error saving custom team:", e);
@@ -152,7 +152,7 @@ export const teamService = {
 
   async deleteCustomTeam(id: string): Promise<void> {
     try {
-      await teamsRepositoryV2.deleteTeam(id);
+      await apiManagementRepository.teamRepository.deleteTeam(id);
       teamCache.delete(String(id));
     } catch (e) {
       console.error("Error deleting custom team:", e);

@@ -6,9 +6,8 @@ import SeoAnalytics from './SeoAnalytics';
 import SystemHealthDashboard from './SystemHealthDashboard';
 import MatchesAnalyticsDashboard from './MatchesAnalyticsDashboard';
 import UserBehaviorAnalytics from './UserBehaviorAnalytics';
-import { userService } from '../../services/userService';
-import { matchService } from '../../services/matchService';
 import AdminLayout from '../layouts/AdminLayout';
+import { repositories } from '../../core/repository';
 
 const TABS = [
   { id: 'overview', label: 'نظرة عامة', icon: LayoutDashboard },
@@ -32,41 +31,30 @@ export default function AnalyticsCenter() {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const { doc, getDoc, collection, getDocs, query, limit } = await import('firebase/firestore');
-        const { db } = await import('../../firebase');
 
-        const [statsDoc, matchesStatsDoc, usersStatsDoc] = await Promise.all([
-          getDoc(doc(db, 'system_stats', 'global')),
-          getDoc(doc(db, 'system_stats', 'matches_analytics')),
-          getDoc(doc(db, 'system_stats', 'users_analytics'))
+        const [statsDoc, matchesStats, usersStats] = await Promise.all([
+          repositories.analytics.getById('global'),
+          repositories.analytics.getById('matches_analytics'),
+          repositories.analytics.getById('users_analytics')
         ]);
         
-        let matchesStats = matchesStatsDoc.exists() ? matchesStatsDoc.data() : { live: 0, upcoming: 0, finished: 0, cancelled: 0, leagueData: [], dayData: [] };
-        let usersStats = usersStatsDoc.exists() ? usersStatsDoc.data() : { total: 0, vips: 0, admins: 0, activeLast24h: 0, activeLast7d: 0, regData: [] };
+        const matchesData = matchesStats || { live: 0, upcoming: 0, finished: 0, cancelled: 0, leagueData: [], dayData: [] };
+        const usersData = usersStats || { total: 0, vips: 0, admins: 0, activeLast24h: 0, activeLast7d: 0, regData: [] };
         
-        setData({ matches: matchesStats as any, users: usersStats as any });
+        setData({ matches: matchesData as any, users: usersData as any });
         
-        if (statsDoc.exists()) {
-          const s = statsDoc.data();
+        if (statsDoc) {
           setCounts({
-            matches: s.matches || 0,
-            users: s.users || 0,
-            channels: s.channels || 0
+            matches: statsDoc.matches || 0,
+            users: statsDoc.users || 0,
+            channels: statsDoc.channels || 0
           });
         } else {
           setCounts({ matches: 0, users: 0, channels: 0 });
         }
       } catch (error: any) {
-        const isQuota = error?.message?.toLowerCase().includes('quota') || 
-                        error?.message?.toLowerCase().includes('exhausted') || 
-                        error?.code === 'resource-exhausted';
-        if (isQuota) {
-          console.warn('[AnalyticsCenter] Firestore quota exceeded. Displaying empty or cached fallback analytics dashboard metrics.');
-        } else {
-          console.error('Error fetching analytics data:', error);
-        }
-        // Graceful fallback with empty structures so the UI doesn't crash
-        setData({ matches: [], users: [] });
+        console.error('Error fetching analytics data:', error);
+        setData({ matches: [] as any, users: [] as any });
         setCounts({ matches: 0, users: 0, channels: 0 });
       } finally {
         setLoading(false);

@@ -24,6 +24,7 @@ export const BlockForm: React.FC<BlockFormProps> = ({ blockToEdit, onSave, onCan
 
   // Content state variables
   const [title, setTitle] = useState('');
+  const [titleEn, setTitleEn] = useState('');
   const [type, setType] = useState<BlockType>(BlockType.HERO);
   const [enabled, setEnabled] = useState(true);
   const [visibleDesktop, setVisibleDesktop] = useState(true);
@@ -91,6 +92,7 @@ export const BlockForm: React.FC<BlockFormProps> = ({ blockToEdit, onSave, onCan
   useEffect(() => {
     if (blockToEdit) {
       setTitle(blockToEdit.title || '');
+      setTitleEn(blockToEdit.titleEn || '');
       setType(blockToEdit.type || BlockType.HERO);
       setEnabled(blockToEdit.enabled !== false);
       setDataSource(blockToEdit.dataSource || 'api');
@@ -200,6 +202,7 @@ export const BlockForm: React.FC<BlockFormProps> = ({ blockToEdit, onSave, onCan
     } else {
       // Defaults for creation
       setTitle('');
+      setTitleEn('');
       setType(BlockType.HERO);
       setEnabled(true);
       setVisibleDesktop(true);
@@ -309,6 +312,7 @@ export const BlockForm: React.FC<BlockFormProps> = ({ blockToEdit, onSave, onCan
       id: blockToEdit ? `widget-${blockToEdit.id}` : `widget-new-${Date.now()}`,
       type,
       title,
+      titleEn,
       status: enabled ? 'active' as const : 'inactive' as const,
       order: 10,
       dataSource,
@@ -371,6 +375,7 @@ export const BlockForm: React.FC<BlockFormProps> = ({ blockToEdit, onSave, onCan
 
     const payload: any = {
       title,
+      titleEn,
       type,
       internalName: title.toLowerCase().replace(/\s/g, '_'),
       displayOrder: blockToEdit ? blockToEdit.displayOrder : Date.now(),
@@ -517,6 +522,8 @@ export const BlockForm: React.FC<BlockFormProps> = ({ blockToEdit, onSave, onCan
           <BlockFormTabContent
             title={title}
             setTitle={setTitle}
+            titleEn={titleEn}
+            setTitleEn={setTitleEn}
             type={type}
             setType={setType}
             subtitle={subtitle}

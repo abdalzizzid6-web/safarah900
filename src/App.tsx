@@ -22,6 +22,7 @@ function DownloadRedirect() {
 import { HelmetProvider } from 'react-helmet-async';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from './lib/react-query';
+import { cmsService } from './services/cmsService';
 import { Capacitor } from '@capacitor/core';
 import { AdMob } from '@capacitor-community/admob';
 import MainLayout from './components/layouts/MainLayout';
@@ -80,7 +81,7 @@ const TranslationManager = lazy(() => import('@/src/admin/shared/TranslationMana
 const WorldCupManager = lazy(() => import('@/src/admin/shared/WorldCupManager'));
 const AdminDashboardPage = lazy(() => import('./admin/dashboard/DashboardPage'));
 const ApiSettings = lazy(() => import('@/src/admin/shared/ApiSettings'));
-const ApiManagementV2 = lazy(() => import('./admin/pages/ApiManagementV2'));
+const ApiManagementCenter = lazy(() => import('./admin/pages/ApiManagementCenter'));
 const SystemHealthPage = lazy(() => import('./admin/pages/SystemHealthPage'));
 const RouteDiagnosticsPage = lazy(() => import('./admin/pages/RouteDiagnosticsPage'));
 const SeoDiagnosticsPage = lazy(() => import('./admin/pages/SeoDiagnosticsPage'));
@@ -173,6 +174,11 @@ export default function App() {
     };
     runStartupDiagnostics();
 
+    // Warm up leagues cache to support smart filters immediately
+    cmsService.getLeagueSettingsList().catch(err => {
+      console.log('[App Startup] Silent leagues cache warming:', err);
+    });
+
     const initAdMob = async () => {
       if (Capacitor.isNativePlatform()) {
         try {
@@ -245,7 +251,7 @@ export default function App() {
                                     <Route path="seo-diagnostics" element={<SeoDiagnosticsPage />} />
                                     <Route path="pages" element={<DynamicPageController />} />
                                     <Route path="translations" element={<TranslationManager />} />
-                                    <Route path="api-management-v2" element={<ApiManagementV2 />} />
+                                    <Route path="api-management-center" element={<ApiManagementCenter />} />
                                     <Route path="settings" element={<SettingsManager />} />
                                   </Routes>
                                 </AdminLayout>

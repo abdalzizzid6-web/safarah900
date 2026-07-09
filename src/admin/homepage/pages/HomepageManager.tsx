@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { collection, getDocs, doc, deleteDoc, updateDoc, query, orderBy, addDoc, writeBatch } from 'firebase/firestore';
-import { db } from '../../../firebase';
+import { repositories } from '../../../core/repository';
 import { BlockType } from '../../../types';
 import { Layout, RefreshCw, Plus, Smartphone, Grid } from 'lucide-react';
 import { BlockForm } from '../components/BlockForm';
 import { HOMEPAGE_TEMPLATES } from '../../../premium/data/HomepageTemplates';
 import { clearHomepageCache } from '../../../hooks/useHomepageLayout';
 import { motion, AnimatePresence } from 'motion/react';
+import { db } from '../../../firebase';
+import { writeBatch, doc } from 'firebase/firestore';
 
 // Import sub-components
 import { THEME_PRESETS } from '../components/homepage-manager/HomepageManagerConstants';
@@ -35,6 +36,7 @@ export const HomepageManager: React.FC = () => {
   // Quick Properties Inspector State
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
   const [quickTitle, setQuickTitle] = useState('');
+  const [quickTitleEn, setQuickTitleEn] = useState('');
   const [quickSubtitle, setQuickSubtitle] = useState('');
   const [quickTitleIcon, setQuickTitleIcon] = useState('None');
   const [quickTitleAlign, setQuickTitleAlign] = useState('text-right');
@@ -51,15 +53,14 @@ export const HomepageManager: React.FC = () => {
   const fetchBlocks = async () => {
     setLoading(true);
     try {
-      const q = query(collection(db, 'homepage_blocks'), orderBy('displayOrder', 'asc'));
-      const snapshot = await getDocs(q);
-      const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setBlocks(items);
+      const items = await repositories.homepage.getAll(200);
+      const sorted = items.sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
+      setBlocks(sorted);
       try {
-        localStorage.setItem('admin_homepage_blocks_fallback', JSON.stringify(items));
+        localStorage.setItem('admin_homepage_blocks_fallback', JSON.stringify(sorted));
       } catch (e) {}
     } catch (err) {
-      console.error("[HomepageManager] Error loading layouts from Firestore: ", err);
+      console.error("[HomepageManager] Error loading layouts: ", err);
       try {
         const cached = localStorage.getItem('admin_homepage_blocks_fallback');
         if (cached) {
@@ -80,11 +81,10 @@ export const HomepageManager: React.FC = () => {
 
     setApplyingTemplate(true);
     try {
-      const q = query(collection(db, 'homepage_blocks'));
-      const snapshot = await getDocs(q);
-      
+      // Need to delete all existing blocks. Use batch for efficiency.
+      const currentBlocks = await repositories.homepage.getAll();
       const batch = writeBatch(db);
-      snapshot.docs.forEach(d => {
+      currentBlocks.forEach(d => {
         batch.delete(doc(db, 'homepage_blocks', d.id));
       });
       await batch.commit();
@@ -112,14 +112,14 @@ export const HomepageManager: React.FC = () => {
           rows: [row] 
         };
 
-        await addDoc(collection(db, 'homepage_blocks'), payload);
+        await repositories.homepage.create(payload);
       }
 
       clearHomepageCache();
       await fetchBlocks();
       triggerAlert('success', `تم تطبيق قالب البناء المباشر "${template.name}" بنجاح!`);
     } catch (err) {
-      console.error("[HomepageManager] Failed to apply experience template:", err);
+      console.error("[HomepageManager] Failed to apply template:", err);
       triggerAlert('error', 'حدث خطأ أثناء تطبيق قالب الهيكل المخصص.');
     } finally {
       setApplyingTemplate(false);
@@ -134,7 +134,7 @@ export const HomepageManager: React.FC = () => {
   const toggleBlockEnabled = async (block: any) => {
     try {
       const updatedValue = !block.enabled;
-      await updateDoc(doc(db, 'homepage_blocks', block.id), { enabled: updatedValue });
+      await repositories.homepage.update(block.id, { enabled: updatedValue });
       setBlocks(prev => prev.map(b => b.id === block.id ? { ...b, enabled: updatedValue } : b));
       clearHomepageCache();
       triggerAlert('success', `تم ${updatedValue ? 'تفعيل' : 'تعطيل'} قسم "${block.title}" بنجاح.`);
@@ -147,7 +147,7 @@ export const HomepageManager: React.FC = () => {
   const deleteBlock = async (id: string, title: string) => {
     if (confirm(`هل أنت متأكد من حذف قسم "${title}" نهائياً من الصفحة الرئيسية؟`)) {
       try {
-        await deleteDoc(doc(db, 'homepage_blocks', id));
+        await repositories.homepage.delete(id);
         clearHomepageCache();
         if (selectedBlockId === id) setSelectedBlockId(null);
         await fetchBlocks();
@@ -177,8 +177,8 @@ export const HomepageManager: React.FC = () => {
       setBlocks(updatedBlocks);
 
       await Promise.all([
-        updateDoc(doc(db, 'homepage_blocks', currentBlock.id), { displayOrder: targetOrder }),
-        updateDoc(doc(db, 'homepage_blocks', targetBlock.id), { displayOrder: currentOrder })
+        repositories.homepage.update(currentBlock.id, { displayOrder: targetOrder }),
+        repositories.homepage.update(targetBlock.id, { displayOrder: currentOrder })
       ]);
       clearHomepageCache();
     } catch (err) {
@@ -224,7 +224,7 @@ export const HomepageManager: React.FC = () => {
 
     try {
       const promises = reindexed.map(b => 
-        updateDoc(doc(db, 'homepage_blocks', b.id), { displayOrder: b.displayOrder })
+        repositories.homepage.update(b.id, { displayOrder: b.displayOrder })
       );
       await Promise.all(promises);
       clearHomepageCache();
@@ -339,7 +339,7 @@ export const HomepageManager: React.FC = () => {
     };
 
     try {
-      await addDoc(collection(db, 'homepage_blocks'), payload);
+      await repositories.homepage.create(payload);
       clearHomepageCache();
       await fetchBlocks();
       triggerAlert('success', `تم توليد قسم "${label}" فوري بنجاح، وتحميل الإعدادات الرياضية القياسية!`);
@@ -353,6 +353,7 @@ export const HomepageManager: React.FC = () => {
   const openQuickInspector = (block: any) => {
     setSelectedBlockId(block.id);
     setQuickTitle(block.title || '');
+    setQuickTitleEn(block.titleEn || '');
     setQuickSubtitle(block.styleConfig?.subtitle || '');
     setQuickTitleIcon(block.styleConfig?.titleIcon || 'None');
     setQuickTitleAlign(block.styleConfig?.titleAlign || 'text-right');
@@ -376,11 +377,12 @@ export const HomepageManager: React.FC = () => {
 
       const payload = {
         title: quickTitle,
+        titleEn: quickTitleEn,
         styleConfig
       };
 
-      await updateDoc(doc(db, 'homepage_blocks', selectedBlockId), payload);
-      setBlocks(prev => prev.map(b => b.id === selectedBlockId ? { ...b, title: quickTitle, styleConfig } : b));
+      await repositories.homepage.update(selectedBlockId, payload);
+      setBlocks(prev => prev.map(b => b.id === selectedBlockId ? { ...b, title: quickTitle, titleEn: quickTitleEn, styleConfig } : b));
       clearHomepageCache();
       
       setSaveSuccess(true);
@@ -415,7 +417,7 @@ export const HomepageManager: React.FC = () => {
         shadowIntensity: preset.shadowIntensity
       };
 
-      await updateDoc(doc(db, 'homepage_blocks', selectedBlockId), { styleConfig });
+      await repositories.homepage.update(selectedBlockId, { styleConfig });
       setBlocks(prev => prev.map(b => b.id === selectedBlockId ? { ...b, styleConfig } : b));
       clearHomepageCache();
       triggerAlert('success', `تم تطبيق المظهر الرياضي "${preset.name}" على القسم.`);
@@ -563,6 +565,8 @@ export const HomepageManager: React.FC = () => {
               blocks={blocks}
               quickTitle={quickTitle}
               setQuickTitle={setQuickTitle}
+              quickTitleEn={quickTitleEn}
+              setQuickTitleEn={setQuickTitleEn}
               quickSubtitle={quickSubtitle}
               setQuickSubtitle={setQuickSubtitle}
               quickTitleIcon={quickTitleIcon}

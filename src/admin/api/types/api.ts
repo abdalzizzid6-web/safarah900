@@ -21,6 +21,7 @@ export interface ApiProvider {
 }
 
 export type ApiConnection = ApiProvider;
+export type ApiKey = ApiProvider;
 
 export interface ApiRouting {
   worldCup: string;

@@ -31,6 +31,135 @@ router.get("/security/audits", authMiddleware('admin'), (req, res) => {
 router.get("/health", (req, res) => res.json({ status: "healthy", timestamp: new Date().toISOString() }));
 
 router.get("/test", (req, res) => res.json({ success: true }));
+// Automatic Arabization endpoint for Leagues and their Teams
+router.post("/arabize-league", authMiddleware('editor'), async (req, res) => {
+    try {
+        const { leagueId, leagueName, season } = req.body;
+        if (!leagueId || !leagueName) {
+            return res.status(400).json({ error: "Missing leagueId or leagueName" });
+        }
+
+        const targetSeason = season || new Date().getFullYear();
+        
+        // 1. Fetch Teams for this league
+        let teamsData: any[] = [];
+        try {
+            const { key, providerDoc } = await apiManager.getActiveKeyForCategory('teams') as { key: string; providerDoc: any };
+            const url = providerDoc.provider === 'TheSportsDB' 
+                ? `${providerDoc.baseUrl}lookup_all_teams.php?id=${leagueId}`
+                : `${providerDoc.baseUrl}teams?league=${leagueId}&season=${targetSeason}`;
+            
+            const headers: any = { 'Accept': 'application/json' };
+            if (key.length === 32) {
+                headers['x-apisports-key'] = key;
+            } else if (key.length === 50) {
+                headers['x-rapidapi-key'] = key;
+                headers['x-rapidapi-host'] = providerDoc.baseUrl.replace('https://', '').split('/')[0];
+            }
+
+            const fetchResponse = await fetch(url, { headers });
+            const responseData = await fetchResponse.json();
+            
+            if (providerDoc.provider === 'TheSportsDB') {
+                teamsData = responseData.teams || [];
+            } else {
+                teamsData = responseData.response || [];
+            }
+        } catch (e) {
+            console.warn("Failed to fetch teams, proceeding with just league translation.", e);
+        }
+
+        // 2. Extract Team Names
+        let teamsToTranslate: any[] = [];
+        if (teamsData && teamsData.length > 0) {
+            teamsToTranslate = teamsData.map((t: any) => {
+                const teamObj = t.team || t; // Handle API-Football vs TheSportsDB
+                return {
+                    id: teamObj.id || teamObj.idTeam,
+                    name: teamObj.name || teamObj.strTeam,
+                    logo: teamObj.logo || teamObj.strTeamBadge
+                };
+            }).filter((t: any) => t.id && t.name);
+        }
+
+        // 3. Ask Gemini to translate League Name + Team Names
+        const teamNamesList = teamsToTranslate.map((t: any) => t.name).join('", "');
+        const prompt = `
+You are a professional Arabic sports translator.
+Translate the following football league and team names into standard Arabic as used in MENA sports media (like beIN Sports).
+
+League Name: "${leagueName}"
+Team Names: ["${teamNamesList}"]
+
+Provide the output strictly as a valid JSON object matching this structure:
+{
+  "leagueArabicName": "string",
+  "teams": {
+    "English Team Name 1": "Arabic Team Name 1",
+    "English Team Name 2": "Arabic Team Name 2"
+  }
+}
+Return ONLY the JSON. No markdown, no quotes around JSON.`;
+
+        const geminiResult = await generateContentWithRetry({
+            model: "gemini-3.5-flash",
+            contents: prompt
+        });
+
+        let translations: any = {};
+        try {
+            const rawText = geminiResult.text?.trim() || "{}";
+            const jsonText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
+            translations = JSON.parse(jsonText);
+        } catch (e) {
+            console.error("Failed to parse AI translation response. Raw:", geminiResult.text);
+        }
+
+        // 4. Update League in CMS
+        if (translations.leagueArabicName) {
+            const leagueDocRef = firestore.collection('cms_leagues').doc(String(leagueId));
+            await leagueDocRef.set({
+                customName: translations.leagueArabicName,
+                enabled: true,
+                updatedAt: new Date().toISOString()
+            }, { merge: true });
+        }
+
+        // 5. Update Teams in CMS
+        const batch = firestore.batch();
+        let teamUpdatesCount = 0;
+        
+        if (translations.teams && Object.keys(translations.teams).length > 0) {
+            for (const team of teamsToTranslate) {
+                const arabicName = translations.teams[team.name];
+                if (arabicName) {
+                    const teamDocRef = firestore.collection('cms_teams').doc(String(team.id));
+                    batch.set(teamDocRef, {
+                        customName: arabicName,
+                        enabled: true,
+                        logoUrl: team.logo,
+                        updatedAt: new Date().toISOString()
+                    }, { merge: true });
+                    teamUpdatesCount++;
+                }
+            }
+        }
+
+        if (teamUpdatesCount > 0) {
+            await batch.commit();
+        }
+
+        res.json({ 
+            success: true, 
+            message: `تم تعريب البطولة بنجاح (${translations.leagueArabicName || leagueName}) مع ${teamUpdatesCount} فريقاً.`,
+            data: translations
+        });
+
+    } catch (error: any) {
+        console.error("League Arabization Error:", error);
+        res.status(500).json({ error: error.message || "Failed to arabize league" });
+    }
+});
 
 // Clear Cache endpoint for DB optimization UI tool
 router.post("/clear-cache", authMiddleware('editor'), async (req, res) => {

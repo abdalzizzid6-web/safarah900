@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Users, ShieldCheck, Star, Trash2, Edit2, ShieldAlert, CheckCircle, RefreshCw } from 'lucide-react';
-import { db } from '../../firebase';
-import { doc, updateDoc, collection, getDocs, query, limit } from 'firebase/firestore';
+import { repositories } from '../../core/repository';
 import { UserRole } from '../../types';
 import { useError } from '../../context/ErrorContext';
 
@@ -14,9 +13,7 @@ export default function UserRoleManager({ users: initialUsers = [], onUpdate }: 
   const fetchUsers = async () => {
     try {
       setFetching(true);
-      const q = query(collection(db, 'users'), limit(100));
-      const snap = await getDocs(q);
-      const fetched = snap.docs.map(doc => ({ uid: doc.id, ...doc.data() }));
+      const fetched = await repositories.users.getAll(100);
       setLocalUsers(fetched);
     } catch (err) {
       console.error('Error fetching users:', err);
@@ -37,13 +34,9 @@ export default function UserRoleManager({ users: initialUsers = [], onUpdate }: 
   const handleRoleChange = async (uid: string, newRole: UserRole) => {
     setLoading(uid);
     try {
-      // Update both collections for compatibility
-      await updateDoc(doc(db, 'users', uid), { role: newRole });
-      try {
-        await updateDoc(doc(db, 'user_roles', uid), { role: newRole });
-      } catch (e) {
-        // user_roles doc might not exist yet; ignore or gracefully catch
-      }
+      // Update using repository
+      await repositories.users.update(uid, { role: newRole });
+      
       showToast('تم تحديث صلاحيات المستخدم بنجاح', 'success');
       setLocalUsers(prev => prev.map(u => (u.uid === uid || u.id === uid) ? { ...u, role: newRole } : u));
       if (onUpdate) onUpdate();
@@ -58,7 +51,7 @@ export default function UserRoleManager({ users: initialUsers = [], onUpdate }: 
     setLoading(uid);
     try {
       const updatedRole = isVip ? UserRole.VIP_USER : UserRole.USER;
-      await updateDoc(doc(db, 'users', uid), { 
+      await repositories.users.update(uid, { 
         isVip, 
         role: updatedRole
       });

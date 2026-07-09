@@ -1,12 +1,8 @@
-import { MatchRepository } from '../infrastructure/repositories/MatchRepository';
-import { ApiManagerAdapter } from '../infrastructure/adapters/ApiManagerAdapter';
-import { CacheManager } from '../infrastructure/cache/CacheManager';
-import { MatchNormalizer } from '../infrastructure/normalization/MatchNormalizer';
+import { matchRepository } from '../../server/compositionRoot';
 
 async function testIntegration() {
-  // Setup DI
-  const adapter = new ApiManagerAdapter();
-  const repo = new MatchRepository(adapter, new CacheManager(), new MatchNormalizer());
+  // Use centralized dependencies from Composition Root
+  const repo = matchRepository;
   
   // This will try to fetch live matches using the Real ApiManagerService under the hood
   try {

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { RefreshCw, CheckCircle2, AlertTriangle, Loader2, Activity } from 'lucide-react';
 import { auth } from '../../firebase';
+import { repositories } from '../../core/repository';
 
 interface ProviderStatus {
   status: 'online' | 'offline' | 'checking' | 'error';
@@ -11,8 +12,6 @@ interface ProviderStatus {
 }
 
 const PROVIDERS = ['API-Football', 'SportMonks', 'TheSportsDB'];
-
-import { dataSourceService } from '../../services/dataSourceService';
 
 export default function ApiHealthDashboard() {
   const [statuses, setStatuses] = useState<Record<string, ProviderStatus>>({});
@@ -25,11 +24,10 @@ export default function ApiHealthDashboard() {
     
     try {
       const token = await auth.currentUser?.getIdToken();
-      const settings = await dataSourceService.getSettings();
-      let key = '';
-      if (provider === 'API-Football') key = settings.apiFootballKey;
-      else if (provider === 'TheSportsDB') key = settings.theSportsDBApiKey;
-      else if (provider === 'SportMonks') key = settings.sportMonksKey;
+      const keys = await repositories.apiManagement.apiKeyRepository.getKeys();
+      const providerKey = keys.find(k => k.provider === provider);
+      
+      const key = providerKey?.key || '';
 
       // Using the same endpoint created before
       const response = await fetch('/api/test-api-key', {

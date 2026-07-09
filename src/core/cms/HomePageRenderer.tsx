@@ -167,7 +167,10 @@ export const HomePageRenderer: React.FC<HomePageRendererProps> = ({ blocks, feat
                         className={`${titleSize} ${titleWeight} tracking-tight`}
                         style={{ color: titleColor }}
                       >
-                        {block.title}
+                        {(() => {
+                          const isEn = localStorage.getItem('language') === 'en' || new URLSearchParams(window.location.search).get('lang') === 'en';
+                          return isEn && block.titleEn ? block.titleEn : block.title;
+                        })()}
                       </h2>
                     </div>
                     {subtitle && (

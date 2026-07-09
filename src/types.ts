@@ -725,6 +725,7 @@ export interface HomepageBlock {
   id: string;
   type: BlockType;
   title: string;
+  titleEn?: string;
   internalName: string;
   displayOrder: number;
   enabled: boolean;
@@ -775,12 +776,29 @@ export interface HomepageBlock {
 
 export interface LeagueSettings {
   id: string;
+  leagueId: string;
+  name: string;
+  country: string;
+  logo: string;
+  season?: string | number;
+  sport?: string;
+  provider?: string;
   enabled: boolean;
   featured: boolean;
   order: number;
+  sortOrder: number;
+  visibleInHome?: boolean;
+  visibleInLive?: boolean;
+  visibleInSchedule?: boolean;
+  visibleInNews?: boolean;
+  visibleInLeaguePage?: boolean;
+  primaryProviderId?: string;
+  maxMatches?: number;
   customName?: string;
   logoUrl?: string;
   color?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface TeamSettings {

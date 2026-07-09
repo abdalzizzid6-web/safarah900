@@ -93,6 +93,8 @@ export default function PremiumMatchesScheduleSection({ title = "جدول الم
     // Filter very old matches (older than 3 days)
     const threeDaysAgo = Date.now() - 3 * 24 * 60 * 60 * 1000;
     
+    console.log(`[PremiumMatchesScheduleSection] Initial matches count: ${matches.length}`);
+
     matches = [...matches].filter(m => {
       const mTime = new Date(m.startTime || m.utcDate || 0).getTime();
       if (mTime < threeDaysAgo) return false;
@@ -130,6 +132,7 @@ export default function PremiumMatchesScheduleSection({ title = "جدول الم
       // Live / Upcoming matches: soonest first
       return timeA - timeB;
     });
+    console.log(`[PremiumMatchesScheduleSection] Matches count after filtering: ${matches.length}`);
   }
 
   if (loading || matches.length === 0) return null;

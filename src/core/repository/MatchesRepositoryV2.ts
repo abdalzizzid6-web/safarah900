@@ -88,6 +88,25 @@ export interface MatchLock {
   editingSince: any;
 }
 
+function isLeagueDisabled(leagueId: string | number): boolean {
+  if (!leagueId) return false;
+  try {
+    const raw = localStorage.getItem('Safara 90_cms_cache_leagues');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && parsed.data && Array.isArray(parsed.data)) {
+        const found = parsed.data.find((l: any) => String(l.id) === String(leagueId) || String(l.leagueId) === String(leagueId));
+        if (found) {
+          return found.enabled === false;
+        }
+      }
+    }
+  } catch (e) {
+    console.error('[MatchesRepositoryV2] Error parsing leagues cache:', e);
+  }
+  return false;
+}
+
 export class MatchesRepositoryV2 extends BaseRepository<Match> {
   constructor() {
     super('matches');
@@ -203,7 +222,16 @@ export class MatchesRepositoryV2 extends BaseRepository<Match> {
         return item;
       });
 
-      const filtered = processed.filter(m => m && !m.isHidden);
+      const filtered = processed.filter(m => {
+        if (!m) return false;
+        if (m.isHidden) return false;
+        
+        const lId = m.league?.id || m.leagueDetails?.id || (m as any).leagueId;
+        if (lId && isLeagueDisabled(lId)) {
+          return false;
+        }
+        return true;
+      });
       console.log(`[RepositoryV2] LIST Stage: Input=${data.length}, Output=${filtered.length}. Rejected=${data.length - filtered.length}`);
       return filtered as unknown as T;
     }
@@ -220,6 +248,13 @@ export class MatchesRepositoryV2 extends BaseRepository<Match> {
           console.warn(`[RepositoryV2] SINGLE Stage: Match ${id} is hidden. Reason: ${adjusted.metadata?.hiddenReason}`);
           return null as unknown as T;
         }
+
+        const lId = adjusted.league?.id || adjusted.leagueDetails?.id || (adjusted as any).leagueId;
+        if (lId && isLeagueDisabled(lId)) {
+          console.log(`[RepositoryV2] SINGLE Stage: Match ${id} belongs to disabled league ${lId}. Filtering out.`);
+          return null as unknown as T;
+        }
+        
         return adjusted as unknown as T;
       }
     }
@@ -479,7 +514,7 @@ export class MatchesRepositoryV2 extends BaseRepository<Match> {
         // MUST Normalize the API response to ensure it fits the Match interface
         const normalized = this.mapFirestoreMatch(id, response.data as DocumentData);
         const adjusted = this.adjustMatchStatus(normalized);
-        cacheManager.set(cacheKey, adjusted, true);
+        cacheManager.set(cacheKey, adjusted, 300000, true);
         return adjusted;
       }
     } catch (apiError) {
@@ -494,7 +529,7 @@ export class MatchesRepositoryV2 extends BaseRepository<Match> {
         const snapshot = await getDoc(docRef);
         if (snapshot.exists()) {
           const match = this.mapFirestoreMatch(snapshot.id, snapshot.data());
-          cacheManager.set(cacheKey, match, true);
+          cacheManager.set(cacheKey, match, 300000, true);
           return match;
         }
       } catch (e: any) {
@@ -561,7 +596,7 @@ export class MatchesRepositoryV2 extends BaseRepository<Match> {
     try {
       const response = await apiClient.get<MatchEvent[]>(`/api/matches/${matchId}/events`);
       if (response.data) {
-        cacheManager.set(cacheKey, response.data, true);
+        cacheManager.set(cacheKey, response.data, 300000, true);
         return response.data;
       }
     } catch (apiError) {
@@ -574,7 +609,7 @@ export class MatchesRepositoryV2 extends BaseRepository<Match> {
         const snapshot = await getDoc(doc(db, 'events', matchId));
         if (snapshot.exists()) {
           const events = (snapshot.data().events || []) as MatchEvent[];
-          cacheManager.set(cacheKey, events, true);
+          cacheManager.set(cacheKey, events, 300000, true);
           return events;
         }
       } catch (e: any) {
@@ -601,7 +636,7 @@ export class MatchesRepositoryV2 extends BaseRepository<Match> {
     try {
       const response = await apiClient.get<MatchStat[]>(`/api/matches/${matchId}/statistics`);
       if (response.data) {
-        cacheManager.set(cacheKey, response.data, true);
+        cacheManager.set(cacheKey, response.data, 300000, true);
         return response.data;
       }
     } catch (apiError) {
@@ -614,7 +649,7 @@ export class MatchesRepositoryV2 extends BaseRepository<Match> {
         const snapshot = await getDoc(doc(db, 'statistics', matchId));
         if (snapshot.exists()) {
           const stats = (snapshot.data().statistics || []) as MatchStat[];
-          cacheManager.set(cacheKey, stats, true);
+          cacheManager.set(cacheKey, stats, 300000, true);
           return stats;
         }
       } catch (e: any) {
@@ -641,7 +676,7 @@ export class MatchesRepositoryV2 extends BaseRepository<Match> {
     try {
       const response = await apiClient.get<TeamLineup[]>(`/api/matches/${matchId}/lineups`);
       if (response.data) {
-        cacheManager.set(cacheKey, response.data, true);
+        cacheManager.set(cacheKey, response.data, 300000, true);
         return response.data;
       }
     } catch (apiError) {
@@ -654,7 +689,7 @@ export class MatchesRepositoryV2 extends BaseRepository<Match> {
         const snapshot = await getDoc(doc(db, 'lineups', matchId));
         if (snapshot.exists()) {
           const lineups = (snapshot.data().lineups || []) as TeamLineup[];
-          cacheManager.set(cacheKey, lineups, true);
+          cacheManager.set(cacheKey, lineups, 300000, true);
           return lineups;
         }
       } catch (e: any) {
@@ -685,7 +720,7 @@ export class MatchesRepositoryV2 extends BaseRepository<Match> {
         if (leagueId) {
           filtered = response.data.filter((s: any) => String(s.leagueId || s.id) === String(leagueId));
         }
-        cacheManager.set(cacheKey, filtered, true);
+        cacheManager.set(cacheKey, filtered, 300000, true);
         return filtered;
       }
     } catch (apiError) {
@@ -701,7 +736,7 @@ export class MatchesRepositoryV2 extends BaseRepository<Match> {
           const docSnap = await getDoc(docRef);
           if (docSnap.exists()) {
             const data = { id: docSnap.id, ...docSnap.data() };
-            cacheManager.set(cacheKey, [data], true);
+            cacheManager.set(cacheKey, [data], 300000, true);
             return [data];
           }
           const q = query(
@@ -728,7 +763,7 @@ export class MatchesRepositoryV2 extends BaseRepository<Match> {
         if (leagueId) {
           filtered = list.filter((s: any) => String(s.leagueId || s.id) === String(leagueId));
         }
-        cacheManager.set(cacheKey, filtered, true);
+        cacheManager.set(cacheKey, filtered, 300000, true);
         return filtered;
       } catch (e: any) {
         if (e.message?.includes('quota') || e.code === 'resource-exhausted') {

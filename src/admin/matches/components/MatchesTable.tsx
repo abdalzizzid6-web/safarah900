@@ -1,5 +1,5 @@
 import React from 'react';
-import { cn } from '@/src/lib/utils';
+import { cn } from '@/lib/utils';
 import { AlertCircle, CheckSquare2, Square, RefreshCw, CheckCircle2, Star, EyeOff, Eye, Archive, Edit, Trash2, Calendar, Trophy, RotateCcw, Copy, History, Save, X, Activity } from 'lucide-react';
 import LiveMatchControls from '../../shared/MatchesCms/LiveMatchControls';
 

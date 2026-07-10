@@ -1,5 +1,5 @@
 import { collection, getDocs, doc, updateDoc, query, limit, orderBy } from 'firebase/firestore';
-import { db } from '@/src/firebase';
+import { db } from '@/firebase';
 import { SeoArticle } from '../types';
 
 export const seoDiagnosticsService = {

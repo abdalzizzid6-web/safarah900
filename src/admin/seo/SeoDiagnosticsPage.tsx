@@ -9,8 +9,8 @@ import {
   Sparkles, 
   ExternalLink 
 } from 'lucide-react';
-import { useError } from '@/src/context/ErrorContext';
-import SEO from '@/src/components/SEO';
+import { useError } from '@/context/ErrorContext';
+import SEO from '@/components/SEO';
 
 // Hooks
 import { useSitemapStatus } from './hooks/useSitemapStatus';

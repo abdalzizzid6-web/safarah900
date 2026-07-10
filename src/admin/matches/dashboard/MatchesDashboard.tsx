@@ -2,9 +2,9 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Activity, ChevronDown, LayoutGrid, List, RefreshCcw, Trophy, ChevronLeft, ChevronRight } from 'lucide-react';
 
-import { useError } from '@/src/context/ErrorContext';
-import { cn } from '@/src/lib/utils';
-import { Match } from '@/src/types';
+import { useError } from '@/context/ErrorContext';
+import { cn } from '@/lib/utils';
+import { Match } from '@/types';
 
 import { useMatches } from '../hooks/useMatches';
 import { useMatchActions } from '../hooks/useMatchActions';
@@ -13,9 +13,9 @@ import { useMatchLock } from '../hooks/useMatchLock';
 import { matchEnterpriseService, MatchStatus, MatchVersion, MatchAuditLog } from '../services/matchEnterpriseService';
 import { Download, Upload, Trash, History as HistoryIcon, X } from 'lucide-react';
 
-import { leagueService } from '@/src/services/leagueService';
-import { matchService } from '@/src/services/matchService';
-import { cmsService, LeagueSettings } from '@/src/services/cmsService';
+import { leagueService } from '@/services/leagueService';
+import { matchService } from '@/services/matchService';
+import { cmsService, LeagueSettings } from '@/services/cmsService';
 
 import MatchStatistics from '../components/MatchStatistics';
 import MatchApprovalPanel from '../components/MatchApprovalPanel';
@@ -24,7 +24,7 @@ import MatchesTable from '../components/MatchesTable';
 import { MatchModal as MatchEditor } from '../components/MatchEditor';
 import { MatchBulkActions as BulkActionsToolbar } from '../components/BulkActionsToolbar';
 import MatchDiagnosticTool from '../components/MatchDiagnosticTool';
-import MatchesAnalyticsDashboard from '@/src/admin/shared/MatchesAnalyticsDashboard';
+import MatchesAnalyticsDashboard from '@/admin/shared/MatchesAnalyticsDashboard';
 
 export default function MatchesDashboard() {
   const { showToast } = useError();

@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { X, Trophy, AlertTriangle, Goal, Target, UserPlus, AlertCircle, Clock, Play, Pause, Square, RefreshCw } from 'lucide-react';
-import { matchEnterpriseService, MatchStatus } from '@/src/admin/matches/services/matchEnterpriseService';
-import { useError } from '@/src/context/ErrorContext';
-import { auth } from '@/src/firebase';
-import { cn } from '@/src/lib/utils';
+import { matchEnterpriseService, MatchStatus } from '@/admin/matches/services/matchEnterpriseService';
+import { useError } from '@/context/ErrorContext';
+import { auth } from '@/firebase';
+import { cn } from '@/lib/utils';
 
 export default function LiveMatchControls({ match, onClose }: { match: any, onClose: () => void }) {
   const [loading, setLoading] = useState(false);

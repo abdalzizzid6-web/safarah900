@@ -4,7 +4,7 @@ import { Plus, Edit, X, Star, Trophy, Calendar, CheckSquare, Sparkles, Layers, A
 import { useMatchLock } from '../hooks/useMatchLock';
 import { useAutoSave } from '../hooks/useAutoSave';
 import { MatchStatus } from '../services/matchEnterpriseService';
-import { cn } from '@/src/lib/utils';
+import { cn } from '@/lib/utils';
 
 interface MatchModalProps {
   showMatchModal: boolean;

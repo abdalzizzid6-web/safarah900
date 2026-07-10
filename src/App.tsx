@@ -21,96 +21,96 @@ function DownloadRedirect() {
 
 import { HelmetProvider } from 'react-helmet-async';
 import { QueryClientProvider } from '@tanstack/react-query';
-import { queryClient } from './lib/react-query';
-import { cmsService } from './services/cmsService';
+import { queryClient } from '@/lib/react-query';
+import { cmsService } from '@/services/cmsService';
 import { Capacitor } from '@capacitor/core';
 import { AdMob } from '@capacitor-community/admob';
-import MainLayout from './components/layouts/MainLayout';
-import PremiumLayout from './components/layouts/premium/PremiumLayout';
-import { ProtectedRoute } from './components/ProtectedRoute';
-import { UserRole } from './types';
+import MainLayout from '@/components/layouts/MainLayout';
+import PremiumLayout from '@/components/layouts/premium/PremiumLayout';
+import { ProtectedRoute } from '@/components/ProtectedRoute';
+import { UserRole } from '@/types';
 
 // CONSTANT TO TOGGLE BETWEEN OLD AND PREMIUM LAYOUT (Set to true for preview testing)
 const USE_PREMIUM_LAYOUT = true;
 
 // Lazy loading pages for better performance
-const HomePage = lazy(() => import('./pages/HomePage'));
-const DashboardPage = lazy(() => import('./pages/DashboardPage'));
-const WorldCupCenter = lazy(() => import('./pages/worldcup/WorldCupCenter'));
-const StandingsPage = lazy(() => import('./pages/StandingsPage'));
-const MatchDetailsPage = lazy(() => import('./pages/MatchDetailsPage'));
-const MatchAnalysisPage = lazy(() => import('./pages/MatchAnalysisPage'));
-const LiveStreamPage = lazy(() => import('./pages/LiveStreamPage'));
-const LeaguesPage = lazy(() => import('./pages/LeaguesPage'));
-const LeaguePage = lazy(() => import('./pages/LeaguePage'));
-const TeamPage = lazy(() => import('./pages/TeamPage'));
-const PlayerPage = lazy(() => import('./pages/PlayerPage'));
-const SettingsPage = lazy(() => import('./pages/SettingsPage'));
+const HomePage = lazy(() => import('@/pages/HomePage'));
+const DashboardPage = lazy(() => import('@/pages/DashboardPage'));
+const WorldCupCenter = lazy(() => import('@/pages/worldcup/WorldCupCenter'));
+const StandingsPage = lazy(() => import('@/pages/StandingsPage'));
+const MatchDetailsPage = lazy(() => import('@/pages/MatchDetailsPage'));
+const MatchAnalysisPage = lazy(() => import('@/pages/MatchAnalysisPage'));
+const LiveStreamPage = lazy(() => import('@/pages/LiveStreamPage'));
+const LeaguesPage = lazy(() => import('@/pages/LeaguesPage'));
+const LeaguePage = lazy(() => import('@/pages/LeaguePage'));
+const TeamPage = lazy(() => import('@/pages/TeamPage'));
+const PlayerPage = lazy(() => import('@/pages/PlayerPage'));
+const SettingsPage = lazy(() => import('@/pages/SettingsPage'));
 
 // Additional dynamic & static services pages
-const ExportManagement = lazy(() => import('./pages/ExportManagement'));
-const PrivacyPage = lazy(() => import('./pages/PrivacyPage'));
-const CookiePolicyPage = lazy(() => import('./pages/CookiePolicyPage'));
-const TermsPage = lazy(() => import('./pages/TermsPage'));
-const FAQPage = lazy(() => import('./pages/FAQPage'));
-const AnnouncementsPage = lazy(() => import('./pages/AnnouncementsPage'));
-const NewsPage = lazy(() => import('./pages/NewsPage'));
-const NewsArticlePage = lazy(() => import('./pages/NewsArticlePage'));
-const SitemapPage = lazy(() => import('./pages/SitemapPage'));
+const ExportManagement = lazy(() => import('@/pages/ExportManagement'));
+const PrivacyPage = lazy(() => import('@/pages/PrivacyPage'));
+const CookiePolicyPage = lazy(() => import('@/pages/CookiePolicyPage'));
+const TermsPage = lazy(() => import('@/pages/TermsPage'));
+const FAQPage = lazy(() => import('@/pages/FAQPage'));
+const AnnouncementsPage = lazy(() => import('@/pages/AnnouncementsPage'));
+const NewsPage = lazy(() => import('@/pages/NewsPage'));
+const NewsArticlePage = lazy(() => import('@/pages/NewsArticlePage'));
+const SitemapPage = lazy(() => import('@/pages/SitemapPage'));
 // About section
-const AboutPage = lazy(() => import('./pages/AboutPage'));
-const ContactPage = lazy(() => import('./pages/ContactPage'));
-const DisclaimerPage = lazy(() => import('./pages/DisclaimerPage'));
+const AboutPage = lazy(() => import('@/pages/AboutPage'));
+const ContactPage = lazy(() => import('@/pages/ContactPage'));
+const DisclaimerPage = lazy(() => import('@/pages/DisclaimerPage'));
 
 // Admin Lazy Loads
-const MatchesCms = lazy(() => import('@/src/admin/shared/MatchesCms'));
-const LeagueManager = lazy(() => import('@/src/admin/shared/LeagueManager'));
-const TeamsCms = lazy(() => import('@/src/admin/shared/TeamsCms'));
-const ChannelsCms = lazy(() => import('@/src/admin/shared/ChannelsCms'));
-const DynamicPageController = lazy(() => import('@/src/admin/shared/DynamicPageController'));
-const SettingsManager = lazy(() => import('@/src/admin/shared/SettingsManager'));
-const AdManager = lazy(() => import('@/src/admin/shared/AdManager'));
-const NotificationBroadcast = lazy(() => import('@/src/admin/shared/NotificationBroadcast'));
-const UserRoleManager = lazy(() => import('@/src/admin/shared/UserRoleManager'));
-const BugLogsDashboard = lazy(() => import('@/src/admin/shared/BugLogsDashboard'));
-const AnalyticsCenter = lazy(() => import('@/src/admin/shared/AnalyticsCenter'));
-const MediaDashboard = lazy(() => import('./admin/media/dashboard/MediaDashboard'));
-const KnowledgeBaseManager = lazy(() => import('@/src/admin/shared/KnowledgeBaseManager'));
-const RssManager = lazy(() => import('./admin/news/rss/components/RssDashboard'));
-const TranslationManager = lazy(() => import('@/src/admin/shared/TranslationManager'));
-const WorldCupManager = lazy(() => import('@/src/admin/shared/WorldCupManager'));
-const AdminDashboardPage = lazy(() => import('./admin/dashboard/DashboardPage'));
-const ApiSettings = lazy(() => import('@/src/admin/shared/ApiSettings'));
-const ApiManagementCenter = lazy(() => import('./admin/pages/ApiManagementCenter'));
-const SystemHealthPage = lazy(() => import('./admin/pages/SystemHealthPage'));
-const RouteDiagnosticsPage = lazy(() => import('./admin/pages/RouteDiagnosticsPage'));
-const SeoDiagnosticsPage = lazy(() => import('./admin/pages/SeoDiagnosticsPage'));
-const SecurityDashboardPage = lazy(() => import('./admin/security/SecurityDashboardPage'));
-const NewsDashboardPage = lazy(() => import('./admin/news/pages/NewsDashboardPage'));
-const HomepageManager = lazy(() => import('./admin/homepage/pages/HomepageManager'));
-const SocialMediaCenter = lazy(() => import('./admin/social/SocialMediaCenter'));
+const MatchesCms = lazy(() => import('@/admin/shared/MatchesCms'));
+const LeagueManager = lazy(() => import('@/admin/shared/LeagueManager'));
+const TeamsCms = lazy(() => import('@/admin/shared/TeamsCms'));
+const ChannelsCms = lazy(() => import('@/admin/shared/ChannelsCms'));
+const DynamicPageController = lazy(() => import('@/admin/shared/DynamicPageController'));
+const SettingsManager = lazy(() => import('@/admin/shared/SettingsManager'));
+const AdManager = lazy(() => import('@/admin/shared/AdManager'));
+const NotificationBroadcast = lazy(() => import('@/admin/shared/NotificationBroadcast'));
+const UserRoleManager = lazy(() => import('@/admin/shared/UserRoleManager'));
+const BugLogsDashboard = lazy(() => import('@/admin/shared/BugLogsDashboard'));
+const AnalyticsCenter = lazy(() => import('@/admin/shared/AnalyticsCenter'));
+const MediaDashboard = lazy(() => import('@/admin/media/dashboard/MediaDashboard'));
+const KnowledgeBaseManager = lazy(() => import('@/admin/shared/KnowledgeBaseManager'));
+const RssManager = lazy(() => import('@/admin/news/rss/components/RssDashboard'));
+const TranslationManager = lazy(() => import('@/admin/shared/TranslationManager'));
+const WorldCupManager = lazy(() => import('@/admin/shared/WorldCupManager'));
+const AdminDashboardPage = lazy(() => import('@/admin/dashboard/DashboardPage'));
+const ApiSettings = lazy(() => import('@/admin/shared/ApiSettings'));
+const ApiManagementCenter = lazy(() => import('@/admin/pages/ApiManagementCenter'));
+const SystemHealthPage = lazy(() => import('@/admin/pages/SystemHealthPage'));
+const RouteDiagnosticsPage = lazy(() => import('@/admin/pages/RouteDiagnosticsPage'));
+const SeoDiagnosticsPage = lazy(() => import('@/admin/pages/SeoDiagnosticsPage'));
+const SecurityDashboardPage = lazy(() => import('@/admin/security/SecurityDashboardPage'));
+const NewsDashboardPage = lazy(() => import('@/admin/news/pages/NewsDashboardPage'));
+const HomepageManager = lazy(() => import('@/admin/homepage/pages/HomepageManager'));
+const SocialMediaCenter = lazy(() => import('@/admin/social/SocialMediaCenter'));
 
-import AdminLayout from './admin/layouts/AdminLayout';
-import Profile from './components/Profile';
-import AnnouncementBar from './components/AnnouncementBar';
-import SplashScreen from './components/SplashScreen';
-import Schedule from './components/Schedule';
-import ScrollToHash from './components/ScrollToHash';
-import Footer from './components/Footer';
-import { SettingsProvider } from './context/SettingsContext';
-import { ErrorProvider } from './context/ErrorContext';
-import { BrandingProvider } from './contexts/BrandingContext';
-import { ThemeProvider } from './context/ThemeContext';
-import { NotificationProvider } from './context/NotificationContext';
-import { AuthProvider } from './context/AuthContext';
-import GoalNotifier from './components/GoalNotifier';
-import InstallHandler from './components/InstallHandler';
-import SEO from './components/SEO';
+import AdminLayout from '@/admin/layouts/AdminLayout';
+import Profile from '@/components/Profile';
+import AnnouncementBar from '@/components/AnnouncementBar';
+import SplashScreen from '@/components/SplashScreen';
+import Schedule from '@/components/Schedule';
+import ScrollToHash from '@/components/ScrollToHash';
+import Footer from '@/components/Footer';
+import { SettingsProvider } from '@/context/SettingsContext';
+import { ErrorProvider } from '@/context/ErrorContext';
+import { BrandingProvider } from '@/contexts/BrandingContext';
+import { ThemeProvider } from '@/context/ThemeContext';
+import { NotificationProvider } from '@/context/NotificationContext';
+import { AuthProvider } from '@/context/AuthContext';
+import GoalNotifier from '@/components/GoalNotifier';
+import InstallHandler from '@/components/InstallHandler';
+import SEO from '@/components/SEO';
 
-import { ErrorBoundary } from './components/ErrorBoundary';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 import { useLocation } from 'react-router-dom';
-import { logEvent } from './services/analyticsService';
+import { logEvent } from '@/services/analyticsService';
 
 function PageTracker() {
   const location = useLocation();
@@ -120,7 +120,7 @@ function PageTracker() {
   return null;
 }
 
-import LiveScoreWidget from './components/LiveScoreWidget';
+import LiveScoreWidget from '@/components/LiveScoreWidget';
 
 export default function App() {
   const LayoutWrapper = ({ children }: { children: React.ReactNode }) => {

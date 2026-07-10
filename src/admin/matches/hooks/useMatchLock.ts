@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { matchEnterpriseService, MatchLock } from '../services/matchEnterpriseService';
-import { auth } from '@/src/firebase';
+import { auth } from '@/firebase';
 
 export function useMatchLock(matchId: string | null) {
   const [lock, setLock] = useState<MatchLock | null>(null);

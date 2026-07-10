@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { matchAdminService } from '../services/matchAdminService';
-import { Match } from '@/src/types';
+import { Match } from '@/types';
 
 export function useMatches(options?: { subscribe?: boolean }) {
   const queryClient = useQueryClient();

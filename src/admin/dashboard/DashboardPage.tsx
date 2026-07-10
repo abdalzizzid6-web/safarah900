@@ -1,22 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { CheckCircle2, AlertTriangle, RefreshCw } from 'lucide-react';
-import DashboardHeader from '@/src/admin/dashboard/DashboardHeader';
-import StatisticsCards from '@/src/admin/dashboard/StatisticsCards';
-import LiveMatchesWidget from '@/src/admin/dashboard/LiveMatchesWidget';
-import QuickActions from '@/src/admin/dashboard/QuickActions';
-import SystemHealthWidget from '@/src/admin/dashboard/SystemHealthWidget';
-import RecentActivityWidget from '@/src/admin/dashboard/RecentActivityWidget';
-import TrafficWidget from '@/src/admin/dashboard/TrafficWidget';
-import ApiUsageWidget from '@/src/admin/dashboard/ApiUsageWidget';
-import DatabaseActionsWidget from '@/src/admin/dashboard/DatabaseActionsWidget';
-import AiInsightsWidget from '@/src/admin/dashboard/AiInsightsWidget';
-import SecurityWidget from '@/src/admin/dashboard/SecurityWidget';
-import ApiHealthDashboard from '@/src/admin/shared/ApiHealthDashboard';
-import ApiSettings from '@/src/admin/shared/ApiSettings';
-import { useDashboardStats } from '@/src/admin/dashboard/hooks/useDashboardStats';
-import { useDashboardHealth } from '@/src/admin/dashboard/hooks/useDashboardHealth';
-import { useDashboardActivity } from '@/src/admin/dashboard/hooks/useDashboardActivity';
+import DashboardHeader from '@/admin/dashboard/DashboardHeader';
+import StatisticsCards from '@/admin/dashboard/StatisticsCards';
+import LiveMatchesWidget from '@/admin/dashboard/LiveMatchesWidget';
+import QuickActions from '@/admin/dashboard/QuickActions';
+import SystemHealthWidget from '@/admin/dashboard/SystemHealthWidget';
+import RecentActivityWidget from '@/admin/dashboard/RecentActivityWidget';
+import TrafficWidget from '@/admin/dashboard/TrafficWidget';
+import ApiUsageWidget from '@/admin/dashboard/ApiUsageWidget';
+import DatabaseActionsWidget from '@/admin/dashboard/DatabaseActionsWidget';
+import AiInsightsWidget from '@/admin/dashboard/AiInsightsWidget';
+import SecurityWidget from '@/admin/dashboard/SecurityWidget';
+import ApiHealthDashboard from '@/admin/shared/ApiHealthDashboard';
+import ApiSettings from '@/admin/shared/ApiSettings';
+import { useDashboardStats } from '@/admin/dashboard/hooks/useDashboardStats';
+import { useDashboardHealth } from '@/admin/dashboard/hooks/useDashboardHealth';
+import { useDashboardActivity } from '@/admin/dashboard/hooks/useDashboardActivity';
 
 const containerVariants = {
   hidden: { opacity: 0 },

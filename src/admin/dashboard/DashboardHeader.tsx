@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar, RefreshCw, Clock } from 'lucide-react';
-import { auth } from '@/src/firebase';
+import { auth } from '@/firebase';
 
 export default function DashboardHeader({ fetchStats, loading, title }: { fetchStats: () => void, loading: boolean, title: string }) {
   const [time, setTime] = useState(new Date());

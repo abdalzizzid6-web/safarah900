@@ -1,6 +1,6 @@
 import React from 'react';
 import { Zap, RefreshCw, Plus, SlidersHorizontal } from 'lucide-react';
-import { cn } from '@/src/lib/utils';
+import { cn } from '@/lib/utils';
 
 export default function MatchApprovalPanel({ 
   filteredMatchesLength, 
@@ -33,7 +33,7 @@ export default function MatchApprovalPanel({
         <button 
           onClick={async () => {
             alert("بدء مزامنة كأس العالم...");
-            const { syncWorldCupToFirestore } = await import('@/src/services/worldCupSyncService');
+            const { syncWorldCupToFirestore } = await import('@/services/worldCupSyncService');
             const results = await syncWorldCupToFirestore();
             alert(`تمت المزامنة بنجاح: ${JSON.stringify(results)}`);
           }} 

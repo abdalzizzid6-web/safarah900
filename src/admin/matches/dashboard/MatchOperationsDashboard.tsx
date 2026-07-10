@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Trophy, Radio, LayoutGrid, AlertTriangle } from 'lucide-react';
 import { useMatches } from '../hooks/useMatches';
 import { useMatchActions } from '../hooks/useMatchActions';
-import { useError } from '@/src/context/ErrorContext';
+import { useError } from '@/context/ErrorContext';
 import { LiveMatchRoom } from './components/LiveMatchRoom';
 import MatchStatistics from '../components/MatchStatistics';
 import MatchesTable from '../components/MatchesTable';

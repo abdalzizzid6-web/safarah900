@@ -1,7 +1,7 @@
 import { 
   collection, doc, getDocs, getDoc, setDoc, addDoc, updateDoc, deleteDoc, query, limit, where, orderBy 
 } from 'firebase/firestore';
-import { db } from '@/src/firebase';
+import { db } from '@/firebase';
 import { MediaAsset, MediaFolder, MediaCollection, DAMConfig, DAMAnalytics, MediaType } from '../types';
 import { calculateHammingDistance } from '../utils/imageProcessor';
 

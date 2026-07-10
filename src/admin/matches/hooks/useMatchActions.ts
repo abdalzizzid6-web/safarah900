@@ -2,10 +2,10 @@ import { useState } from 'react';
 import { matchAdminService } from '../services/matchAdminService';
 import { matchEnterpriseService, MatchStatus } from '../services/matchEnterpriseService';
 import { useQueryClient } from '@tanstack/react-query';
-import { logMatchAction } from '@/src/services/matchService';
-import { Match } from '@/src/types';
-import { createSlugPath } from '@/src/utils/slugify';
-import { auth } from '@/src/firebase';
+import { logMatchAction } from '@/services/matchService';
+import { Match } from '@/types';
+import { createSlugPath } from '@/utils/slugify';
+import { auth } from '@/firebase';
 
 export function useMatchActions(matches: Match[], showToast: (msg: string, type: 'success' | 'error' | 'warning' | 'info') => void) {
   const [actionLoading, setActionLoading] = useState<string | null>(null);

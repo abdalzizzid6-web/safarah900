@@ -1,5 +1,5 @@
-import { Match } from '@/src/types';
-import { matchesRepositoryV2, MatchStatus, MatchVersion, MatchAuditLog } from '@/src/core/repository/MatchesRepositoryV2';
+import { Match } from '@/types';
+import { matchesRepositoryV2, MatchStatus, MatchVersion, MatchAuditLog } from '@/core/repository/MatchesRepositoryV2';
 
 export { MatchStatus };
 export type { MatchVersion, MatchAuditLog };

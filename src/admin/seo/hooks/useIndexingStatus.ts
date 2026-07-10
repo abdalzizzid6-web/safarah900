@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { seoDiagnosticsService } from '../services/seoDiagnosticsService';
-import { createSlugPath } from '@/src/utils/slugify';
+import { createSlugPath } from '@/utils/slugify';
 
 interface UseIndexingStatusProps {
   showToast: (msg: string, type: 'success' | 'error' | 'info') => void;

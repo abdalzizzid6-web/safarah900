@@ -21,8 +21,8 @@ import {
   Megaphone,
   Bell
 } from 'lucide-react';
-import { auth } from '@/src/firebase';
-import { useError } from '@/src/context/ErrorContext';
+import { auth } from '@/firebase';
+import { useError } from '@/context/ErrorContext';
 
 interface ServiceStatus {
   name: string;

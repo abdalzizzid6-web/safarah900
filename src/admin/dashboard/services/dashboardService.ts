@@ -1,4 +1,4 @@
-import { db, auth } from '@/src/firebase';
+import { db, auth } from '@/firebase';
 import { collection, getDocs, query, limit, orderBy, doc, getDoc, getCountFromServer, setDoc } from 'firebase/firestore';
 
 export const dashboardService = {

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Match } from '@/src/types';
+import { Match } from '@/types';
 
 export function useMatchForm(leagues: any[]) {
   const [showMatchModal, setShowMatchModal] = useState(false);

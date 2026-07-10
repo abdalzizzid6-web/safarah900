@@ -1,5 +1,5 @@
 import React from 'react';
-import { cn } from '@/src/lib/utils';
+import { cn } from '@/lib/utils';
 import { Clock, ShieldCheck, Star, Activity, Archive } from 'lucide-react';
 
 export default function MatchStatistics({ statsSummary, statusFilter, setStatusFilter }: any) {

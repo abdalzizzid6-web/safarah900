@@ -55,11 +55,72 @@ app.use((req, res, next) => {
   next();
 });
 
+// Cache for index.html template and sitemaps
+let cachedIndexHtml: string | null = null;
+const matchSsoCache: Record<string, { data: any, expiry: number }> = {};
+const newsSsoCache: Record<string, { data: any, expiry: number }> = {};
+
+const getIndexHtml = (distPath: string) => {
+  if (cachedIndexHtml && process.env.NODE_ENV === 'production') return cachedIndexHtml;
+  try {
+    cachedIndexHtml = fs.readFileSync(path.join(distPath, 'index.html'), 'utf-8');
+    return cachedIndexHtml;
+  } catch (e) {
+    return '<html><head><title>Safara 90</title></head><body><div id="root"></div></body></html>';
+  }
+};
+
+const injectSeo = (html: string, options: { 
+  title?: string, 
+  description?: string, 
+  url?: string, 
+  image?: string,
+  type?: string,
+  structuredData?: any 
+}) => {
+  const { title, description, url, image = 'https://korea90.xyz/logo-master.png', type = 'website', structuredData } = options;
+  
+  let result = html;
+  if (title) {
+    const fullTitle = `${title} | صافرة 90`;
+    result = result.replace(/<title>.*?<\/title>/, `<title>${fullTitle}</title>`);
+    result = result.replace(/<meta property="og:title" content=".*?" \/>/, `<meta property="og:title" content="${fullTitle}" />`);
+  }
+  
+  if (description) {
+    result = result.replace(/<meta name="description" content=".*?" \/>/, `<meta name="description" content="${description}" />`);
+    result = result.replace(/<meta property="og:description" content=".*?" \/>/, `<meta property="og:description" content="${description}" />`);
+  }
+
+  if (url) {
+    result = result.replace(/<meta property="og:url" content=".*?" \/>/, `<meta property="og:url" content="${url}" />`);
+    // Add canonical
+    if (result.includes('</head>')) {
+      result = result.replace('</head>', `  <link rel="canonical" href="${url}" />\n</head>`);
+    }
+  }
+
+  if (image) {
+    result = result.replace(/<meta property="og:image" content=".*?" \/>/, `<meta property="og:image" content="${image}" />`);
+  }
+
+  if (type) {
+    result = result.replace(/<meta property="og:type" content=".*?" \/>/, `<meta property="og:type" content="${type}" />`);
+  }
+
+  if (structuredData && result.includes('</head>')) {
+    const ldJson = `  <script type="application/ld+json">\n${JSON.stringify(structuredData, null, 2)}\n  </script>\n</head>`;
+    result = result.replace('</head>', ldJson);
+  }
+
+  return result;
+};
+
 // CRITICAL: SEO Routes must take precedence before static files or other catch-alls
 app.use("/", seoRoutes);
 
 app.get("/robots.txt", (req, res) => {
-  const host = (process.env.BASE_URL || `https://${req.get('host')}`).replace(/\/$/, '');
+  const host = (process.env.BASE_URL || `https://korea90.xyz`).replace(/\/$/, '');
   res.header('Content-Type', 'text/plain; charset=utf-8');
   res.send(`User-agent: *
 Allow: /
@@ -67,6 +128,7 @@ Disallow: /admin/
 Disallow: /api/
 Disallow: /vip
 Disallow: /premium-services
+Disallow: /*?*
 
 Sitemap: ${host}/sitemap.xml`);
 });
@@ -325,7 +387,6 @@ app.post("/api/notifications/unsubscribe", async (req, res) => {
 
 // In-memory caching layer to prevent 429 rate limit errors for football-data.org
 const proxyCache: Record<string, { data: any; expiry: number }> = {};
-const matchSsoCache: Record<string, { data: any; expiry: number }> = {};
 const predictionExistenceCache: Record<string, { data: any; expiry: number }> = {};
 
 // Proxy router for football-data.org to avoid CORS & network issues in browser
@@ -847,25 +908,21 @@ export async function bootstrap() {
           const doc = await firestore.collection('matches').doc(matchId).get();
           if (doc.exists) {
             matchDoc = { id: doc.id, ...doc.data(), exists: true };
-            matchSsoCache[matchId] = { data: matchDoc, expiry: nowMs + 30 * 60 * 1000 }; // 30 min cache for match meta
+            matchSsoCache[matchId] = { data: matchDoc, expiry: nowMs + 30 * 60 * 1000 };
           } else {
             matchDoc = { exists: false };
-            matchSsoCache[matchId] = { data: matchDoc, expiry: nowMs + 10 * 60 * 1000 }; // 10 min cache for 404s
+            matchSsoCache[matchId] = { data: matchDoc, expiry: nowMs + 10 * 60 * 1000 };
           }
         }
 
         const exists = matchDoc.exists;
-        
-        // Basic pattern check for World Cup matches if not in collection (handled by separate service)
         const isWcPattern = matchId.includes('2026-m-') || matchId.includes('2022-m-') || matchId.startsWith('wc-');
 
         if (!exists && !isWcPattern) {
-          // Return index.html with 404 status to avoid Soft 404
           return res.status(404).sendFile(path.join(distPath, 'index.html'));
         }
 
-        // Dynamic Meta Injection for SEO crawlers
-        let html = fs.readFileSync(path.join(distPath, 'index.html'), 'utf-8');
+        let html = getIndexHtml(distPath);
         
         if (exists) {
           const data = matchDoc || {};
@@ -873,31 +930,35 @@ export async function bootstrap() {
           const awayTeam = data.awayTeamName || (typeof data.awayTeam === 'object' ? data.awayTeam.name : data.awayTeam) || 'فريق 2';
           const league = data.leagueName || (typeof data.league === 'object' ? data.league.name : data.league) || 'بطولة';
           
-          const title = `مباراة ${homeTeam} ضد ${awayTeam} - ${league} | صافرة 90`;
+          const title = `مباراة ${homeTeam} ضد ${awayTeam} - ${league}`;
           const description = `تابع تفاصيل مباراة ${homeTeam} و ${awayTeam} في ${league}. البث المباشر، التشكيلات، والنتائج لحظة بلحظة على صافرة 90.`;
           
-          html = html.replace(/<title>.*?<\/title>/, `<title>${title}</title>`);
-          html = html.replace(/<meta name="description" content=".*?" \/>/, `<meta name="description" content="${description}" />`);
-          
-          const ogTags = `
-            <meta property="og:title" content="${title}" />
-            <meta property="og:description" content="${description}" />
-            <meta property="og:type" content="article" />
-            <meta property="og:url" content="https://korea90.xyz/match/${slug}" />
-            <link rel="canonical" href="https://korea90.xyz/match/${slug}" />
-          `;
-          html = html.replace('</head>', `${ogTags}</head>`);
+          const structuredData = {
+            "@context": "https://schema.org",
+            "@type": "SportsEvent",
+            "name": title,
+            "description": description,
+            "startDate": data.startTime?.toDate?.()?.toISOString() || data.startTime,
+            "homeTeam": { "@type": "SportsTeam", "name": homeTeam },
+            "awayTeam": { "@type": "SportsTeam", "name": awayTeam },
+            "location": { "@type": "Place", "name": data.venue || "ملعب المباراة" }
+          };
+
+          html = injectSeo(html, {
+            title,
+            description,
+            url: `https://korea90.xyz/match/${slug}`,
+            type: 'article',
+            structuredData
+          });
         }
 
         res.send(html);
       } catch (e) {
-        console.error(`[SEO Error] Failed to process match meta for ${slug}:`, e);
+        console.error(`[SEO Error] Failed to process match meta:`, e);
         res.sendFile(path.join(distPath, 'index.html'));
       }
     });
-
-    // Cache variables for news pages SEO meta
-    const newsSsoCache: Record<string, { data: any, expiry: number }> = {};
 
     app.get('/news/:slug', async (req, res) => {
       const { slug } = req.params;
@@ -917,10 +978,10 @@ export async function bootstrap() {
           const doc = await firestore.collection('news').doc(newsId).get();
           if (doc.exists) {
             newsDoc = { id: doc.id, ...doc.data(), exists: true };
-            newsSsoCache[newsId] = { data: newsDoc, expiry: nowMs + 30 * 60 * 1000 }; // 30 min cache
+            newsSsoCache[newsId] = { data: newsDoc, expiry: nowMs + 30 * 60 * 1000 };
           } else {
             newsDoc = { exists: false };
-            newsSsoCache[newsId] = { data: newsDoc, expiry: nowMs + 10 * 60 * 1000 }; // 10 min cache
+            newsSsoCache[newsId] = { data: newsDoc, expiry: nowMs + 10 * 60 * 1000 };
           }
         }
 
@@ -928,34 +989,62 @@ export async function bootstrap() {
           return res.status(404).sendFile(path.join(distPath, 'index.html'));
         }
 
-        let html = fs.readFileSync(path.join(distPath, 'index.html'), 'utf-8');
+        let html = getIndexHtml(distPath);
         const data = newsDoc;
-        const title = data.seo?.metaTitle || data.title || 'خبر رياضي';
-        const description = data.seo?.metaDescription || data.excerpt || data.content?.substring(0, 160) || 'تفاصيل الخبر الرياضي على صافرة 90';
-        const image = data.featuredImage?.url || '/logo-master.png';
+        const title = data.seo?.metaTitle || data.title;
+        const description = data.seo?.metaDescription || data.excerpt || data.content?.substring(0, 160);
+        const image = data.featuredImage?.url || data.image || 'https://korea90.xyz/logo-master.png';
 
-        html = html.replace(/<title>.*?<\/title>/, `<title>${title} | صافرة 90</title>`);
-        html = html.replace(/<meta name="description" content=".*?" \/>/, `<meta name="description" content="${description}" />`);
+        const structuredData = {
+          "@context": "https://schema.org",
+          "@type": "NewsArticle",
+          "headline": title,
+          "description": description,
+          "image": [image],
+          "datePublished": data.publishDate?.toDate?.()?.toISOString() || data.publishDate,
+          "dateModified": data.updatedAt?.toDate?.()?.toISOString() || data.updatedAt,
+          "author": { "@type": "Organization", "name": "صافرة 90" }
+        };
 
-        const ogTags = `
-          <meta property="og:title" content="${title} | صافرة 90" />
-          <meta property="og:description" content="${description}" />
-          <meta property="og:type" content="article" />
-          <meta property="og:url" content="https://korea90.xyz/news/${slug}" />
-          <meta property="og:image" content="${image}" />
-          <link rel="canonical" href="https://korea90.xyz/news/${slug}" />
-        `;
-        html = html.replace('</head>', `${ogTags}</head>`);
+        html = injectSeo(html, {
+          title,
+          description,
+          url: `https://korea90.xyz/news/${slug}`,
+          image,
+          type: 'article',
+          structuredData
+        });
 
         res.send(html);
       } catch (e) {
-        console.error(`[SEO Error] Failed to process news meta for ${slug}:`, e);
+        console.error(`[SEO Error] Failed to process news meta:`, e);
         res.sendFile(path.join(distPath, 'index.html'));
       }
     });
 
     app.get('*', (req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
+      const html = getIndexHtml(distPath);
+      // Default home page SEO if it's the root
+      if (req.path === '/') {
+        const homeSeo = injectSeo(html, {
+          title: "الرئيسية - أهم أخبار ونتائج مباريات كرة القدم",
+          description: "صافرة 90 هي منصتك الأولى لمتابعة نتائج مباريات كرة القدم، البث المباشر، وأحدث الأخبار الرياضية العالمية والعربية لحظة بلحظة.",
+          url: "https://korea90.xyz/",
+          structuredData: {
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            "name": "صافرة 90",
+            "url": "https://korea90.xyz/",
+            "potentialAction": {
+              "@type": "SearchAction",
+              "target": "https://korea90.xyz/search?q={search_term_string}",
+              "query-input": "required name=search_term_string"
+            }
+          }
+        });
+        return res.send(homeSeo);
+      }
+      res.send(html);
     });
   }
 

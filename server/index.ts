@@ -18,6 +18,7 @@ import rssRoutes from "./routes/rss";
 import knowledgeRoutes from "./routes/knowledge";
 import mediaRoutes from "./routes/media";
 import newsRoutes from "./routes/news";
+import { socialRouter } from "./routes/social";
 
 import { startNotificationJob } from "./jobs/syncNotifications";
 import { startRssJobs } from "./jobs/rssPolling";
@@ -247,6 +248,7 @@ app.post("/api/predict/match", async (req, res) => {
 
 // Mounted Routes
 app.use("/api/admin", adminRoutes);
+app.use("/api/social", socialRouter);
 app.post("/api/test-api-key", authMiddleware('editor'), async (req, res) => {
     const { provider, key } = req.body;
     try {

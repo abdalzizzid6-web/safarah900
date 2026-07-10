@@ -1,0 +1,259 @@
+src/admin/shared/MediaManager.tsx:17:      const response = await fetch(`/api/imagekit/files?path=${encodeURIComponent(path)}`);
+src/admin/shared/MediaManager.tsx:40:        const filesRes = await fetch('/api/imagekit/files');
+src/admin/shared/MediaManager.tsx:67:      const response = await fetch('/api/imagekit/upload', {
+src/admin/shared/MediaManager.tsx:94:      await fetch(`/api/imagekit/files/${fileId}`, { method: 'DELETE' });
+src/admin/shared/TranslationManager.tsx:31:        model: 'Gemini 1.5 Pro',
+src/admin/shared/TranslationManager.tsx:40:        model: 'Gemini 1.5 Flash',
+src/admin/shared/TranslationManager.tsx:141:                  <option>Gemini 1.5 Pro (الأكثر دقة)</option>
+src/admin/shared/TranslationManager.tsx:142:                  <option>Gemini 1.5 Flash (الأسرع)</option>
+src/admin/shared/BugLogsDashboard.tsx:121:        showError(new Error("footballApiStatus - Unresolved route request to api-sports: RapidAPI token limit reached or invalid."));
+src/admin/shared/WorldCupManager.tsx:35:      await fetch('/api/admin/worldcup/sync', { method: 'POST' });
+src/admin/shared/SeoAnalytics.tsx:33:        const res = await fetch(`/sitemap-${name}.xml`);
+src/admin/shared/SeoAnalytics.tsx:58:      const res = await fetch('/robots.txt');
+src/admin/shared/SeoAnalytics.tsx:88:      const res = await fetch('/api/indexing/notify', {
+src/admin/shared/LeagueManager.tsx:110:        const response = await fetch('/api/admin/arabize-league', {
+src/admin/shared/LeagueManager.tsx:715:                                      <option value="TheSportsDB" className="bg-neutral-900 text-white">TheSportsDB</option>
+src/admin/shared/KnowledgeBaseManager.tsx:79:      await fetch('/api/admin/knowledge/sync-all', { method: 'POST' });
+src/admin/shared/SystemHealthDashboard.tsx:52:      const response = await fetch('/api/diagnostics/run-tests', { 
+src/admin/shared/RssManager.tsx:30:      // Simulation of fetching RSS providers
+src/admin/shared/RssManager.tsx:71:      await fetch('/api/admin/rss/refresh-all', { method: 'POST' });
+src/admin/shared/RssManager.tsx:93:            مركز إدارة خلاصات الأخبار (RSS Feeds Center)
+src/admin/shared/RssManager.tsx:139:          <h3 className="text-sm font-black text-white">مزودي خلاصات RSS</h3>
+src/admin/shared/ApiHealthDashboard.tsx:14:const PROVIDERS = ['API-Football', 'SportMonks', 'TheSportsDB'];
+src/admin/shared/ApiHealthDashboard.tsx:33:      const response = await fetch('/api/test-api-key', {
+src/admin/shared/ApiSettings.tsx:21:    'API-Football': '', 'TheSportsDB': '', 'SportMonks': ''
+src/admin/shared/ApiSettings.tsx:40:      const keyMap: Record<string, string> = { 'API-Football': '', 'TheSportsDB': '', 'SportMonks': '' };
+src/admin/shared/ApiSettings.tsx:101:      const response = await fetch('/api/test-api-key', {
+src/admin/shared/ApiSettings.tsx:213:                <option value="TheSportsDB">TheSportsDB</option>
+src/admin/shared/ApiSettings.tsx:280:            {(['API-Football', 'TheSportsDB', 'SportMonks']).map(p => (
+src/admin/security/services/securityService.ts:17:    const res = await fetch('/api/admin/security/audits', { headers });
+src/admin/security/services/securityService.ts:33:    return await fetch('/api/rss/fetch', {
+src/admin/security/services/securityService.ts:41:    return await fetch('/api/imagekit/diagnostics', {
+src/admin/security/services/securityService.ts:53:    return await fetch('/api/predict/match', {
+src/admin/news/components/NewsToolbar.tsx:13:    { id: 'rss', label: 'تجميع الأخبار الذكي (RSS)', icon: <Newspaper className="w-4 h-4" /> },
+src/admin/news/rss/components/RssAnalytics.tsx:31:          <h2 className="text-lg font-black text-white">تحليلات وبث المزامنة لـ RSS</h2>
+src/admin/news/rss/components/RssDashboard.tsx:67:    { id: 'providers', label: 'إدارة مصادر التغذية (RSS)', icon: <Globe className="w-4 h-4" /> },
+src/admin/news/rss/components/RssDashboard.tsx:69:    { id: 'health', label: 'صحة المصادر (RSS Health)', icon: <Activity className="w-4 h-4" /> }
+src/admin/news/rss/components/RssDashboard.tsx:78:            <Layers className="w-4 h-4" /> منصة تجميع الأخبار والذكاء الاصطناعي (RSS Portal)
+src/admin/news/rss/components/RssImportQueue.tsx:154:            حدد تصفية أخرى أو انتظر تفعيل جلب RSS التلقائي من مصادر التغذية
+src/admin/news/rss/components/RssProvidersList.tsx:104:          <h2 className="text-lg font-black text-white">مصادر التغذية الإخبارية (RSS Feeds)</h2>
+src/admin/news/rss/components/RssProvidersList.tsx:289:              {editingProvider ? 'تعديل مصدر RSS' : 'إضافة مصدر RSS جديد'}
+src/admin/news/rss/components/RssHealth.tsx:27:          مراقبة صحة مصادر RSS
+src/admin/news/rss/utils/index.ts:1:// Localized Arabic text and date formatting utilities for RSS Feed Aggregator
+src/admin/news/rss/hooks/useRssAnalytics.ts:17:      setError(err.message || 'فشل تحميل تحليلات RSS');
+src/admin/news/rss/hooks/useRssProviders.ts:19:      setError(err.message || 'فشل تحميل مزودي RSS');
+src/admin/news/rss/hooks/useRssQueue.ts:22:      setError(err.message || 'فشل تحميل قائمة مراجعة RSS');
+src/admin/news/rss/parsers/index.ts:1:// Client-side RSS visual preview utilities and HTML cleaners
+src/admin/news/rss/services/rssService.ts:19:    const res = await fetch("/api/rss/providers", { headers });
+src/admin/news/rss/services/rssService.ts:20:    if (!res.ok) throw new Error(`Failed to fetch RSS providers: ${await res.text()}`);
+src/admin/news/rss/services/rssService.ts:27:    const res = await fetch("/api/rss/providers", {
+src/admin/news/rss/services/rssService.ts:32:    if (!res.ok) throw new Error(`Failed to save RSS provider: ${await res.text()}`);
+src/admin/news/rss/services/rssService.ts:40:    const res = await fetch(`/api/rss/providers/${id}`, {
+src/admin/news/rss/services/rssService.ts:52:    const res = await fetch(`/api/rss/providers/${id}/toggle`, {
+src/admin/news/rss/services/rssService.ts:64:    const res = await fetch(`/api/rss/sync/${id}`, {
+src/admin/news/rss/services/rssService.ts:75:    const res = await fetch("/api/rss/sync/all", {
+src/admin/news/rss/services/rssService.ts:91:    const res = await fetch(`/api/rss/queue?${params.toString()}`, { headers });
+src/admin/news/rss/services/rssService.ts:92:    if (!res.ok) throw new Error(`Failed to fetch RSS queue: ${await res.text()}`);
+src/admin/news/rss/services/rssService.ts:99:    const res = await fetch(`/api/rss/queue/${id}/edit`, {
+src/admin/news/rss/services/rssService.ts:112:    const res = await fetch(`/api/rss/queue/${id}/status`, {
+src/admin/news/rss/services/rssService.ts:131:    const res = await fetch(`/api/rss/queue/${id}/classify`, {
+src/admin/news/rss/services/rssService.ts:139:  // Get RSS aggregative analytics
+src/admin/news/rss/services/rssService.ts:142:    const res = await fetch("/api/rss/analytics", { headers });
+src/admin/news/rss/services/rssService.ts:143:    if (!res.ok) throw new Error(`Failed to fetch RSS analytics: ${await res.text()}`);
+src/admin/news/rss/services/rssService.ts:150:    const res = await fetch("/api/rss/seed", {
+src/admin/seo/services/seoDiagnosticsService.ts:40:    const response = await fetch('/robots.txt');
+src/admin/seo/services/seoDiagnosticsService.ts:59:    const response = await fetch(targetUrl);
+src/admin/pages/SystemHealthPage.tsx:73:      const response = await fetch('/api/admin/diagnostics/run-tests', {
+src/admin/pages/SystemHealthPage.tsx:149:              مراقبة حية، فحص استجابات APIs حقيقية، وتحليل كفاءة الربط السحابي مع Firebase و Gemini و API-Football و ImageKit.
+src/admin/homepage/components/block-form/BlockFormTabAdvanced.tsx:83:            <option value="rss">الربط التلقائي بأخبار روابط RSS Feed</option>
+src/admin/homepage/components/block-form/BlockFormTabAdvanced.tsx:84:            <option value="ai">محرك تنبؤات الذكاء الاصطناعي (Gemini Forecasts)</option>
+src/admin/dashboard/AiInsightsWidget.tsx:11:            مستشار التشغيل التكتيكي والـ SEO القائم على Gemini AI
+src/admin/dashboard/QuickActions.tsx:33:        <QuickAction icon={<Rss size={22} />} label="إدارة خلاصات RSS" path="/admin/rss" color="bg-orange-600/10 text-orange-400 border-orange-500/10 hover:border-orange-500/30 font-bold" />
+src/admin/dashboard/ApiUsageWidget.tsx:17:        const res = await fetch('/api/admin/api-management/stats', {
+src/admin/dashboard/services/dashboardService.ts:62:    const res = await fetch('/api/admin/metrics');
+src/admin/dashboard/services/dashboardService.ts:83:    const res = await fetch('/api/admin/security/audits', {
+src/admin/dashboard/services/dashboardService.ts:117:    const response = await fetch('/api/admin/clear-cache', {
+src/admin/dashboard/services/dashboardService.ts:130:    const response = await fetch('/api/admin/clean-old-news', {
+src/admin/dashboard/services/dashboardService.ts:144:    const response = await fetch('/api/admin/ai-insights', {
+src/admin/matches/hooks/useMatchActions.ts:16:      await fetch('/api/cache/rebuild', { method: 'POST' });
+src/admin/matches/hooks/useMatchActions.ts:32:      await fetch('/api/indexing/notify', {
+src/admin/navigation/navigation.ts:26:      { name: 'تغذية RSS', path: '/admin/rss', icon: Rss, requiredRole: UserRole.ADMIN },
+src/admin/media/components/MediaUploadsView.tsx:114:        // 2. Premium AI Tagging from Gemini Server Route
+src/admin/media/components/MediaOptimizerView.tsx:112:                <h5 className="text-xs font-black text-white">وسم الذكاء الاصطناعي التلقائي (Gemini Model)</h5>
+src/admin/media/services/mediaService.ts:619:      const response = await fetch('/api/media/smart-tag', {
+src/admin/media/services/mediaService.ts:656:      await fetch('/api/admin/media/cleanup', {
+src/admin/media/dashboard/MediaDashboard.tsx:350:                  قم بسحب وإفلات صور اللاعبين، شعارات الأندية والبطولات ليتولى Gemini توليد الأوسمة الفنية باللغة العربية وتحسين دقة الألوان وتعرية بيانات EXIF للحمل الزائد فوراً.
+src/admin/api/types/api.ts:5:  provider: 'API-Football' | 'SportMonks' | 'TheSportsDB' | 'Custom';
+src/admin/api/components/ApiSettingsWidget.tsx:20:    { key: 'news' as const, label: '📰 الأخبار والتقارير الرياضية', desc: 'مزامنة أخبار RSS وجلب البيانات الصحفية' },
+src/admin/api/components/ApiSettingsWidget.tsx:60:                    <option value="TheSportsDB">TheSportsDB (المفتوح)</option>
+src/admin/api/components/ConnectionDetailsDialog.tsx:88:                <option value="TheSportsDB">TheSportsDB</option>
+src/admin/api/hooks/useApiStatistics.ts:25:    const providerCosts = ['API-Football', 'SportMonks', 'TheSportsDB'].map((pName) => {
+src/admin/api/services/apiManagementService.ts:13:    const res = await fetch('/api/admin/api-management/stats', {
+src/admin/api/services/apiManagementService.ts:25:    const res = await fetch('/api/admin/api-management/providers', {
+src/admin/api/services/apiManagementService.ts:36:    const res = await fetch(`/api/admin/api-management/providers/${id}`, {
+src/admin/api/services/apiManagementService.ts:48:    const res = await fetch('/api/admin/api-management/test-key', {
+src/admin/api/services/apiManagementService.ts:60:    const res = await fetch('/api/admin/api-management/routing', {
+src/admin/api/services/apiManagementService.ts:71:    const res = await fetch('/api/admin/api-management/reset', {
+src/admin/components/operations/OperationsCenter.tsx:6:    { name: 'RSS Health', value: '98%', icon: Radio, color: 'text-emerald-500' },
+src/core/api-management/adapters/api-adapters.ts:7:  // Bridge to footballApi
+src/core/api/apiClient.ts:1:import axios from 'axios';
+src/core/api/apiClient.ts:4:const apiClient = axios.create({
+src/core/api/apiClient.ts:10:registerMatchDiagnostics(apiClient);
+src/core/api/apiClient.ts:12:apiClient.interceptors.request.use((config) => {
+src/core/api/apiClient.ts:19:export default apiClient;
+src/core/api/index.ts:1:export { default as apiClient } from './apiClient';
+src/core/repository/BreakingNewsRepositoryV2.ts:3:import apiClient from '../../api/apiClient';
+src/core/repository/BreakingNewsRepositoryV2.ts:14:      const response = await apiClient.get<any>('/api/news/settings/breaking_articles');
+src/core/repository/FeaturedNewsRepositoryV2.ts:2:import apiClient from '../../api/apiClient';
+src/core/repository/FeaturedNewsRepositoryV2.ts:13:      const response = await apiClient.get<any>('/api/news/settings/featured_articles');
+src/core/repository/NewsRepositoryV2.ts:3:import apiClient from '../../api/apiClient';
+src/core/repository/NewsRepositoryV2.ts:67:      const response = await apiClient.get<{ articles: News[], isQuotaExceeded: boolean }>(`/api/news?limit=${count}`);
+src/core/repository/NewsRepositoryV2.ts:80:      const response = await apiClient.get<News>(`/api/news/article/${slug}`);
+src/core/repository/NewsRepositoryV2.ts:106:      const response = await apiClient.get<{ articles: News[], isQuotaExceeded: boolean }>(`/api/news?${params.toString()}`);
+src/core/repository/MatchesRepositoryV2.ts:2:import apiClient from '../api/apiClient';
+src/core/repository/MatchesRepositoryV2.ts:315:    // Network Request via apiClient
+src/core/repository/MatchesRepositoryV2.ts:318:      const fetchFn = () => apiClient.get<T>(apiEndpoint, { params: apiParams });
+src/core/repository/MatchesRepositoryV2.ts:512:      const response = await apiClient.get<Match>(`/api/matches/${id}`);
+src/core/repository/MatchesRepositoryV2.ts:597:      const response = await apiClient.get<MatchEvent[]>(`/api/matches/${matchId}/events`);
+src/core/repository/MatchesRepositoryV2.ts:637:      const response = await apiClient.get<MatchStat[]>(`/api/matches/${matchId}/statistics`);
+src/core/repository/MatchesRepositoryV2.ts:677:      const response = await apiClient.get<TeamLineup[]>(`/api/matches/${matchId}/lineups`);
+src/core/repository/MatchesRepositoryV2.ts:717:      const response = await apiClient.get<any[]>(`/api/matches/standings/all`);
+src/core/utils/matchDiagnostics.ts:1:import { AxiosInstance } from 'axios';
+src/core/utils/matchDiagnostics.ts:7:export const registerMatchDiagnostics = (apiClient: AxiosInstance) => {
+src/core/utils/matchDiagnostics.ts:8:  apiClient.interceptors.response.use(
+src/core/compatibility/cmsService.ts:78:      const response = await fetch('/channels.json');
+src/core/compatibility/cmsService.ts:207:      const response = await fetch('/servers.json');
+src/components/player/PlayerKnowledgeGraph.tsx:33:    fetch(`/api/knowledge/player/${encodeURIComponent(playerId)}?name=${encodeURIComponent(playerName)}`)
+src/components/match/PredictionsTab.tsx:80:        const response = await fetch('/api/predict/match', {
+src/components/match/MatchKnowledgeGraph.tsx:28:    fetch(`/api/knowledge/match/${encodeURIComponent(matchId)}`)
+src/components/match/AIPredictionWidget.jsx:21:        const response = await fetch('/api/predict/match', {
+src/components/AdBanner.tsx:215:        await fetch('https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js', {
+src/components/team/TeamKnowledgeSection.tsx:25:    fetch(`/api/knowledge/team/${encodeURIComponent(teamId)}`)
+src/components/NotificationCenter.tsx:24:import { FAMOUS_TEAMS } from '../api/apiClient';
+src/components/GoalNotifier.tsx:11:import { FAMOUS_TEAMS } from '../api/apiClient';
+src/components/lineups/LineupsAnalysisModal.tsx:48:              <p className="text-[10px] text-gray-500 font-bold">بواسطة مخرجات الذكاء الاصطناعي من Gemini AI</p>
+src/components/LineupsView.tsx:54:      const response = await fetch(`/api/matches/${match.id || 'match'}/analyze-lineup`, {
+src/components/MatchHighlights.tsx:22:    fetch(`/api/knowledge/match/${encodeURIComponent(matchId)}`)
+src/components/SearchModal.tsx:66:        const semRes = await fetch(`/api/knowledge/search?q=${encodeURIComponent(query)}`);
+src/components/Schedule.tsx:179:    currentQuery.refetch();
+src/components/Schedule.tsx:670:            onRetry={() => currentQuery.refetch()}
+src/services/theSportsDBService.ts:1:import axios from 'axios';
+src/services/theSportsDBService.ts:9:export type ApiProvider = 'API-Football' | 'TheSportsDB';
+src/services/theSportsDBService.ts:14:    if (provider === 'TheSportsDB' || provider === 'API-Football') {
+src/services/theSportsDBService.ts:27:export function getTheSportsDBApiKey(): string {
+src/services/theSportsDBService.ts:35:export function setTheSportsDBApiKey(key: string) {
+src/services/theSportsDBService.ts:41:// In-memory cache for TheSportsDB to prevent redundant fetches
+src/services/theSportsDBService.ts:67:      console.warn('[TheSportsDB] Error reading localStorage cache:', e);
+src/services/theSportsDBService.ts:72:    const response = await axios.get(url, { params, timeout: 12000 });
+src/services/theSportsDBService.ts:87:    console.error(`[TheSportsDB] Error fetching API of url: ${url}`, error);
+src/services/theSportsDBService.ts:90:      console.warn('[TheSportsDB] Returning stale in-memory cache as fallback.');
+src/services/theSportsDBService.ts:97:        console.warn('[TheSportsDB] Returning stale localStorage cache as fallback.');
+src/services/theSportsDBService.ts:110:    const apiKey = getTheSportsDBApiKey();
+src/services/theSportsDBService.ts:130:      console.error('[TheSportsDBService] Failed to fetch leagues:', error);
+src/services/theSportsDBService.ts:139:    const apiKey = getTheSportsDBApiKey();
+src/services/theSportsDBService.ts:193:      console.error(`[TheSportsDBService] Failed to fetch events for league: ${leagueId}`, error);
+src/services/theSportsDBService.ts:202:    const apiKey = getTheSportsDBApiKey();
+src/services/theSportsDBService.ts:255:      console.error(`[TheSportsDBService] Failed to fetch events by date: ${date}`, error);
+src/services/theSportsDBService.ts:264:    const apiKey = getTheSportsDBApiKey();
+src/services/theSportsDBService.ts:271:        throw new Error('Team not found in TheSportsDB');
+src/services/theSportsDBService.ts:287:      console.error(`[TheSportsDBService] Failed to get team details for team: ${teamId}`, error);
+src/services/theSportsDBService.ts:296:    const apiKey = getTheSportsDBApiKey();
+src/services/theSportsDBService.ts:312:      console.error(`[TheSportsDBService] Failed to fetch players for teamId: ${teamId}`, error);
+src/services/theSportsDBService.ts:321:    const apiKey = getTheSportsDBApiKey();
+src/services/theSportsDBService.ts:341:      console.error(`[TheSportsDBService] Failed to search teams with query: ${query}`, error);
+src/services/theSportsDBService.ts:350:    const apiKey = getTheSportsDBApiKey();
+src/services/theSportsDBService.ts:356:        throw new Error('Player not found in TheSportsDB');
+src/services/theSportsDBService.ts:376:      console.error(`[TheSportsDBService] Failed to lookup player: ${playerId}`, error);
+src/services/theSportsDBService.ts:385:    const apiKey = getTheSportsDBApiKey();
+src/services/theSportsDBService.ts:434:      console.error(`[TheSportsDBService] Failed to lookup event: ${id}`, error);
+src/services/dataSourceService.ts:4:export type FootballProvider = 'TheSportsDB' | 'API-Football' | 'SportMonks' | 'Custom' | 'None';
+src/services/dataSourceService.ts:26:  sportMonksKey: string;
+src/services/dataSourceService.ts:55:  sportMonksKey: '',
+src/services/dataSourceService.ts:109:        if (!merged.sportMonksKey && DEFAULT_DATA_SOURCE_SETTINGS.sportMonksKey) {
+src/services/dataSourceService.ts:110:          merged.sportMonksKey = DEFAULT_DATA_SOURCE_SETTINGS.sportMonksKey;
+src/services/dataSourceService.ts:162:        const response = await fetch('/api/test-api-key', {
+src/services/worldCupService.ts:307:      const response = await fetch(endpoint);
+src/services/worldCupService.ts:344:      const response = await fetch('/api/football-data/competitions/WC');
+src/services/worldCupService.ts:485:        const matches = await provider.fetch(targetYear, ignoreCache);
+src/services/worldCupService.ts:636:        const footballApiData = await this.safeGet(`/api/football-api/standings?league=1&season=${targetYear}`, async () => {
+src/services/worldCupService.ts:640:        if (footballApiData && footballApiData.response && footballApiData.response.length > 0) {
+src/services/worldCupService.ts:643:          const groups = mapLeagueStandings(footballApiData);
+src/services/worldCupService.ts:722:        const footballApiData = await this.safeGet(`/api/football-api/teams?league=1&season=${targetYear}`, async () => {
+src/services/worldCupService.ts:726:        if (footballApiData && footballApiData.response && footballApiData.response.length > 0) {
+src/services/worldCupService.ts:729:          const mapped = mapRawTeams(footballApiData.response);
+src/services/worldCupService.ts:825:        const footballApiData = await this.safeGet(`/api/football-api/players/topscorers?league=1&season=${targetYear}`, async () => {
+src/services/worldCupService.ts:829:        if (footballApiData && footballApiData.response && footballApiData.response.length > 0) {
+src/services/worldCupService.ts:831:          const mappedScorers: ScorerEntry[] = footballApiData.response.map((s: any) => ({
+src/services/worldCupDataProvider.ts:19:    const res = await fetch(endpoint);
+src/services/imagekitService.ts:11:  const res = await fetch("/api/imagekit/upload", {
+src/services/footballApi.ts:1:import apiClient, { getActiveApiKey } from '../api/apiClient';
+src/services/footballApi.ts:32:      // Standings are fetched and successfully cached inside our apiClient cache layer for 30 minutes!
+src/services/footballApi.ts:33:      console.log(`[footballApi] Standings successfully populated & cached for league ${leagueId}`);
+src/services/aiContentEngine.ts:5: * Delegated to server-side API for security (Gemini API access).
+src/services/aiContentEngine.ts:10:   * Server-side API handles Firestore caching and Gemini generation.
+src/services/aiContentEngine.ts:20:        response = await fetch(url, {
+src/services/aiContentEngine.ts:28:        response = await fetch(url);
+src/services/sportMonksService.ts:1:import axios from 'axios';
+src/services/sportMonksService.ts:11:  const key = settings.sportMonksKey;
+src/services/sportMonksService.ts:28:  const response = await axios.get(url);
+src/services/sportMonksService.ts:32:export const sportMonksService = {
+src/services/sportMonksService.ts:49:      console.error('[sportMonksService] Failed to load leagues:', err);
+src/services/sportMonksService.ts:66:      console.error('[sportMonksService] Failed to load fixtures for date:', err);
+src/services/sportMonksService.ts:82:      console.error('[sportMonksService] Failed to load live matches:', err);
+src/services/sportMonksService.ts:99:      console.error('[sportMonksService] Failed to load fixture details:', err);
+src/services/sportMonksService.ts:128:      console.error('[sportMonksService] Failed to load team detail:', err);
+src/services/sportMonksService.ts:151:      console.error('[sportMonksService] Failed to load team squads:', err);
+src/services/sportMonksService.ts:183:      console.error('[sportMonksService] Failed to load player details:', err);
+src/services/sportMonksService.ts:209:      console.error('[sportMonksService] Failed to fetch standings:', err);
+src/services/openFootballService.ts:1:import axios from 'axios';
+src/services/openFootballService.ts:708:            return await axios.get(url, { timeout: 15000 });
+src/services/notificationService.ts:147:      const response = await fetch('/api/notifications/subscribe', {
+src/services/notificationService.ts:176:      const response = await fetch('/api/notifications/unsubscribe', {
+src/services/api/searchService.js:1:import apiClient, { getActiveApiKey } from '../../api/apiClient';
+src/services/api/searchService.js:25:      const teamRes = await apiClient.get('/teams', { params: { search: term } });
+src/services/api/searchService.js:39:      const playerRes = await apiClient.get('/players', { params: { search: term } });
+src/services/api/searchService.js:54:      const leagueRes = await apiClient.get('/leagues', { params: { search: term } });
+src/services/api/searchService.js:69:      const response = await apiClient.get('/fixtures', {
+src/types.ts:194:  matchProvider: 'TheSportsDB' | 'API-Football' | 'SportMonks' | 'Custom' | 'None';
+src/types.ts:195:  leagueProvider: 'TheSportsDB' | 'API-Football' | 'SportMonks' | 'Custom' | 'None';
+src/types.ts:196:  teamProvider: 'TheSportsDB' | 'API-Football' | 'SportMonks' | 'Custom' | 'None';
+src/types.ts:197:  playerProvider: 'TheSportsDB' | 'API-Football' | 'SportMonks' | 'Custom' | 'None';
+src/types.ts:198:  standingsProvider: 'TheSportsDB' | 'API-Football' | 'SportMonks' | 'Custom' | 'None';
+src/types.ts:199:  statisticsProvider: 'TheSportsDB' | 'API-Football' | 'SportMonks' | 'Custom' | 'None';
+src/types.ts:200:  streamProvider: 'TheSportsDB' | 'API-Football' | 'SportMonks' | 'Custom' | 'None';
+src/types.ts:203:  sportMonksKey: string;
+src/types.ts:213:  fallbackProvider: 'TheSportsDB' | 'API-Football' | 'SportMonks' | 'Custom' | 'None';
+src/hooks/useNews.ts:71:    await v2Refetch();
+src/pages/StandingsPage.tsx:3:import axios from 'axios';
+src/pages/StandingsPage.tsx:93:      const response = await axios.get(`/api/football-data/competitions/${selectedLeague}/standings`);
+src/pages/SitemapPage.tsx:157:          desc: "مراقبة حيّة لاتصال Firebase وGemini API واستهلاك كوتا البيانات الرياضية في الوقت الفعلي.", 
+src/pages/ExportManagement.tsx:65:                ملاحظة: إذا كان تطبيقك يحتوي على دوال Backend (كجلب الخلاصات RSS)، قد يتطلب ذلك استضافة كاملة (Node.js) أو تحويل الـ Backend إلى Vercel Serverless Functions.
+src/api/leagueApi.js:1:import apiClient from './apiClient';
+src/api/apiClient.ts:1:import axios from 'axios';
+src/api/apiClient.ts:80:const apiClient = axios.create({
+src/api/apiClient.ts:89:apiClient.interceptors.request.use((config) => {
+src/api/apiClient.ts:323:// Override apiClient.get to implement Caching, Request Deduplication, and Retry backoff
+src/api/apiClient.ts:324:const originalGet = apiClient.get;
+src/api/apiClient.ts:325:apiClient.get = async function<T = any>(url: string, config?: any): Promise<any> {
+src/api/apiClient.ts:349:  const requestPromise = executeWithRetry(() => originalGet.call(apiClient, url, config))
+src/api/apiClient.ts:365:apiClient.interceptors.response.use(
+src/api/apiClient.ts:383:        return apiClient(retryConfig);
+src/api/apiClient.ts:424:    console.warn(`[apiClient Interceptor] Real API Error (status: ${status || 'network'}): ${error.message || error}`);
+src/api/apiClient.ts:425:    console.warn(`[apiClient Interceptor] Failed URL: ${config?.baseURL || ''}${config?.url || ''}, Method: ${config?.method || 'unknown'}`);
+src/api/apiClient.ts:456:export default apiClient;
+src/api/playerApi.js:1:import apiClient from './apiClient';
+src/api/playerApi.js:39:      const response = await apiClient.get('/players', {
+src/api/teamApi.js:1:import apiClient from './apiClient';
+src/api/teamApi.js:38:      const response = await apiClient.get('/teams', {
+src/api/teamApi.js:79:    let response = await apiClient.get('/fixtures', {
+src/api/teamApi.js:90:          const fbResponse = await apiClient.get('/fixtures', {
+src/api/teamApi.js:141:    const response = await apiClient.get('/standings', {
+src/api/teamApi.js:176:    const response = await apiClient.get('/players/squads', {
+src/api/teamApi.js:183:      const playersRes = await apiClient.get('/players', {
+src/api/sysClient.ts:1:import axios from 'axios';
+src/api/sysClient.ts:4:const sysClient = axios.create({
+src/context/NotificationContext.tsx:4:import { FAMOUS_TEAMS } from '../api/apiClient';
+src/context/ErrorContext.tsx:145:      errStr.includes('footballApiStatus')
+src/main.tsx:7:import axios from 'axios';
+src/main.tsx:46:  axios.interceptors.request.use(async (config) => {
+src/App.tsx:143:        const res = await fetch('/api/diagnostics');

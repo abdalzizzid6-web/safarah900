@@ -1,11 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
-import { db } from '../../../firebase';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { featuredNewsRepositoryV2 } from '../../../core/repository/FeaturedNewsRepositoryV2';
 import { featureFlags } from '../../../core/config/featureFlags';
-
-const SETTINGS_DOC_PATH = 'news_settings/featured_articles';
 
 export function useFeaturedNews() {
   const queryClient = useQueryClient();
@@ -29,10 +25,9 @@ export function useFeaturedNews() {
   const loadFeatured = useCallback(async () => {
     if (featureFlags.useNewsV2) return;
     try {
-      const docRef = doc(db, SETTINGS_DOC_PATH);
-      const snap = await getDoc(docRef);
-      if (snap.exists()) {
-        setFeaturedIds(snap.data().ids || []);
+      const doc = await featuredNewsRepositoryV2.getById('featured_articles');
+      if (doc) {
+        setFeaturedIds(doc.ids || []);
       }
     } catch (err) {
       console.error('Error loading featured articles settings:', err);
@@ -58,8 +53,7 @@ export function useFeaturedNews() {
     }
 
     try {
-      const docRef = doc(db, SETTINGS_DOC_PATH);
-      await setDoc(docRef, { ids: nextIds }, { merge: true });
+      await featuredNewsRepositoryV2.setById('featured_articles', { ids: nextIds });
       setFeaturedIds(nextIds);
       return true;
     } catch (err) {

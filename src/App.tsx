@@ -88,6 +88,7 @@ const SeoDiagnosticsPage = lazy(() => import('./admin/pages/SeoDiagnosticsPage')
 const SecurityDashboardPage = lazy(() => import('./admin/security/SecurityDashboardPage'));
 const NewsDashboardPage = lazy(() => import('./admin/news/pages/NewsDashboardPage'));
 const HomepageManager = lazy(() => import('./admin/homepage/pages/HomepageManager'));
+const SocialMediaCenter = lazy(() => import('./admin/social/SocialMediaCenter'));
 
 import AdminLayout from './admin/layouts/AdminLayout';
 import Profile from './components/Profile';
@@ -245,6 +246,7 @@ export default function App() {
                                     <Route path="ads" element={<AdManager />} />
                                     <Route path="notifications" element={<NotificationBroadcast />} />
                                     <Route path="users" element={<UserRoleManager />} />
+                                    <Route path="social/*" element={<SocialMediaCenter />} />
                                     <Route path="system-health" element={<SystemHealthPage />} />
                                     <Route path="security-dashboard" element={<SecurityDashboardPage />} />
                                     <Route path="error-center" element={<BugLogsDashboard />} />

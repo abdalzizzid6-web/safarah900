@@ -2,8 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { UserRole } from '../types';
-import { doc, setDoc } from 'firebase/firestore';
-import { db } from '../firebase';
 import { ShieldAlert, RefreshCw, UserCheck, ArrowLeft, AlertCircle } from 'lucide-react';
 
 interface ProtectedRouteProps {

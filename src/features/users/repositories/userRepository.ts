@@ -9,6 +9,7 @@ export interface UserProfile {
   role: string;
   notifiedMatches?: string[];
   favoriteTeamIds?: string[];
+  favoriteLeagues?: string[];
 }
 
 export const subscribeToUserProfile = (uid: string, callback: (profile: UserProfile | null) => void) => {

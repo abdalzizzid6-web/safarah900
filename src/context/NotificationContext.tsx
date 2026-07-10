@@ -1,9 +1,9 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
-import { collection, query, orderBy, limit, onSnapshot, doc, updateDoc, getDoc } from 'firebase/firestore';
-import { db, auth, registerForPushNotifications } from '../firebase';
+import { auth, registerForPushNotifications } from '../firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { FAMOUS_TEAMS } from '../api/apiClient';
 import { safeJSONParse } from '../lib/json';
+import { getUserProfile, updateUserProfile } from '../features/users/repositories/userRepository';
 
 export type NotificationType = 'goal' | 'result' | 'card' | 'status_change';
 
@@ -124,22 +124,15 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     // Register push notifications
     registerForPushNotifications(user.uid);
 
-    const docRef = doc(db, 'users', user.uid);
-
     const fetchPreferences = async () => {
       try {
-        const snapshot = await getDoc(docRef);
-        if (snapshot.exists()) {
-          const data = snapshot.data();
-          setFavoriteLeagues(data.favoriteLeagues || []);
-          setNotifiedMatches(data.notifiedMatches || []);
+        const profile = await getUserProfile(user.uid);
+        if (profile) {
+          setFavoriteLeagues(profile.favoriteLeagues || []);
+          setNotifiedMatches(profile.notifiedMatches || []);
         }
       } catch (error: any) {
-        if (error.code === 'resource-exhausted') {
-          console.warn("Firestore Quota Exceeded in NotificationProvider user listener.");
-        } else {
-          console.error("Error getting user doc in NotificationProvider:", error);
-        }
+        console.error("Error getting user doc in NotificationProvider:", error);
       }
     };
 
@@ -154,7 +147,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       : [...current, leagueName];
     
     try {
-      await updateDoc(doc(db, 'users', user.uid), { favoriteLeagues: newList });
+      await updateUserProfile(user.uid, { favoriteLeagues: newList });
     } catch (e) {
       console.error("Error toggling favorite league:", e);
     }
@@ -168,7 +161,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       : [...current, matchId];
     
     try {
-      await updateDoc(doc(db, 'users', user.uid), { notifiedMatches: newList });
+      await updateUserProfile(user.uid, { notifiedMatches: newList });
     } catch (e) {
       console.error("Error toggling match notification:", e);
     }
@@ -200,7 +193,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     if (missingLeagues.length > 0) {
       const newList = [...new Set([...currentLeagues, ...missingLeagues])];
       try {
-        await updateDoc(doc(db, 'users', user.uid), { favoriteLeagues: newList });
+        await updateUserProfile(user.uid, { favoriteLeagues: newList });
         console.log(`[SmartSync] Synchronized ${missingLeagues.length} leagues across user profile.`);
       } catch (e) {
         console.warn("Smart sync failed to save to Firestore:", e);

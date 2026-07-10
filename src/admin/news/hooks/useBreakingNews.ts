@@ -1,12 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
-import { db } from '../../../firebase';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { breakingNewsRepositoryV2 } from '../../../core/repository/BreakingNewsRepositoryV2';
 import { featureFlags } from '../../../core/config/featureFlags';
-
-const SETTINGS_DOC_PATH = 'news_settings/breaking_articles';
-
 import { BreakingNewsFlash } from '../types/breakingNews';
 
 export function useBreakingNews() {
@@ -31,10 +26,9 @@ export function useBreakingNews() {
   const loadBreaking = useCallback(async () => {
     if (featureFlags.useNewsV2) return;
     try {
-      const docRef = doc(db, SETTINGS_DOC_PATH);
-      const snap = await getDoc(docRef);
-      if (snap.exists()) {
-        setBreakingFlashes(snap.data().flashes || []);
+      const doc = await breakingNewsRepositoryV2.getById('breaking_articles');
+      if (doc) {
+        setBreakingFlashes(doc.flashes || []);
       }
     } catch (err) {
       console.error('Error loading breaking news flashes:', err);
@@ -54,8 +48,7 @@ export function useBreakingNews() {
       return await saveMutation.mutateAsync(flashes);
     }
     try {
-      const docRef = doc(db, SETTINGS_DOC_PATH);
-      await setDoc(docRef, { flashes }, { merge: true });
+      await breakingNewsRepositoryV2.setById('breaking_articles', { flashes });
       setBreakingFlashes(flashes);
       return true;
     } catch (err) {

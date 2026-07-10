@@ -3,7 +3,7 @@ import apiClient from '../../api/apiClient';
 import { db } from '../../firebase';
 import { doc, setDoc } from 'firebase/firestore';
 
-export class FeaturedNewsRepositoryV2 extends BaseRepository<string[]> {
+export class FeaturedNewsRepositoryV2 extends BaseRepository<{ ids: string[] }> {
   constructor() {
     super('news_settings');
   }
@@ -14,14 +14,15 @@ export class FeaturedNewsRepositoryV2 extends BaseRepository<string[]> {
       return response.data?.ids || [];
     } catch (e) {
       console.error('FeaturedNewsRepositoryV2.getFeaturedIds error:', e);
-      return [];
+      // Fallback to repository
+      const doc = await this.getById('featured_articles');
+      return doc?.ids || [];
     }
   }
 
   async saveFeaturedIds(ids: string[]): Promise<boolean> {
     try {
-        const docRef = doc(db, 'news_settings', 'featured_articles');
-        await setDoc(docRef, { ids }, { merge: true });
+        await this.setById('featured_articles', { ids });
         return true;
     } catch (e) {
         return false;

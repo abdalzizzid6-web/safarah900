@@ -6,8 +6,6 @@ import { BlockForm } from '../components/BlockForm';
 import { HOMEPAGE_TEMPLATES } from '../../../premium/data/HomepageTemplates';
 import { clearHomepageCache } from '../../../hooks/useHomepageLayout';
 import { motion, AnimatePresence } from 'motion/react';
-import { db } from '../../../firebase';
-import { writeBatch, doc } from 'firebase/firestore';
 
 // Import sub-components
 import { THEME_PRESETS } from '../components/homepage-manager/HomepageManagerConstants';

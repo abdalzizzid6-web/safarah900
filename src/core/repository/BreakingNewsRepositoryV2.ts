@@ -4,7 +4,7 @@ import apiClient from '../../api/apiClient';
 import { db } from '../../firebase';
 import { doc, setDoc } from 'firebase/firestore';
 
-export class BreakingNewsRepositoryV2 extends BaseRepository<BreakingNewsFlash> {
+export class BreakingNewsRepositoryV2 extends BaseRepository<{ flashes: BreakingNewsFlash[] }> {
   constructor() {
     super('news_settings'); // Breaking news is in news_settings/breaking_articles
   }
@@ -15,14 +15,15 @@ export class BreakingNewsRepositoryV2 extends BaseRepository<BreakingNewsFlash> 
       return response.data?.flashes || [];
     } catch (e) {
       console.error('BreakingNewsRepositoryV2.getFlashes error:', e);
-      return [];
+      // Fallback
+      const doc = await this.getById('breaking_articles');
+      return doc?.flashes || [];
     }
   }
 
   async saveFlashes(flashes: BreakingNewsFlash[]): Promise<boolean> {
     try {
-        const docRef = doc(db, 'news_settings', 'breaking_articles');
-        await setDoc(docRef, { flashes }, { merge: true });
+        await this.setById('breaking_articles', { flashes });
         return true;
     } catch (e) {
         return false;

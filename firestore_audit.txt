@@ -1,0 +1,387 @@
+src/utils/googleIndexing.ts:57:      errorStr.toLowerCase().includes('limit') || 
+src/utils/UserPointTracker.ts:4:  getDoc, 
+src/utils/UserPointTracker.ts:5:  setDoc, 
+src/utils/UserPointTracker.ts:6:  updateDoc, 
+src/utils/UserPointTracker.ts:7:  collection, 
+src/utils/UserPointTracker.ts:8:  getDocs, 
+src/utils/UserPointTracker.ts:9:  query, 
+src/utils/UserPointTracker.ts:10:  orderBy, 
+src/utils/UserPointTracker.ts:11:  limit,
+src/utils/UserPointTracker.ts:83:      const userSnap = await getDoc(userDocRef);
+src/utils/UserPointTracker.ts:129:      await updateDoc(userDocRef, incrementFields).catch(async (err) => {
+src/utils/UserPointTracker.ts:131:        await setDoc(userDocRef, incrementFields, { merge: true });
+src/utils/UserPointTracker.ts:138:      await setDoc(publicPointsRef, {
+src/utils/UserPointTracker.ts:189:      const userSnap = await getDoc(userDocRef);
+src/utils/UserPointTracker.ts:210:      const userSnap = await getDoc(userDocRef);
+src/utils/UserPointTracker.ts:247: * Retrieves top users for competitive rankings from user_points collection.
+src/utils/UserPointTracker.ts:255:    const pointsCollRef = collection(db, 'user_points');
+src/utils/UserPointTracker.ts:256:    const q = query(pointsCollRef, orderBy('points', 'desc'), limit(10));
+src/utils/UserPointTracker.ts:257:    const querySnapshot = await getDocs(q);
+src/utils/UserPointTracker.ts:259:    querySnapshot.forEach((docSnap) => {
+src/admin/shared/TeamsCms.tsx:148:      // Save directly to teams collection
+src/admin/shared/BugLogsDashboard.tsx:117:        showError(new Error("Firebase Firestore RESOURCE_EXHAUSTED: Quota limit exceeded for read transactions from client 958469007898."));
+src/admin/shared/BugLogsDashboard.tsx:119:        showError(new Error("Missing or insufficient permissions. User in 'guest' role cannot write to collection 'settings'."));
+src/admin/shared/BugLogsDashboard.tsx:121:        showError(new Error("footballApiStatus - Unresolved route request to api-sports: RapidAPI token limit reached or invalid."));
+src/admin/shared/LeagueManager.tsx:418:    const queryStr = searchTerm.toLowerCase();
+src/admin/shared/LeagueManager.tsx:419:    const matchesSearch = nameSearch.includes(queryStr) || customSearch.includes(queryStr);
+src/admin/news/hooks/useFeaturedNews.ts:2:import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+src/admin/news/hooks/useFeaturedNews.ts:7:  const queryClient = useQueryClient();
+src/admin/news/hooks/useFeaturedNews.ts:13:    queryKey: ['featuredNews'],
+src/admin/news/hooks/useFeaturedNews.ts:14:    queryFn: () => featuredNewsRepositoryV2.getFeaturedIds(),
+src/admin/news/hooks/useFeaturedNews.ts:21:    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['featuredNews'] }),
+src/admin/news/hooks/useNews.ts:30:        limitSize: 15
+src/admin/news/hooks/useLatestNews.ts:1:import { useQuery } from '@tanstack/react-query';
+src/admin/news/hooks/useLatestNews.ts:7:    queryKey: ['latestNews', count],
+src/admin/news/hooks/useLatestNews.ts:8:    queryFn: () => newsService.getLatestNews(count),
+src/admin/news/hooks/useBreakingNews.ts:2:import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+src/admin/news/hooks/useBreakingNews.ts:8:  const queryClient = useQueryClient();
+src/admin/news/hooks/useBreakingNews.ts:14:    queryKey: ['breakingNews'],
+src/admin/news/hooks/useBreakingNews.ts:15:    queryFn: () => breakingNewsRepositoryV2.getFlashes(),
+src/admin/news/hooks/useBreakingNews.ts:22:    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['breakingNews'] }),
+src/admin/news/hooks/useNewsCategories.ts:2:import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+src/admin/news/hooks/useNewsCategories.ts:8:  const queryClient = useQueryClient();
+src/admin/news/hooks/useNewsCategories.ts:12:    queryKey: ['newsCategories'],
+src/admin/news/hooks/useNewsCategories.ts:13:    queryFn: () => newsCategoryService.getCategories(),
+src/admin/news/hooks/useNewsCategories.ts:22:    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['newsCategories'] }),
+src/admin/news/hooks/useNewsCategories.ts:27:    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['newsCategories'] }),
+src/admin/news/hooks/useNewsCategories.ts:32:    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['newsCategories'] }),
+src/admin/homepage/components/BlockForm.tsx:2:import { collection, addDoc, doc, updateDoc } from 'firebase/firestore';
+src/admin/homepage/components/BlockForm.tsx:100:      // Load custom filtering & limit parameters
+src/admin/homepage/components/BlockForm.tsx:451:        await updateDoc(doc(db, 'homepage_blocks', blockToEdit.id), payload);
+src/admin/homepage/components/BlockForm.tsx:453:        await addDoc(collection(db, 'homepage_blocks'), payload);
+src/admin/matches/hooks/useMatches.ts:2:import { useQuery, useQueryClient } from '@tanstack/react-query';
+src/admin/matches/hooks/useMatches.ts:7:  const queryClient = useQueryClient();
+src/admin/matches/hooks/useMatches.ts:9:  const query = useQuery({
+src/admin/matches/hooks/useMatches.ts:10:    queryKey: ['admin-matches'],
+src/admin/matches/hooks/useMatches.ts:11:    queryFn: matchAdminService.getMatches,
+src/admin/matches/hooks/useMatches.ts:19:      queryClient.setQueryData(['admin-matches'], matches);
+src/admin/matches/hooks/useMatches.ts:23:  }, [options?.subscribe, queryClient]);
+src/admin/matches/hooks/useMatches.ts:26:    matches: query.data || [],
+src/admin/matches/hooks/useMatches.ts:27:    isLoading: query.isLoading,
+src/admin/matches/hooks/useMatches.ts:28:    isError: query.isError,
+src/admin/matches/hooks/useMatches.ts:29:    error: query.error,
+src/admin/matches/hooks/useMatches.ts:30:    refetch: query.refetch
+src/admin/matches/hooks/useMatchActions.ts:4:import { useQueryClient } from '@tanstack/react-query';
+src/admin/matches/hooks/useMatchActions.ts:12:  const queryClient = useQueryClient();
+src/admin/matches/hooks/useMatchActions.ts:17:      queryClient.invalidateQueries({ queryKey: ['liveMatchesV2'] });
+src/admin/matches/hooks/useMatchActions.ts:18:      queryClient.invalidateQueries({ queryKey: ['fixturesV2'] });
+src/admin/matches/hooks/useMatchActions.ts:19:      queryClient.invalidateQueries({ queryKey: ['matchDetailsV2'] });
+src/admin/matches/utils/inspectFirestoreMatch.ts:2:import { collection, query, limit, getDocs } from 'firebase/firestore';
+src/admin/matches/utils/inspectFirestoreMatch.ts:11:    const q = query(collection(db, 'matches'), limit(1));
+src/admin/matches/utils/inspectFirestoreMatch.ts:12:    const snapshot = await getDocs(q);
+src/admin/matches/utils/inspectFirestoreMatch.ts:15:      console.warn("No matches found in Firestore 'matches' collection.");
+src/admin/media/components/MediaCollectionsView.tsx:6:  collections: MediaCollection[];
+src/admin/media/components/MediaCollectionsView.tsx:14:  collections,
+src/admin/media/components/MediaCollectionsView.tsx:50:  const countCollectionAssets = (collection: MediaCollection) => {
+src/admin/media/components/MediaCollectionsView.tsx:51:    if (collection.isSmart && collection.smartRules) {
+src/admin/media/components/MediaCollectionsView.tsx:52:      const ruleTags = collection.smartRules.tags || [];
+src/admin/media/components/MediaCollectionsView.tsx:53:      const ruleType = collection.smartRules.mediaType;
+src/admin/media/components/MediaCollectionsView.tsx:61:    return assets.filter(a => a.collectionIds?.includes(collection.id)).length;
+src/admin/media/components/MediaCollectionsView.tsx:64:  const toggleFavorite = async (collection: MediaCollection) => {
+src/admin/media/components/MediaCollectionsView.tsx:65:    await onUpdateCollection(collection.id, { isFavorite: !collection.isFavorite });
+src/admin/media/components/MediaCollectionsView.tsx:68:  const togglePin = async (collection: MediaCollection) => {
+src/admin/media/components/MediaCollectionsView.tsx:69:    await onUpdateCollection(collection.id, { isPinned: !collection.isPinned });
+src/admin/media/components/MediaCollectionsView.tsx:181:        {collections.map(col => {
+src/admin/media/components/MediaUploadsView.tsx:146:          collectionIds: [],
+src/admin/media/components/MediaUploadsView.tsx:185:          collectionIds: [],
+src/admin/media/components/MediaLibraryView.tsx:11:  collections: MediaCollection[];
+src/admin/media/components/MediaLibraryView.tsx:21:  collections,
+src/admin/media/components/MediaLibraryView.tsx:147:      const coll = collections.find(c => c.id === selectedCollection);
+src/admin/media/components/MediaLibraryView.tsx:157:          matchesCollection = asset.collectionIds?.includes(selectedCollection);
+src/admin/media/components/MediaLibraryView.tsx:206:            {collections.map(c => (
+src/admin/media/types/index.ts:74:  collectionIds: string[];
+src/admin/media/dashboard/MediaDashboard.tsx:21:  const [activeTab, setActiveTab] = useState<'dashboard' | 'library' | 'folders' | 'collections' | 'uploads' | 'optimizer' | 'duplicates' | 'cdn' | 'analytics' | 'settings'>('dashboard');
+src/admin/media/dashboard/MediaDashboard.tsx:26:  const [collections, setCollections] = useState<MediaCollection[]>([]);
+src/admin/media/dashboard/MediaDashboard.tsx:176:    { id: 'collections', name: 'ألبومات ذكية', icon: Layers },
+src/admin/media/dashboard/MediaDashboard.tsx:244:              collections={collections} 
+src/admin/media/dashboard/MediaDashboard.tsx:261:          {activeTab === 'collections' && (
+src/admin/media/dashboard/MediaDashboard.tsx:263:              collections={collections} 
+src/admin/media/dashboard/MediaDashboard.tsx:331:            <h4 className="text-xl font-black text-blue-400 font-mono mt-1">{collections.length} ألبوم</h4>
+src/core/api-management/contracts/ISyncRepository.ts:11:  getSyncLogs(limitCount?: number): Promise<ISyncLog[]>;
+src/core/api/rateLimiter.ts:2:  // Placeholder for rate limiting logic
+src/core/compatibility/cmsService.ts:2:import { doc, getDoc, getDocs, setDoc, deleteDoc, collection, query, limit } from 'firebase/firestore';
+src/core/compatibility/cmsService.ts:67:    await setDoc(doc(db, 'cms_leagues', String(leagueId)), payload, { merge: true });
+src/core/compatibility/cmsService.ts:88:      console.warn("[cmsService] Channels.json cache fetch failed, querying Firestore fallback:", err);
+src/core/compatibility/cmsService.ts:92:      const snap = await getDocs(query(collection(db, 'cms_leagues'), limit(50)));
+src/core/compatibility/cmsService.ts:122:    await setDoc(doc(db, 'cms_match_overrides', String(matchId)), payload, { merge: true });
+src/core/compatibility/cmsService.ts:132:      const snap = await getDocs(query(collection(db, 'cms_match_overrides'), limit(100)));
+src/core/compatibility/cmsService.ts:154:    await setDoc(doc(db, 'cms_teams', String(teamId)), payload, { merge: true });
+src/core/compatibility/cmsService.ts:164:      const snap = await getDocs(query(collection(db, 'cms_teams'), limit(100)));
+src/core/compatibility/cmsService.ts:189:    await setDoc(doc(db, 'cms_channels_servers', String(id)), payload, { merge: true });
+src/core/compatibility/cmsService.ts:196:    await deleteDoc(doc(db, 'cms_channels_servers', String(id)));
+src/core/compatibility/cmsService.ts:217:      console.warn("[cmsService] Servers.json cache fetch failed, querying Firestore fallback:", err);
+src/core/compatibility/cmsService.ts:221:      const snap = await getDocs(query(collection(db, 'cms_channels_servers'), limit(100)));
+src/core/compatibility/cmsService.ts:240:      const docSnap = await getDoc(doc(db, 'cms_config', 'homepage'));
+src/core/compatibility/cmsService.ts:259:    await setDoc(doc(db, 'cms_config', 'homepage'), payload, { merge: true });
+src/core/monitoring/telemetry.ts:48:  logFirestoreRead(collection: string) { 
+src/core/monitoring/telemetry.ts:50:    console.log(`[TELEMETRY]: Firestore Read - ${collection}`); 
+src/core/monitoring/telemetry.ts:52:  logFirestoreWrite(collection: string) { 
+src/core/monitoring/telemetry.ts:54:    console.log(`[TELEMETRY]: Firestore Write - ${collection}`); 
+src/core/query/queryClient.ts:1:import { QueryClient } from '@tanstack/react-query';
+src/core/query/queryClient.ts:3:export const queryClient = new QueryClient({
+src/components/match/H2HTab.tsx:56:          const fsMatches = await matchesRepositoryV2.getMatches({ limit: 100 });
+src/components/ErrorBoundary.tsx:45:      // Rate limit reloads to once every 30 seconds to avoid 429 and infinity loops
+src/components/ui/PullToRefresh.tsx:17:  const maxPullDistance = 130; // maximum visual drag limit
+src/components/SEO.tsx:88:      'query-input': 'required name=search_term_string'
+src/components/SearchModal.tsx:28:  const [query, setQuery] = useState('');
+src/components/SearchModal.tsx:54:  // Debounced semantic & fallback search query
+src/components/SearchModal.tsx:56:    if (!query.trim()) {
+src/components/SearchModal.tsx:66:        const semRes = await fetch(`/api/knowledge/search?q=${encodeURIComponent(query)}`);
+src/components/SearchModal.tsx:75:          (l?.name || '').toLowerCase().includes(query.toLowerCase()) ||
+src/components/SearchModal.tsx:76:          (l?.country || '').toLowerCase().includes(query.toLowerCase())
+src/components/SearchModal.tsx:79:        if ("كأس العالم 2026 world cup wc".includes(query.toLowerCase())) {
+src/components/SearchModal.tsx:93:          matchedTeams = await teamService.searchTeams(query);
+src/components/SearchModal.tsx:111:  }, [query]);
+src/components/SearchModal.tsx:165:                value={query}
+src/components/SearchModal.tsx:174:              {!query.trim() ? (
+src/components/Schedule.tsx:148:  // Dynamic query selection based on tab
+src/components/VideoPlayer.tsx:345:      const iframe = playerRef.current?.querySelector('iframe');
+src/components/VideoPlayer.tsx:503:      const limit = (zoomScale - 1) * 160;
+src/components/VideoPlayer.tsx:505:        x: Math.min(Math.max(dragStartRef.current.panX + dx, -limit), limit),
+src/components/VideoPlayer.tsx:506:        y: Math.min(Math.max(dragStartRef.current.panY + dy, -limit), limit)
+src/premium/components/PremiumNewsSection.tsx:26:    limitSize: 12
+src/lib/react-query.ts:1:import { QueryClient } from '@tanstack/react-query';
+src/lib/react-query.ts:3:export const queryClient = new QueryClient({
+src/features/match-details/hooks/useMatchLineups.ts:2:import { useQuery } from '@tanstack/react-query';
+src/features/match-details/hooks/useMatchLineups.ts:7:        queryKey: ['match-lineups', id],
+src/features/match-details/hooks/useMatchLineups.ts:8:        queryFn: async () => {
+src/features/match-details/hooks/useMatchStats.ts:2:import { useQuery } from '@tanstack/react-query';
+src/features/match-details/hooks/useMatchStats.ts:7:        queryKey: ['match-stats', id],
+src/features/match-details/hooks/useMatchStats.ts:8:        queryFn: async () => {
+src/features/match-details/hooks/useMatch.ts:2:import { useQuery } from '@tanstack/react-query';
+src/features/match-details/hooks/useMatch.ts:8:        queryKey: ['matchDetails', id],
+src/features/match-details/hooks/useMatch.ts:9:        queryFn: async () => {
+src/features/match-details/hooks/useMatchH2H.ts:2:import { useQuery } from '@tanstack/react-query';
+src/features/match-details/hooks/useMatchH2H.ts:7:        queryKey: ['match-h2h', id],
+src/features/match-details/hooks/useMatchH2H.ts:8:        queryFn: async () => {
+src/features/match-details/hooks/useMatchTimeline.ts:2:import { useQuery } from '@tanstack/react-query';
+src/features/match-details/hooks/useMatchTimeline.ts:7:        queryKey: ['match-timeline', id],
+src/features/match-details/hooks/useMatchTimeline.ts:8:        queryFn: async () => {
+src/features/match-details/hooks/useMatchPredictions.ts:2:import { useQuery } from '@tanstack/react-query';
+src/features/match-details/hooks/useMatchPredictions.ts:7:        queryKey: ['match-predictions', id],
+src/features/match-details/hooks/useMatchPredictions.ts:8:        queryFn: async () => {
+src/features/world-cup/hooks/useWorldCup.ts:2:import { useQuery } from '@tanstack/react-query';
+src/features/world-cup/hooks/useWorldCup.ts:12:    queryKey: ['wc-admin-matches'],
+src/features/world-cup/hooks/useWorldCup.ts:13:    queryFn: () => worldCupService.getWorldCupMatches(2026),
+src/features/world-cup/hooks/useWorldCup.ts:18:    queryKey: ['wc-admin-teams'],
+src/features/world-cup/hooks/useWorldCup.ts:19:    queryFn: () => worldCupService.getWorldCupTeams(2026),
+src/features/world-cup/hooks/useWorldCup.ts:24:    queryKey: ['wc-admin-news'],
+src/features/world-cup/hooks/useWorldCup.ts:25:    queryFn: worldCupAdminRepository.getNews,
+src/features/world-cup/hooks/useWorldCup.ts:30:    queryKey: ['wc-admin-streams'],
+src/features/world-cup/hooks/useWorldCup.ts:31:    queryFn: worldCupAdminRepository.getStreams,
+src/features/world-cup/hooks/useWorldCup.ts:36:    queryKey: ['wc-admin-users'],
+src/features/world-cup/hooks/useWorldCup.ts:37:    queryFn: async () => {
+src/features/world-cup/repositories/worldCupRepository.ts:1:import { collection, query, where, getDocs, limit, orderBy } from 'firebase/firestore';
+src/features/world-cup/repositories/worldCupRepository.ts:6:    const q = query(
+src/features/world-cup/repositories/worldCupRepository.ts:7:      collection(db, 'matchStreams'),
+src/features/world-cup/repositories/worldCupRepository.ts:8:      where('matchId', '==', String(matchId)),
+src/features/world-cup/repositories/worldCupRepository.ts:9:      where('isActive', '!=', false)
+src/features/world-cup/repositories/worldCupRepository.ts:11:    const snapshot = await getDocs(q);
+src/features/world-cup/repositories/worldCupRepository.ts:19:export const getNews = async (limitCount: number = 20) => {
+src/features/world-cup/repositories/worldCupRepository.ts:21:    const q = query(
+src/features/world-cup/repositories/worldCupRepository.ts:22:      collection(db, 'news'),
+src/features/world-cup/repositories/worldCupRepository.ts:23:      orderBy('createdAt', 'desc'),
+src/features/world-cup/repositories/worldCupRepository.ts:24:      limit(limitCount)
+src/features/world-cup/repositories/worldCupRepository.ts:26:    const snapshot = await getDocs(q);
+src/features/world-cup/repositories/worldCupAdminRepository.ts:2:import { collection, doc, getDocs, updateDoc, deleteDoc, addDoc, onSnapshot, query, orderBy, limit, serverTimestamp, setDoc } from 'firebase/firestore';
+src/features/world-cup/repositories/worldCupAdminRepository.ts:7:    await setDoc(ref, {
+src/features/world-cup/repositories/worldCupAdminRepository.ts:16:    await setDoc(ref, {
+src/features/world-cup/repositories/worldCupAdminRepository.ts:24:    const snap = await getDocs(query(collection(db, 'news'), limit(200)));
+src/features/world-cup/repositories/worldCupAdminRepository.ts:28:    await addDoc(collection(db, 'news'), { ...data, date: new Date().toISOString() });
+src/features/world-cup/repositories/worldCupAdminRepository.ts:31:    await updateDoc(doc(db, 'news', id), data);
+src/features/world-cup/repositories/worldCupAdminRepository.ts:34:    await deleteDoc(doc(db, 'news', id));
+src/features/world-cup/repositories/worldCupAdminRepository.ts:38:    const snap = await getDocs(query(collection(db, 'matchStreams'), limit(200)));
+src/features/world-cup/repositories/worldCupAdminRepository.ts:42:    await updateDoc(doc(db, 'matchStreams', id), data);
+src/features/world-cup/repositories/worldCupAdminRepository.ts:46:    await setDoc(doc(db, 'matchStreams', id), data);
+src/features/world-cup/repositories/worldCupAdminRepository.ts:49:    await deleteDoc(doc(db, 'matchStreams', id));
+src/features/world-cup/repositories/worldCupAdminRepository.ts:53:    const snap = await getDocs(query(collection(db, 'users'), limit(500)));
+src/features/world-cup/repositories/worldCupAdminRepository.ts:58:    await updateDoc(doc(db, 'users', id), roleData);
+src/features/world-cup/repositories/worldCupAdminRepository.ts:62:    const q = query(collection(db, 'api_logs'), orderBy('timestamp', 'desc'), limit(50));
+src/features/world-cup/repositories/worldCupAdminRepository.ts:63:    return onSnapshot(q, (snapshot) => {
+src/features/users/repositories/userRepository.ts:1:import { doc, onSnapshot, getDoc, updateDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+src/features/users/repositories/userRepository.ts:21:  return onSnapshot(docRef, (snapshot) => {
+src/features/users/repositories/userRepository.ts:51:    const snapshot = await getDoc(docRef);
+src/features/users/repositories/userRepository.ts:70:        console.warn('[userRepository] Quota limit exceeded or connection error. Recovered user profile from local storage fallback.');
+src/features/users/repositories/userRepository.ts:83:    await updateDoc(docRef, {
+src/features/users/repositories/userRepository.ts:96:    await setDoc(docRef, {
+src/features/contact/repositories/contactRepository.ts:1:import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+src/features/contact/repositories/contactRepository.ts:14:    await addDoc(collection(db, 'contact_messages'), {
+src/features/analytics/repositories/analyticsRepository.ts:1:import { doc, setDoc, increment, serverTimestamp, arrayUnion } from 'firebase/firestore';
+src/features/analytics/repositories/analyticsRepository.ts:7:    await setDoc(eventRef, {
+src/features/analytics/repositories/analyticsRepository.ts:28:    // setDoc with merge: true will create the doc if it doesn't exist
+src/features/analytics/repositories/analyticsRepository.ts:29:    // This dramatically reduces Firestore reads by eliminating getDoc
+src/features/analytics/repositories/analyticsRepository.ts:30:    await setDoc(dailyRef, {
+src/features/analytics/repositories/analyticsRepository.ts:52:    await setDoc(presenceRef, {
+src/features/ads/hooks/useAds.ts:1:import { useQuery } from '@tanstack/react-query';
+src/features/ads/hooks/useAds.ts:6:    queryKey: ['ads'],
+src/features/ads/hooks/useAds.ts:7:    queryFn: () => getAllAds(),
+src/features/ads/hooks/useAdActions.ts:1:import { useMutation, useQueryClient } from '@tanstack/react-query';
+src/features/ads/hooks/useAdActions.ts:6:  const queryClient = useQueryClient();
+src/features/ads/hooks/useAdActions.ts:10:    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['ads'] })
+src/features/ads/hooks/useAdActions.ts:15:    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['ads'] })
+src/features/ads/hooks/useAdActions.ts:20:    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['ads'] })
+src/features/cms/hooks/useCmsHooks.ts:1:import { useQuery } from '@tanstack/react-query';
+src/features/cms/hooks/useCmsHooks.ts:7:    queryKey: ['cms_leagues'],
+src/features/cms/hooks/useCmsHooks.ts:8:    queryFn: () => cmsRepositoryV2.getLeagues(),
+src/features/cms/hooks/useCmsHooks.ts:16:    queryKey: ['cms_teams'],
+src/features/cms/hooks/useCmsHooks.ts:17:    queryFn: () => cmsRepositoryV2.getTeams(),
+src/features/cms/hooks/useCmsHooks.ts:25:    queryKey: ['cms_channels'],
+src/features/cms/hooks/useCmsHooks.ts:26:    queryFn: () => cmsRepositoryV2.getChannels(),
+src/features/cms/hooks/useCmsHooks.ts:34:    queryKey: ['cms_homepage_config'],
+src/features/cms/hooks/useCmsHooks.ts:35:    queryFn: () => cmsRepositoryV2.getHomepageConfig(),
+src/features/cms/repositories/cmsRepository.ts:1:import { doc, getDoc, setDoc, collection, query, where, orderBy, getDocs, serverTimestamp } from 'firebase/firestore';
+src/features/cms/repositories/cmsRepository.ts:13:    const docSnap = await getDoc(docRef);
+src/features/cms/repositories/cmsRepository.ts:26:  await setDoc(docRef, {
+src/features/cms/repositories/cmsRepository.ts:34:    const q = query(
+src/features/cms/repositories/cmsRepository.ts:35:      collection(db, 'announcements'),
+src/features/cms/repositories/cmsRepository.ts:36:      where('active', '==', true),
+src/features/cms/repositories/cmsRepository.ts:37:      orderBy('priority', 'desc')
+src/features/cms/repositories/cmsRepository.ts:40:    const snapshot = await getDocs(q);
+src/features/cms/repositories/cmsRepository.ts:59:    await setDoc(doc(db, 'install_widget_stats', customId), {
+src/features/news/repositories/newsRepository.ts:1:import { collection, query, where, limit, getDocs, doc, getDoc, orderBy } from 'firebase/firestore';
+src/features/news/repositories/newsRepository.ts:17:    const docSnap = await getDoc(docRef);
+src/features/news/repositories/newsRepository.ts:26:    const q = query(
+src/features/news/repositories/newsRepository.ts:27:      collection(db, 'news'),
+src/features/news/repositories/newsRepository.ts:28:      where('seo.slug', '==', slug),
+src/features/news/repositories/newsRepository.ts:29:      limit(1)
+src/features/news/repositories/newsRepository.ts:31:    const snapshot = await getDocs(q);
+src/features/news/repositories/newsRepository.ts:54:    const q = query(
+src/features/news/repositories/newsRepository.ts:55:      collection(db, 'news'),
+src/features/news/repositories/newsRepository.ts:56:      orderBy('publishDate', 'desc'),
+src/features/news/repositories/newsRepository.ts:57:      limit(count)
+src/features/news/repositories/newsRepository.ts:59:    const snapshot = await getDocs(q);
+src/hooks/useMatchesV2.ts:1:import { useQuery, useQueryClient, QueryClient } from '@tanstack/react-query';
+src/hooks/useMatchesV2.ts:13:// Global constant keys for query caching stability
+src/hooks/useMatchesV2.ts:34:    queryKey: MATCHES_QUERY_KEYS.list(filters),
+src/hooks/useMatchesV2.ts:35:    queryFn: async ({ signal }) => {
+src/hooks/useMatchesV2.ts:49:    queryKey: MATCHES_QUERY_KEYS.live(),
+src/hooks/useMatchesV2.ts:50:    queryFn: async ({ signal }) => {
+src/hooks/useMatchesV2.ts:67:    queryKey: MATCHES_QUERY_KEYS.detail(id),
+src/hooks/useMatchesV2.ts:68:    queryFn: async ({ signal }) => {
+src/hooks/useMatchesV2.ts:76:    refetchInterval: (query) => {
+src/hooks/useMatchesV2.ts:78:      const match = query.state.data;
+src/hooks/useMatchesV2.ts:91:    queryKey: MATCHES_QUERY_KEYS.fixtures(filters),
+src/hooks/useMatchesV2.ts:92:    queryFn: async ({ signal }) => {
+src/hooks/useMatchesV2.ts:106:    queryKey: MATCHES_QUERY_KEYS.results(),
+src/hooks/useMatchesV2.ts:107:    queryFn: async ({ signal }) => {
+src/hooks/useMatchesV2.ts:121:    queryKey: MATCHES_QUERY_KEYS.standings(leagueId),
+src/hooks/useMatchesV2.ts:122:    queryFn: async ({ signal }) => {
+src/hooks/useMatchesV2.ts:136:    queryKey: MATCHES_QUERY_KEYS.league(leagueId),
+src/hooks/useMatchesV2.ts:137:    queryFn: async ({ signal }) => {
+src/hooks/useMatchesV2.ts:152:    queryKey: MATCHES_QUERY_KEYS.team(teamId),
+src/hooks/useMatchesV2.ts:153:    queryFn: async ({ signal }) => {
+src/hooks/useMatchesV2.ts:168:    queryKey: MATCHES_QUERY_KEYS.h2h(homeId, awayId),
+src/hooks/useMatchesV2.ts:169:    queryFn: async ({ signal }) => {
+src/hooks/useMatchesV2.ts:184:    queryKey: MATCHES_QUERY_KEYS.events(matchId),
+src/hooks/useMatchesV2.ts:185:    queryFn: async ({ signal }) => {
+src/hooks/useMatchesV2.ts:200:    queryKey: MATCHES_QUERY_KEYS.statistics(matchId),
+src/hooks/useMatchesV2.ts:201:    queryFn: async ({ signal }) => {
+src/hooks/useMatchesV2.ts:216:    queryKey: MATCHES_QUERY_KEYS.lineups(matchId),
+src/hooks/useMatchesV2.ts:217:    queryFn: async ({ signal }) => {
+src/hooks/useMatchesV2.ts:232:export async function prefetchMatchDetails(queryClient: QueryClient, matchId: string) {
+src/hooks/useMatchesV2.ts:237:      queryClient.prefetchQuery({
+src/hooks/useMatchesV2.ts:238:        queryKey: MATCHES_QUERY_KEYS.detail(matchId),
+src/hooks/useMatchesV2.ts:239:        queryFn: () => matchService.getMatchDetails(matchId),
+src/hooks/useMatchesV2.ts:242:      queryClient.prefetchQuery({
+src/hooks/useMatchesV2.ts:243:        queryKey: MATCHES_QUERY_KEYS.events(matchId),
+src/hooks/useMatchesV2.ts:244:        queryFn: () => matchService.getEvents(matchId),
+src/hooks/useMatchesV2.ts:247:      queryClient.prefetchQuery({
+src/hooks/useMatchesV2.ts:248:        queryKey: MATCHES_QUERY_KEYS.statistics(matchId),
+src/hooks/useMatchesV2.ts:249:        queryFn: () => matchService.getStatistics(matchId),
+src/hooks/useMatchesV2.ts:252:      queryClient.prefetchQuery({
+src/hooks/useMatchesV2.ts:253:        queryKey: MATCHES_QUERY_KEYS.lineups(matchId),
+src/hooks/useMatchesV2.ts:254:        queryFn: () => matchService.getLineups(matchId),
+src/hooks/useMatchesV2.ts:266:export function invalidateMatchQueries(queryClient: QueryClient, matchId: string) {
+src/hooks/useMatchesV2.ts:269:  queryClient.invalidateQueries({ queryKey: MATCHES_QUERY_KEYS.detail(matchId) });
+src/hooks/useMatchesV2.ts:270:  queryClient.invalidateQueries({ queryKey: MATCHES_QUERY_KEYS.events(matchId) });
+src/hooks/useMatchesV2.ts:271:  queryClient.invalidateQueries({ queryKey: MATCHES_QUERY_KEYS.statistics(matchId) });
+src/hooks/useMatchesV2.ts:272:  queryClient.invalidateQueries({ queryKey: MATCHES_QUERY_KEYS.lineups(matchId) });
+src/hooks/useHomepageLayout.ts:2:import { useQuery } from '@tanstack/react-query';
+src/hooks/useHomepageLayout.ts:5:import { queryClient } from '../lib/react-query';
+src/hooks/useHomepageLayout.ts:8:  queryClient.invalidateQueries({ queryKey: ['homepageLayoutV2'] });
+src/hooks/useHomepageLayout.ts:13:    queryKey: ['homepageLayoutV2'],
+src/hooks/useHomepageLayout.ts:14:    queryFn: async () => {
+src/hooks/useNews.ts:2:import { useQuery } from '@tanstack/react-query';
+src/hooks/useNews.ts:11:  limitSize?: number;
+src/hooks/useNews.ts:21:    queryKey: ['newsListV2', options.category, options.tag, options.limitSize, v2Cursor],
+src/hooks/useNews.ts:22:    queryFn: async ({ signal }) => {
+src/hooks/useNews.ts:28:        limitSize: options.limitSize || 10,
+src/hooks/useNews.ts:34:    gcTime: 15 * 60 * 1000,  // 15 minutes garbage collection
+src/hooks/useNews.ts:58:      setV2HasMore(pageArticles.length === (options.limitSize || 10));
+src/hooks/useNews.ts:60:  }, [pageData, v2Cursor, options.limitSize]);
+src/hooks/useFootballApi.ts:1:import { useQuery } from '@tanstack/react-query';
+src/hooks/useFootballApi.ts:16:    queryKey: ['liveMatchesV2'],
+src/hooks/useFootballApi.ts:17:    queryFn: async () => {
+src/hooks/useFootballApi.ts:32:    queryKey: ['fixturesV2', filters],
+src/hooks/useFootballApi.ts:33:    queryFn: async () => {
+src/hooks/useFootballApi.ts:58:    queryKey: ['standingsV2', leagueId, season],
+src/hooks/useFootballApi.ts:59:    queryFn: async () => {
+src/hooks/useFootballApi.ts:76:    queryKey: ['leaguesV2'],
+src/hooks/useFootballApi.ts:77:    queryFn: async () => {
+src/hooks/useFootballApi.ts:90:    queryKey: ['teamDetailsV2', teamId],
+src/hooks/useFootballApi.ts:91:    queryFn: async () => {
+src/hooks/useFootballApi.ts:105:    queryKey: ['playerDetailsV2', playerId, season],
+src/hooks/useFootballApi.ts:106:    queryFn: async () => {
+src/hooks/useFootballApi.ts:118:export function useGlobalSearch(queryText: string) {
+src/hooks/useFootballApi.ts:120:    queryKey: ['globalSearch', queryText],
+src/hooks/useFootballApi.ts:121:    queryFn: async () => {
+src/hooks/useFootballApi.ts:122:      if (!queryText || queryText.trim().length < 2) {
+src/hooks/useFootballApi.ts:125:      return await searchService.searchGlobal(queryText);
+src/hooks/useFootballApi.ts:127:    enabled: queryText.trim().length >= 2,
+src/hooks/useFootballApi.ts:134:    queryKey: ['leagueDetails', leagueId, season],
+src/hooks/useFootballApi.ts:135:    queryFn: async () => {
+src/hooks/useArticle.ts:1:import { useQuery } from '@tanstack/react-query';
+src/hooks/useArticle.ts:8:    queryKey: ['article', slug],
+src/hooks/useArticle.ts:9:    queryFn: () => newsService.getArticleBySlug(slug),
+src/hooks/useLeagues.ts:1:import { useQuery } from '@tanstack/react-query';
+src/hooks/useLeagues.ts:9:    queryKey: LEAGUES_QUERY_KEY,
+src/hooks/useLeagues.ts:10:    queryFn: () => leagueService.getLeagues(),
+src/pages/StandingsPage.tsx:4:import { useQuery } from '@tanstack/react-query';
+src/pages/StandingsPage.tsx:78:    queryKey: ['standings', selectedLeague],
+src/pages/StandingsPage.tsx:79:    queryFn: async () => {
+src/pages/StandingsPage.tsx:294:                              // Simple query simulation
+src/pages/worldcup/WCTeamDetail.tsx:243:              {/* Roster is unavailable because API limitations */}
+src/pages/worldcup/WorldCupCenter.tsx:42:  // Modal / overlay identifiers from query parameters
+src/pages/worldcup/WorldCupCenter.tsx:233:  // Filter teams based on search query
+src/pages/TermsPage.tsx:92:              {/* Content usage limits & Crawl restriction */}
+src/pages/NewsPage.tsx:15:  const { articles, loading, error, hasMore, loadMore } = useNews({ limitSize: 12 });
+src/pages/DashboardPage.tsx:3:import { useQuery } from '@tanstack/react-query';
+src/pages/DashboardPage.tsx:125:    queryKey: ['dashboardStats'],
+src/pages/DashboardPage.tsx:126:    queryFn: dashboardService.getStats,
+src/pages/DashboardPage.tsx:132:    queryKey: ['dashboardAggregate'],
+src/pages/DashboardPage.tsx:133:    queryFn: dashboardService.getAggregateStats,
+src/pages/HomePage.tsx:2:import { useQueryClient } from '@tanstack/react-query';
+src/pages/HomePage.tsx:9:  const queryClient = useQueryClient();
+src/pages/HomePage.tsx:14:        queryClient.refetchQueries({ queryKey: ['wcMatches'] }),
+src/pages/HomePage.tsx:15:        queryClient.refetchQueries({ queryKey: ['latestNews'] }),
+src/pages/HomePage.tsx:16:        queryClient.refetchQueries({ queryKey: ['liveMatchesV2'] }),
+src/pages/HomePage.tsx:17:        queryClient.refetchQueries({ queryKey: ['fixturesV2'] }),
+src/pages/HomePage.tsx:18:        queryClient.refetchQueries({ queryKey: ['fixtures'] })
+src/api/apiClient.ts:34:  status: 'pending' | 'success' | 'rate-limit' | 'auth-error' | 'network-error' | 'empty-response';
+src/api/apiClient.ts:229:// Calculate appropriate TTL for caching to reduce API-Football rate limit consumption
+src/api/apiClient.ts:265:        // Keeping it allows us fallback recovery on rate limits!
+src/api/apiClient.ts:295:    const isRateLimit = status === 429 || (error.response?.data?.errors && JSON.stringify(error.response?.data?.errors).includes('limit'));
+src/api/apiClient.ts:389:      if (errorMsg.includes('token') || errorMsg.includes('limit') || errorMsg.includes('key') || errorMsg.includes('requests')) {
+src/api/apiClient.ts:390:        status = errorMsg.includes('limit') || errorMsg.includes('requests') ? 'rate-limit' : 'auth-error';
+src/api/apiClient.ts:391:        statusText = status === 'rate-limit' ? 'تجاوز حد الطلبات المسموح به (429 Rate Limit)' : 'مفتاح مزود الخدمة غير صالح أو منتهي الصلاحية';
+src/api/apiClient.ts:431:      label = 'rate-limit';
+src/api/playerApi.js:7: * @param {string|number} id - Player identifier or search query name
+src/api/playerApi.js:10:  const query = String(id).trim();
+src/api/playerApi.js:11:  const isNumeric = /^\d+$/.test(query);
+src/api/playerApi.js:16:      const res = await playerService.getPlayerDetails(query);
+src/api/playerApi.js:22:        photo: res.photo || `https://media.api-sports.io/football/players/${query}.png`,
+src/api/playerApi.js:40:        params: { search: query }
+src/api/playerApi.js:44:        throw new Error(`PLAYER_NOT_FOUND: لم يتم العثور على لاعب حقيقي باسم "${query}" في قاعدة بيانات الدوري المباشرة.`);
+src/api/teamApi.js:16: * @param {string|number} id - Team identifier or search query name
+src/context/ErrorContext.tsx:4:import { collection, addDoc } from 'firebase/firestore';
+src/context/ErrorContext.tsx:101:    const isQuota = errStr.includes('Quota') || errStr.includes('quota') || errStr.includes('RESOURCE_EXHAUSTED') || errStr.includes('resource-exhausted') || errStr.includes('958469007898') || errStr.includes('Quota limit exceeded');
+src/context/ErrorContext.tsx:115:      addDoc(collection(db, 'error_logs'), {
+src/context/SettingsContext.tsx:147:          const link: HTMLLinkElement = document.querySelector("link[rel*='icon']") || document.createElement('link');
+src/context/SettingsContext.tsx:154:          const appleLink: HTMLLinkElement = document.querySelector("link[rel='apple-touch-icon']") || document.createElement('link');
+src/contexts/BrandingContext.tsx:2:import { doc, getDoc } from 'firebase/firestore';
+src/contexts/BrandingContext.tsx:69:        const docSnap = await getDoc(docRef);
+src/contexts/BrandingContext.tsx:85:          console.warn("[BrandingContext] Quota limit exceeded. Loading branding from fallback storage...");
+src/main.tsx:114:    // In development mode or AI Studio preview sandbox, clear all active service worker registrations to prevent them from intercepting dev asset loads and causing 429 rate limit issues
+src/App.tsx:23:import { QueryClientProvider } from '@tanstack/react-query';
+src/App.tsx:24:import { queryClient } from './lib/react-query';
+src/App.tsx:198:    <QueryClientProvider client={queryClient}>

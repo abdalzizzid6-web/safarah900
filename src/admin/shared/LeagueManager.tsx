@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { cmsService, LeagueSettings } from '../../services/cmsService';
 import { leagueService } from '../../services/leagueService';
-import { db, auth } from '../../firebase';
-import { collection, getDocs, doc, setDoc } from 'firebase/firestore';
+import { auth } from '../../firebase';
 import { 
   Trophy, Star, ToggleLeft, ToggleRight, ArrowUp, ArrowDown, 
   Search, RefreshCw, Upload, Image, Check, AlertCircle, Trash2, 

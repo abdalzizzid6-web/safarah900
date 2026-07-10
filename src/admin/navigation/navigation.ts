@@ -35,6 +35,12 @@ export const navGroups = [
     ]
   },
   {
+    title: 'وسائل التواصل الاجتماعي',
+    items: [
+      { name: 'مركز المنصات (Social)', path: '/admin/social', icon: Share2, requiredRole: UserRole.ADMIN },
+    ]
+  },
+  {
     title: 'الإدارة والنظام',
     items: [
       { name: 'المستخدمين والأدوار', path: '/admin/users', icon: Users, requiredRole: UserRole.SUPER_ADMIN },

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BarChart3, Globe, AlertTriangle, CheckCircle2, Search, Link as LinkIcon, Zap, FileText, Send, Activity, RefreshCw } from 'lucide-react';
-import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
-import { db } from '../../firebase';
+import { repositories } from '../../core/repository';
 
 export default function SeoAnalytics() {
   const [activeTab, setActiveTab] = useState('summary');
@@ -67,9 +66,7 @@ export default function SeoAnalytics() {
   const fetchIndexingLogs = async () => {
     setLogsLoading(true);
     try {
-      const qLogs = query(collection(db, 'indexing_logs'), orderBy('timestamp', 'desc'), limit(15));
-      const snap = await getDocs(qLogs);
-      const logsList = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const logsList = await repositories.indexingLogs.getRecentLogs(15);
       setIndexingLogs(logsList);
     } catch (error) {
       console.warn("Could not load indexing logs natively:", error);

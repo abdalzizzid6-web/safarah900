@@ -1,7 +1,5 @@
 import { BaseRepository } from './BaseRepository';
 import { News } from '../../types';
-import { db } from '../../firebase';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
 import apiClient from '../../api/apiClient';
 
 export interface NewsSettings {
@@ -18,8 +16,9 @@ export class NewsRepositoryV2 extends BaseRepository<News> {
 
   async getSettings(): Promise<NewsSettings> {
     try {
-      const docSnap = await getDoc(doc(db, 'news_settings', 'general_configuration'));
-      const data = docSnap.exists() ? docSnap.data() : {};
+      const data = await this.getById('general_configuration') as any;
+      if (!data) return { readingSpeed: 200, autoSitemap: true, minViewsForPopular: 50 };
+      
       return {
         readingSpeed: data.readingSpeed || 200,
         autoSitemap: data.autoSitemap !== false,
@@ -34,7 +33,7 @@ export class NewsRepositoryV2 extends BaseRepository<News> {
   async updateSettings(settings: Partial<NewsSettings>): Promise<void> {
     try {
       const payload = { ...settings, updatedAt: new Date().toISOString() };
-      await setDoc(doc(db, 'news_settings', 'general_configuration'), payload, { merge: true });
+      await this.setById('general_configuration', payload);
     } catch (e) {
       console.error('NewsRepositoryV2.updateSettings error:', e);
       throw e;

@@ -7,8 +7,6 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useError } from '../../context/ErrorContext';
-import { writeBatch, doc } from 'firebase/firestore';
-import { db } from '../../firebase';
 
 interface ErrorLog {
   id: string;
@@ -49,7 +47,6 @@ export default function BugLogsDashboard() {
     }
   };
 
-  // Filter logs locally for responsiveness
   const filteredLogs = logs.filter((log) => {
     const matchesClass = filterClass === 'all' || log.classification === filterClass;
     const matchesStatus = filterStatus === 'all' || 
@@ -66,12 +63,10 @@ export default function BugLogsDashboard() {
     return matchesClass && matchesStatus && matchesSearch;
   });
 
-  // Calculate statistics
   const totalCount = logs.length;
   const pendingCount = logs.filter(l => !l.resolved).length;
   const resolvedCount = logs.filter(l => l.resolved).length;
   
-  // Actions
   const handleToggleResolve = async (logId: string, currentStatus: boolean) => {
     try {
       await repositories.errorLogs.update(logId, { resolved: !currentStatus });
@@ -102,13 +97,9 @@ export default function BugLogsDashboard() {
   const handleClearAllLogs = async () => {
     try {
       if (!confirm('تحذير! سيتم مسح كافة سجلات الأخطاء المخزنة في قاعدة البيانات نهائياً. هل تود الاستمرار؟')) return;
-      // Using batch because delete all is safer this way
       const allLogs = await repositories.errorLogs.getAll(250);
-      const batch = writeBatch(db);
-      allLogs.forEach((log) => {
-        batch.delete(doc(db, 'error_logs', log.id));
-      });
-      await batch.commit();
+      const ids = allLogs.map(log => log.id);
+      await repositories.errorLogs.bulkDelete(ids);
       setLogs([]);
       showToast('تم تصفية وإفراغ جميع سجلات الأخطاء بنجاح', 'success');
     } catch (err) {
@@ -127,7 +118,6 @@ export default function BugLogsDashboard() {
       } else if (testErrorType === 'API') {
         showError(new Error("footballApiStatus - Unresolved route request to api-sports: RapidAPI token limit reached or invalid."));
       } else if (testErrorType === 'Runtime') {
-        // Trigger a fake JS syntax error or runtime issue
         const fakeStack = "TypeError: Cannot read properties of undefined (reading 'homeLogo')\n    at MatchDetailsPage (MatchDetailsPage.tsx:45:21)\n    at renderWithHooks (react-dom.development.js:15467:18)";
         const errorObj = new Error("Cannot read properties of undefined (reading 'homeLogo')");
         errorObj.stack = fakeStack;
@@ -152,7 +142,6 @@ export default function BugLogsDashboard() {
 
   return (
     <div className="space-y-6 text-right" dir="rtl">
-      {/* Header section with Actions */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-white/5 pb-5">
         <div>
           <h1 className="text-2xl font-black text-white flex items-center gap-2">
@@ -184,9 +173,7 @@ export default function BugLogsDashboard() {
         </div>
       </div>
 
-      {/* Statistics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        {/* Total Logs Card */}
         <div className="glass border border-white/5 rounded-2xl p-5 flex items-center justify-between">
           <div>
             <span className="text-slate-400 text-xs font-medium block">إجمالي المشكلات المكتشفة</span>
@@ -197,7 +184,6 @@ export default function BugLogsDashboard() {
           </div>
         </div>
 
-        {/* Pending Card */}
         <div className="glass border border-red-500/10 rounded-2xl p-5 flex items-center justify-between">
           <div>
             <span className="text-red-400 text-xs font-medium block">مشكلات نشطة قيد الفحص</span>
@@ -208,7 +194,6 @@ export default function BugLogsDashboard() {
           </div>
         </div>
 
-        {/* Resolved Card */}
         <div className="glass border border-green-500/10 rounded-2xl p-5 flex items-center justify-between">
           <div>
             <span className="text-green-400 text-xs font-medium block">أعطال تم معالجتها وإغلاقها</span>
@@ -219,7 +204,6 @@ export default function BugLogsDashboard() {
           </div>
         </div>
 
-        {/* Dynamic Simulator Widget inside statistics for smart accessibility */}
         <div className="glass border border-white/10 rounded-2xl p-4 bg-white/[0.02]">
           <span className="text-slate-300 text-xs font-bold flex items-center gap-1.5 mb-2">
             <Sparkles size={13} className="text-yellow-400" />
@@ -248,7 +232,6 @@ export default function BugLogsDashboard() {
         </div>
       </div>
 
-      {/* Filter and search controllers */}
       <div className="glass border border-white/5 rounded-2xl p-4 flex flex-col md:flex-row gap-4 items-center justify-between">
         <div className="relative w-full md:w-[320px]">
           <span className="absolute right-3.5 top-2.5 text-slate-500">
@@ -308,7 +291,6 @@ export default function BugLogsDashboard() {
         </div>
       </div>
 
-      {/* Logs layout Grid */}
       <div className="glass border border-white/5 rounded-3xl overflow-hidden">
         {loading ? (
           <div className="py-20 flex flex-col items-center justify-center gap-3 text-slate-400">
@@ -378,7 +360,6 @@ export default function BugLogsDashboard() {
                     </div>
                   </div>
                   
-                  {/* Actions buttons */}
                   <div className="flex items-center gap-1.5 shrink-0 self-end lg:self-center">
                     <button
                       onClick={() => setSelectedLog(log)}
@@ -415,7 +396,6 @@ export default function BugLogsDashboard() {
         )}
       </div>
 
-      {/* Expanded Modal details view */}
       <AnimatePresence>
         {selectedLog && (
           <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4">
@@ -433,7 +413,6 @@ export default function BugLogsDashboard() {
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               className="relative w-full max-w-4xl bg-slate-900 border border-white/10 rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[85vh] text-slate-100 z-10"
             >
-              {/* Modal Core Header */}
               <div className="p-5 border-b border-white/10 flex items-center justify-between bg-black/20">
                 <div className="flex items-center gap-3">
                   <div className={`p-2 rounded-xl border ${getClassMeta(selectedLog).bg}`}>
@@ -453,7 +432,6 @@ export default function BugLogsDashboard() {
                 </button>
               </div>
               
-              {/* Modal Scroll content */}
               <div className="p-6 overflow-y-auto space-y-5">
                 <div className="flex flex-wrap gap-4 items-center justify-between border-b border-white/5 pb-4">
                   <div className="flex flex-wrap gap-2.5">
@@ -478,7 +456,6 @@ export default function BugLogsDashboard() {
                   </span>
                 </div>
 
-                {/* Error Message Box */}
                 <div className="space-y-1.5">
                   <label className="text-xs font-black text-slate-400 block">نص الخطأ والرسالة الأساسية:</label>
                   <div className="p-4 rounded-xl bg-black/40 border border-white/5 text-slate-200 text-sm font-bold leading-relaxed break-words select-all">
@@ -486,7 +463,6 @@ export default function BugLogsDashboard() {
                   </div>
                 </div>
 
-                {/* Layout Context */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-1 bg-black/20 border border-white/5 rounded-xl p-4">
                     <label className="text-xs font-bold text-slate-500 block">مسار واجهة المستخدم (Page Link):</label>
@@ -499,7 +475,6 @@ export default function BugLogsDashboard() {
                   </div>
                 </div>
 
-                {/* Technical Stack trace */}
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-slate-400 flex items-center gap-1">
                     <Terminal size={14} className="text-pink-500" />
@@ -516,7 +491,6 @@ export default function BugLogsDashboard() {
                   )}
                 </div>
 
-                {/* User Agent metadata */}
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-slate-400 block">بيانات متصفح المستخدم والبيئة (User Agent):</label>
                   <div className="p-3.5 rounded-xl bg-black/20 border border-white/5 text-slate-400 text-xs font-mono select-all">
@@ -525,7 +499,6 @@ export default function BugLogsDashboard() {
                 </div>
               </div>
 
-              {/* Modal footer Actions */}
               <div className="p-4 border-t border-white/10 flex items-center justify-end gap-3 bg-black/20">
                 <button
                   onClick={() => handleDeleteLog(selectedLog.id)}

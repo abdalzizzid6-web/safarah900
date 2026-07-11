@@ -444,12 +444,19 @@ export async function syncRssProvider(providerId: string): Promise<{ success: bo
       setFirestoreQuotaExceeded(true);
       return { success: false, importedCount: 0, duplicateCount: 0, error: "Firestore Quota Exceeded" };
     }
-    console.error(`[RSS Service Error] Provider sync failed for ${providerId}: ${err.message}`);
+    
+    // Treat 403 as a warning, not a critical error for RSS sync
+    if (err.message.includes("403")) {
+        console.warn(`[RSS Service Warning] Provider ${providerId} returned 403 Forbidden. Skipping this sync cycle.`);
+    } else {
+        console.error(`[RSS Service Error] Provider sync failed for ${providerId}: ${err.message}`);
+    }
+
     try {
       await firestore.collection("rss_sources").doc(providerId).set({
         lastError: err.message,
         lastSync: new Date().toISOString(),
-        status: "FAILED"
+        status: err.message.includes("403") ? "ACTIVE" : "FAILED"
       }, { merge: true });
     } catch (saveErr: any) {
       console.warn(`[rssService] Failed to update failure status for provider ${providerId}:`, saveErr.message);

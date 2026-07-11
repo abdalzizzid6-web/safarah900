@@ -847,7 +847,7 @@ async function processQueuedPost(queueId: string) {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              chat_id: account.metadata?.chatId || account.handle || '@safara_90_channel',
+              chat_id: account.defaultPageId || account.metadata?.chatId || account.handle || '@safara_90_channel',
               text: content,
               parse_mode: 'HTML'
             })
@@ -910,10 +910,10 @@ async function processQueuedPost(queueId: string) {
           let apiBody: any = {};
           
           if (platform === 'facebook') {
-            apiEndpoint = `https://graph.facebook.com/v18.0/${account.metadata?.pageId || 'me'}/feed`;
+            apiEndpoint = `https://graph.facebook.com/v18.0/${account.defaultPageId || account.metadata?.pageId || 'me'}/feed`;
             apiBody = { message: content };
           } else if (platform === 'instagram') {
-            apiEndpoint = `https://graph.facebook.com/v18.0/${account.metadata?.igUserId || 'me'}/media`;
+            apiEndpoint = `https://graph.facebook.com/v18.0/${account.defaultPageId || account.metadata?.igUserId || 'me'}/media`;
             apiBody = { caption: content };
           } else if (platform === 'twitter') {
             apiEndpoint = `https://api.twitter.com/2/tweets`;

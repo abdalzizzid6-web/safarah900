@@ -771,7 +771,7 @@ export default function Profile() {
           </div>
           <div className="grid grid-cols-2 gap-3">
             {POPULAR_LEAGUE_CHOICES.map(league => {
-              const isFav = profile?.favoriteLeagues.includes(league.name);
+              const isFav = profile?.favoriteLeagues?.includes(league.name);
               return (
                 <button
                   key={league.id}

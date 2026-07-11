@@ -1,7 +1,7 @@
 import React from 'react';
 import { Trophy, TrendingUp } from 'lucide-react';
 
-export default function LeaguePositionCard({ positionInfo }) {
+export default function LeaguePositionCard({ positionInfo }: { positionInfo: any }) {
   if (!positionInfo) return null;
 
   // Make sure we safe-guard form
@@ -40,7 +40,7 @@ export default function LeaguePositionCard({ positionInfo }) {
         <span className="text-[10px] text-gray-400 font-bold block">مؤشر نتائج المباريات الـ 5 الأخيرة:</span>
         
         <div className="flex items-center gap-2">
-          {formList.map((outcome, idx) => {
+          {formList.map((outcome: any, idx: number) => {
             let badgeBg = 'bg-gray-500/10 text-gray-400 border-gray-500/20';
             let label = outcome;
             

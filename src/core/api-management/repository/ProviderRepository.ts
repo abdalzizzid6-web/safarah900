@@ -10,7 +10,7 @@ export class ProviderRepository extends BaseRepository<ApiProvider> implements I
   }
 
   async getProviders(): Promise<ApiProvider[]> {
-    const cached = CacheLayer.get('providers');
+    const cached = CacheLayer.get<ApiProvider[]>('providers');
     if (cached) return cached;
 
     const providers = await this.getAll(100);

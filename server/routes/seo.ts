@@ -100,7 +100,7 @@ router.get("/sitemap-matches.xml", async (req, res) => {
       const urls: any[] = [];
       const snap = await collections.matches().orderBy('startTime', 'desc').limit(1000).get();
       
-      snap.forEach(doc => {
+      snap.forEach((doc: any) => {
         const data = doc.data();
         const match = normalizeMatch({ ...data, id: doc.id });
         if (!match || match.isHidden) return;
@@ -138,7 +138,7 @@ router.get("/sitemap-news.xml", async (req, res) => {
       const urls: any[] = [];
       const snap = await collections.news().orderBy('publishDate', 'desc').limit(500).get();
       
-      snap.forEach(doc => {
+      snap.forEach((doc: any) => {
         const data = doc.data();
         const news = normalizeNews({ ...data, id: doc.id });
         const pubDate = (data.publishDate?.toDate?.() || new Date()).toISOString();
@@ -170,7 +170,7 @@ router.get("/sitemap-images.xml", async (req, res) => {
       
       // Add news images
       const newsSnap = await collections.news().orderBy('publishDate', 'desc').limit(100).get();
-      newsSnap.forEach(doc => {
+      newsSnap.forEach((doc: any) => {
         const data = doc.data();
         const news = normalizeNews({ ...data, id: doc.id });
         const imageField = data.image || data.featuredImage?.url;
@@ -200,7 +200,7 @@ router.get("/sitemap-leagues.xml", async (req, res) => {
       const host = getBaseUrl(req);
       const urls: any[] = [];
       const snap = await collections.leagues().limit(100).get();
-      snap.forEach(doc => {
+      snap.forEach((doc: any) => {
         const league = normalizeLeague({ ...doc.data(), id: doc.id });
         if (!league.slug || league.slug === 'undefined' || league.slug.includes('[object Object]')) return;
         urls.push({ loc: `${host}/league/${league.slug}`, changefreq: 'daily', priority: '0.8' });
@@ -221,7 +221,7 @@ router.get("/sitemap-teams.xml", async (req, res) => {
       const host = getBaseUrl(req);
       const urls: any[] = [];
       const snap = await collections.teams().limit(500).get();
-      snap.forEach(doc => {
+      snap.forEach((doc: any) => {
         const team = normalizeTeam({ ...doc.data(), id: doc.id });
         if (!team.slug || team.slug === 'undefined' || team.slug.includes('[object Object]')) return;
         urls.push({ loc: `${host}/team/${team.slug}`, changefreq: 'weekly', priority: '0.7' });
@@ -242,7 +242,7 @@ router.get("/sitemap-players.xml", async (req, res) => {
       const host = getBaseUrl(req);
       const urls: any[] = [];
       const snap = await collections.players().limit(500).get();
-      snap.forEach(doc => {
+      snap.forEach((doc: any) => {
         const data = doc.data();
         const slug = createSlugPath(data.name || "player", doc.id);
         if (!slug || slug === 'undefined' || slug.includes('[object Object]')) return;

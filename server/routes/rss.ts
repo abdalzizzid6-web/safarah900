@@ -17,7 +17,7 @@ router.get("/providers", authMiddleware('editor'), async (req, res) => {
   try {
     if (!firestore) return res.status(500).json({ error: "Firestore not initialized" });
     const snapshot = await firestore.collection("rss_sources").get();
-    const providers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const providers = snapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
     res.json(providers);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
@@ -278,17 +278,17 @@ router.get("/analytics", authMiddleware('editor'), async (req, res) => {
     // For now, let's limit to 500 for stats compilation or use the firestore count() if available in this SDK version
     // If count() is not available, we use a smaller limit to prevent quota exhaustion
     const importsSnap = await firestore.collection("rss_imports").limit(200).get(); 
-    const articles = importsSnap.docs.map(doc => doc.data());
+    const articles = importsSnap.docs.map((doc: any) => doc.data());
 
     const totalImported = articles.length;
-    const pendingReview = articles.filter(a => a.status === "REVIEW").length;
-    const approved = articles.filter(a => a.status === "APPROVED").length;
-    const published = articles.filter(a => a.status === "PUBLISHED").length;
-    const rejected = articles.filter(a => a.status === "REJECTED").length;
+    const pendingReview = articles.filter((a: any) => a.status === "REVIEW").length;
+    const approved = articles.filter((a: any) => a.status === "APPROVED").length;
+    const published = articles.filter((a: any) => a.status === "PUBLISHED").length;
+    const rejected = articles.filter((a: any) => a.status === "REJECTED").length;
 
     // Track active vs failed provider health
-    const activeProviders = providersSnap.docs.filter(d => d.data().enabled).length;
-    const failedProviders = providersSnap.docs.filter(d => d.data().status === "FAILED").length;
+    const activeProviders = providersSnap.docs.filter((d: any) => d.data().enabled).length;
+    const failedProviders = providersSnap.docs.filter((d: any) => d.data().status === "FAILED").length;
     const syncSuccessRate = providersCount > 0 ? Math.round(((providersCount - failedProviders) / providersCount) * 100) : 100;
 
     const stats = {

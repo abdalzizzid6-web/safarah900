@@ -34,7 +34,7 @@ const LEAGUE_MAP: Record<string, number> = {
 
 export default function LeaguePage() {
   const { id: rawId } = useParams<{ id: string }>();
-  const id = getIdFromSlug(rawId);
+  const id = getIdFromSlug(rawId || '');
   const navigate = useNavigate();
 
   // Active tab state matching FotMob layout
@@ -295,7 +295,7 @@ export default function LeaguePage() {
                         { rank: 3, team: { name: 'الأهلي', logo: 'https://media.api-sports.io/football/teams/33.png' }, points: 41, played: 22, wins: 12, draws: 5, losses: 5, goalsDiff: 15 },
                         { rank: 4, team: { name: 'التعاون', logo: 'https://media.api-sports.io/football/teams/33.png' }, points: 39, played: 22, wins: 11, draws: 6, losses: 5, goalsDiff: 10 }
                       ]).map((team: any, idx: number) => {
-                        const scoreDiff = team.goalsDiff ?? (team.all?.goals?.for - team.all?.goals?.against) ?? 0;
+                        const scoreDiff = team.goalsDiff !== undefined ? team.goalsDiff : ((team.all?.goals?.for || 0) - (team.all?.goals?.against || 0));
                         const played = team.played ?? team.all?.played ?? 0;
                         const win = team.wins ?? team.all?.win ?? 0;
                         const draw = team.draws ?? team.all?.draw ?? 0;

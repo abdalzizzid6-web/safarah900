@@ -23,7 +23,7 @@ export const matchService = {
   },
 
   mapFirestoreMatch(id: string, data: any): Match {
-    return matchesRepositoryV2.mapFirestoreMatch(id, data);
+    return matchesRepositoryV2.mapFirestoreMatch(id, data) as Match;
   },
 
   async getRealFirestoreMatches(

@@ -30,8 +30,11 @@ import { generateContentWithRetry } from "./services/aiService";
 import { Type } from "@google/genai";
 import { apiManager } from "./services/apiManager";
 
+import passport from "passport";
+
 const app = express();
 app.use(express.json());
+app.use(passport.initialize());
 const PORT = 3000;
 
 // Domain Unification & HTTPS Redirection (SEO-01)
@@ -391,7 +394,7 @@ const predictionExistenceCache: Record<string, { data: any; expiry: number }> = 
 
 // Proxy router for football-data.org to avoid CORS & network issues in browser
 app.get("/api/football-data/*", async (req, res) => {
-  const subPath = req.params[0] || "";
+  const subPath = (req.params as any)[0] || "";
   const queryString = new URLSearchParams(req.query as any).toString();
   
   let targetBase = (process.env.VITE_FOOTBALL_DATA_BASE || "https://api.football-data.org/v4").trim();
@@ -645,7 +648,7 @@ function translateToApiFootball(provider: string, endpoint: string, data: any) {
 
 // A robust client-side proxy route for API-Football to completely avoid CORS and Network Errors in the browser
 app.all("/api/football-api/*", async (req, res) => {
-  const subPath = req.params[0] || "";
+  const subPath = (req.params as any)[0] || "";
   
   // 1. Determine category
   const clientCategory = (req.headers['x-api-category'] || req.headers['X-API-Category'] || '').toString();

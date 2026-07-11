@@ -11,7 +11,7 @@ export function mapRawMatch(raw: any): Match {
   const id = raw.fixture?.id ? `apf-${raw.fixture.id}` : (raw.id || `match-${Date.now()}`);
   
   // Use the canonical normalization logic
-  return normalizeMatch(String(id), raw);
+  return normalizeMatch(String(id), raw) as Match;
 }
 
 /**
@@ -115,7 +115,7 @@ export function mapRawLineups(rawList: any[]): TeamLineup[] {
 export type MappedMatch = Match;
 
 export function mapFootballDataResponse(rawMatch: any): MappedMatch {
-  return normalizeMatch(String(rawMatch.id || Date.now()), rawMatch);
+  return normalizeMatch(String(rawMatch.id || Date.now()), rawMatch) as Match;
 }
 
 

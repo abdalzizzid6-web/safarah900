@@ -17,7 +17,7 @@ import Breadcrumbs from '../components/ui/Breadcrumbs';
 
 export default function TeamPage() {
   const { id: rawId } = useParams<{ id: string }>();
-  const id = getIdFromSlug(rawId);
+  const id = getIdFromSlug(rawId || '');
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState<boolean>(true);

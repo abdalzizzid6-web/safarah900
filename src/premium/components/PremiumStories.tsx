@@ -159,7 +159,7 @@ export default function PremiumStories() {
     } else {
       // Go to next story if available
       if (activeStoryIndex < STORIES_DATA.length - 1) {
-        setActiveStoryIndex(prev => prev + 1);
+        setActiveStoryIndex(activeStoryIndex + 1);
         setActiveSlideIndex(0);
         setProgress(0);
         markAsViewed(STORIES_DATA[activeStoryIndex + 1].id);
@@ -178,7 +178,7 @@ export default function PremiumStories() {
     } else {
       // Go to previous story if available
       if (activeStoryIndex > 0) {
-        setActiveStoryIndex(prev => prev - 1);
+        setActiveStoryIndex(activeStoryIndex - 1);
         const prevStory = STORIES_DATA[activeStoryIndex - 1];
         setActiveSlideIndex(prevStory.slides.length - 1);
         setProgress(0);

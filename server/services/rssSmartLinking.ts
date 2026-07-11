@@ -80,18 +80,18 @@ export async function findSmartLinks(detected: { teams: string[]; players: strin
       const targetTeamId = links.teamIds[0];
       const now = Date.now();
       
-      let localMatches = cachedLiveMatches;
+      let localMatches: any[] = cachedLiveMatches || [];
       // Use in-memory cache for live matches during sync cycle
-      if (!localMatches || now - lastLiveMatchesFetch > LIVE_MATCHES_TTL) {
+      if (!cachedLiveMatches || now - lastLiveMatchesFetch > LIVE_MATCHES_TTL) {
         const matchesSnap = await firestore.collection('matches')
           .where('isLive', '==', true)
           .limit(20)
           .get();
-        localMatches = matchesSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+        localMatches = matchesSnap.docs.map((d: any) => ({ id: d.id, ...d.data() }));
         setCachedLiveMatches(localMatches, now);
       }
       
-      let matchResult = localMatches.find(m => m.homeTeamId === targetTeamId || m.awayTeamId === targetTeamId);
+      let matchResult = localMatches.find((m: any) => m.homeTeamId === targetTeamId || m.awayTeamId === targetTeamId);
       
       if (matchResult) {
         links.matchId = matchResult.id;

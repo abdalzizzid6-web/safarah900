@@ -73,7 +73,7 @@ export default function PremiumLiveMatchesList({ title = "مباريات مبا�
 
                 {/* Score & Minute */}
                 <div className="flex flex-col items-center justify-center w-1/3">
-                  <ScoreFlash homeScore={match.homeScore} awayScore={match.awayScore} size="md" />
+                  <ScoreFlash homeScore={match.homeScore ?? 0} awayScore={match.awayScore ?? 0} size="md" />
                   {(() => {
                     const isLive = match.isLive || ['LIVE', 'IN_PLAY', 'PAUSED'].includes(match.status);
                     const isFinished = ['FT', 'AET', 'PEN', 'FINISHED'].includes(match.status);

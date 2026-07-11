@@ -10,7 +10,7 @@ export class TeamRepository extends BaseRepository<ITeam> implements ITeamReposi
   }
 
   async getTeams(): Promise<ITeam[]> {
-    const cached = CacheLayer.get('teams');
+    const cached = CacheLayer.get<ITeam[]>('teams');
     if (cached) return cached;
 
     const teams = await this.getAll(1000);

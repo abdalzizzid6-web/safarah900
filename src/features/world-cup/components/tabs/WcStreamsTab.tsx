@@ -51,7 +51,7 @@ export function WcStreamsTab({
                   className="w-full bg-black border border-white/10 rounded-xl p-2.5 text-xs text-white"
                 >
                   <option value="">-- اختر المباراة للبث --</option>
-                  {dbMatches.map(m => (
+                  {dbMatches.map((m: any) => (
                     <option key={m.id} value={m.id}>
                       {m.id} • {worldCupService.translateTeam(m.homeTeam.name)} ضد {worldCupService.translateTeam(m.awayTeam.name)} ({new Date(m.utcDate).toLocaleDateString('ar-SA', {month:'short', day:'numeric'})})
                     </option>
@@ -154,9 +154,9 @@ export function WcStreamsTab({
                     <p className="text-xs text-gray-400 font-bold">لا يوجد أي مصادر بث مضافة حالياً في قاعدة البيانات.</p>
                   </div>
                 ) : (
-                  streamsList.map(stream => {
+                  streamsList.map((stream: any) => {
                     // Try to find the associated match details to display home / away names for better readability
-                    const mInfo = dbMatches.find(m => String(m.id) === String(stream.matchId));
+                    const mInfo = dbMatches.find((m: any) => String(m.id) === String(stream.matchId));
                     return (
                       <div key={stream.id} className="p-4 bg-white/[0.01] border border-white/5 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 transition-all hover:bg-white/[0.02] hover:border-amber-500/20">
                         <div className="space-y-2">

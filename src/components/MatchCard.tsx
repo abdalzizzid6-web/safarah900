@@ -33,7 +33,7 @@ function TeamLogoWithGlow({ logoUrl, teamName, tla, isLive }: TeamLogoWithGlowPr
       <MotionImageResolver fallbackType="team" fallbackText={teamName} tla={tla}
         src={logoUrl}
         alt=""
-        onError={(e) => handleImageError(e as any, getFallbackImageUrl(teamName))}
+        onError={(e: any) => handleImageError(e, getFallbackImageUrl(teamName))}
         animate={isLive ? {
           scale: [0.95, 1.2, 0.95],
           opacity: [0.35, 0.7, 0.35]
@@ -51,7 +51,7 @@ function TeamLogoWithGlow({ logoUrl, teamName, tla, isLive }: TeamLogoWithGlowPr
       <MotionImageResolver fallbackType="team" fallbackText={teamName} tla={tla}
         src={logoUrl}
         alt={teamName}
-        onError={(e) => handleImageError(e as any, getFallbackImageUrl(teamName))}
+        onError={(e: any) => handleImageError(e, getFallbackImageUrl(teamName))}
         animate={isLive ? {
           scale: [1, 1.05, 1]
         } : {}}

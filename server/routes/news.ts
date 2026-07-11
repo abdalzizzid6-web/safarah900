@@ -66,10 +66,10 @@ router.get("/", async (req, res) => {
       }
       
       const snap = await query.orderBy('publishDate', 'desc').limit(Number(limit) * 2).get(); // Fetch more and filter
-      const firestoreArticles = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const firestoreArticles = snap.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
       
       // Filter out invalid articles (empty/0 titles/content)
-      const validFirestoreArticles = firestoreArticles.filter(a =>
+      const validFirestoreArticles = firestoreArticles.filter((a: any) =>
         a.title && a.title !== "0" && a.title.trim() !== "" &&
         a.content && (typeof a.content === 'object' ? (a.content.fullText && a.content.fullText !== "0" && a.content.fullText.trim() !== "") : (a.content !== "0" && a.content.trim() !== ""))
       );

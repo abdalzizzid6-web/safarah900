@@ -19,7 +19,7 @@ async function getEnabledLeaguesCached(): Promise<Record<string, any>> {
   try {
     const snap = await firestore.collection('cms_leagues').get();
     const map: Record<string, any> = {};
-    snap.docs.forEach(doc => {
+    snap.docs.forEach((doc: any) => {
       const data = doc.data();
       map[doc.id] = data;
     });
@@ -79,12 +79,12 @@ router.get("/", async (req, res) => {
     try {
       // Limit to 20 to strictly respect Rule 4
       const snap = await firestore.collection('matches').orderBy('startTime', 'desc').limit(20).get();
-      const firestoreMatches = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const firestoreMatches = snap.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
       
       // Merge: prefer Firestore matches if ID exists in both
       const matchesMap = new Map();
-      matches.forEach(m => matchesMap.set(String(m.id), m));
-      firestoreMatches.forEach(m => matchesMap.set(String(m.id), m));
+      matches.forEach((m: any) => matchesMap.set(String(m.id), m));
+      firestoreMatches.forEach((m: any) => matchesMap.set(String(m.id), m));
       matches = Array.from(matchesMap.values());
     } catch (e) {
       if (isFirebaseQuotaError(e)) {
@@ -170,13 +170,13 @@ router.get("/live", async (req, res) => {
         .get();
         
       if (!snap.empty) {
-        const firestoreMatches = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const firestoreMatches = snap.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
         console.log(`[Live API][${requestId}] Found ${firestoreMatches.length} live matches in Firestore.`);
         
         // Merge: prefer Firestore matches
         const matchesMap = new Map();
-        matches.forEach(m => matchesMap.set(String(m.id), m));
-        firestoreMatches.forEach(m => matchesMap.set(String(m.id), m));
+        matches.forEach((m: any) => matchesMap.set(String(m.id), m));
+        firestoreMatches.forEach((m: any) => matchesMap.set(String(m.id), m));
         matches = Array.from(matchesMap.values());
         dataSource = "firestore-merged";
       }
@@ -312,7 +312,7 @@ router.get("/standings/all", async (req, res) => {
   if (!isFirestoreQuotaExceeded) {
     try {
       const snap = await firestore.collection('standings').get();
-      standings = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      standings = snap.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
       standingsCache.data = standings;
       standingsCache.expiry = Date.now() + 60 * 60 * 1000; // 1 hour
     } catch (e) {

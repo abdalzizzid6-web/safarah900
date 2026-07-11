@@ -371,7 +371,7 @@ export default function GoalNotifier() {
             const homeNameFallback = typeof currentMatch.homeTeam === 'string' ? currentMatch.homeTeam : (currentMatch.homeTeam?.name || '');
             const awayNameFallback = typeof currentMatch.awayTeam === 'string' ? currentMatch.awayTeam : (currentMatch.awayTeam?.name || '');
 
-            if (currentMatch.homeScore > prevMatch.homeScore) {
+            if ((currentMatch.homeScore ?? 0) > (prevMatch.homeScore ?? 0)) {
               triggerNotification({
                 id: `fb-goal-h-${currentMatch.id}-${currentMatch.homeScore}`,
                 type: 'goal',
@@ -383,7 +383,7 @@ export default function GoalNotifier() {
                 matchInfo: `${homeNameFallback} ضد ${awayNameFallback}`
               });
             }
-            if (currentMatch.awayScore > prevMatch.awayScore) {
+            if ((currentMatch.awayScore ?? 0) > (prevMatch.awayScore ?? 0)) {
               triggerNotification({
                 id: `fb-goal-a-${currentMatch.id}-${currentMatch.awayScore}`,
                 type: 'goal',

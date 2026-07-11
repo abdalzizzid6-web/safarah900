@@ -897,7 +897,7 @@ export default function VideoPlayer({
                    setShowSettings={setShowSettings}
                    activeMenu={activeMenu}
                    setActiveMenu={setActiveMenu}
-                   isM3U8={isM3U8}
+                   isM3U8={!!isM3U8}
                    qualities={qualities}
                    activeQualityIndex={activeQualityIndex}
                    currentQuality={currentQuality}

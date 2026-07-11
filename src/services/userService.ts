@@ -131,7 +131,7 @@ export const userService = {
   async getAllUsers(): Promise<UserAccount[]> {
     const now = Date.now();
     if (usersCache && now - usersCacheTimestamp < USERS_CACHE_TTL) {
-      return usersCache.data;
+      return (usersCache as any).data;
     }
 
     try {

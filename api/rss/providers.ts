@@ -5,7 +5,7 @@ export default async function handler(req: Request, res: Response) {
   if (req.method === 'GET') {
     try {
       const snapshot = await firestore.collection("rss_sources").get();
-      const providers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const providers = snapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
       return res.json(providers);
     } catch (err: any) {
       return res.status(500).json({ error: err.message });

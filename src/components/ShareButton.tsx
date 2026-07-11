@@ -129,7 +129,7 @@ export default function ShareButton({
   if (variant === 'inline') {
     return (
       <div className="flex flex-wrap items-center gap-2.5">
-        {typeof navigator !== 'undefined' && navigator.share && (
+        {typeof navigator !== 'undefined' && (navigator as any).share && (
           <button
             onClick={handleNativeShare}
             className="flex items-center gap-2 bg-primary hover:bg-primary/95 text-black px-3.5 py-2 rounded-2xl text-xs font-black active:scale-95 transition-all shadow-[0_5px_15px_rgba(0,223,130,0.2)]"
@@ -175,7 +175,7 @@ export default function ShareButton({
     return (
       <div className="relative inline-block" ref={containerRef}>
         <button
-          onClick={navigator.share ? handleNativeShare : (e) => { e.stopPropagation(); setIsOpen(!isOpen); }}
+          onClick={(navigator as any).share ? handleNativeShare : (e) => { e.stopPropagation(); setIsOpen(!isOpen); }}
           className="w-10 h-10 rounded-full glass border border-border/80 flex items-center justify-center text-gray-300 hover:text-primary hover:border-primary/50 hover:bg-primary/5 hover:scale-105 transition-all active:scale-95 shadow-lg"
           title="مشاركة"
         >
@@ -241,7 +241,7 @@ export default function ShareButton({
   return (
     <div className="relative inline-block" ref={containerRef}>
       <button
-        onClick={navigator.share ? handleNativeShare : (e) => { e.stopPropagation(); setIsOpen(!isOpen); }}
+        onClick={(navigator as any).share ? handleNativeShare : (e) => { e.stopPropagation(); setIsOpen(!isOpen); }}
         className="flex items-center gap-2 bg-gradient-to-r from-surface to-surface-hover/80 border border-border/80 px-4.5 py-2.5 rounded-2xl text-xs font-black text-gray-200 hover:text-primary hover:border-primary/50 transition-all shadow-md active:scale-95"
       >
         <Share2 size={14} className="text-primary" />

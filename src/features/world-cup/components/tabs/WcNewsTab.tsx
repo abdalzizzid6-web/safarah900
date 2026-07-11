@@ -83,7 +83,7 @@ export function WcNewsTab({
             <div className="space-y-4">
               <h3 className="text-xs font-bold text-gray-400 uppercase">الأخبار المنشورة المتزامنة ({newsList.length})</h3>
               <div className="divide-y divide-white/5 space-y-3 max-h-[400px] overflow-y-auto pr-1">
-                {newsList.map(item => (
+                {newsList.map((item: any) => (
                   <div key={item.id} className="pt-3 flex justify-between items-start gap-4">
                     <div className="space-y-1">
                       <h4 className="text-xs font-extrabold text-white leading-tight">{item.title}</h4>

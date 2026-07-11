@@ -1,7 +1,8 @@
 import { Match } from '../types';
 
 export function downloadICS(match: Match) {
-  const startTime = new Date(match.startTime);
+  const startTimeStr = match.startTime || (match as any).utcDate || new Date().toISOString();
+  const startTime = new Date(startTimeStr);
   const endTime = new Date(startTime.getTime() + 2 * 60 * 60 * 1000); // Assume 2 hours match duration
 
   const formatDate = (date: Date) => {

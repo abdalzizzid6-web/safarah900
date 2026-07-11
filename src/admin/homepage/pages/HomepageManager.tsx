@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { writeBatch, doc } from 'firebase/firestore';
+import { db } from '../../../firebase';
 import { repositories } from '../../../core/repository';
 import { BlockType } from '../../../types';
 import { Layout, RefreshCw, Plus, Smartphone, Grid } from 'lucide-react';

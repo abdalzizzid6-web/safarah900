@@ -77,7 +77,7 @@ export function useMatchForm(leagues: any[]) {
     let formattedTime = '';
     if (m.startTime || m.utcDate) {
       try {
-        const d = new Date(m.startTime || m.utcDate);
+        const d = new Date((m.startTime || m.utcDate) as string);
         const offset = d.getTimezoneOffset() * 60000;
         formattedTime = new Date(d.getTime() - offset).toISOString().slice(0, 16);
       } catch (e) {

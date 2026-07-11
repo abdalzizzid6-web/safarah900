@@ -85,12 +85,12 @@ export function mapTeamMatches(rawMatches: any) {
   // Sort recent: descending (latest first)
   const recent = allMapped
     .filter((m: any) => ['FT', 'PEN', 'AET', 'FINISHED'].includes(m.status))
-    .sort((a, b) => new Date(b.startTime || 0).getTime() - new Date(a.startTime || 0).getTime());
+    .sort((a: any, b: any) => new Date(b.startTime || 0).getTime() - new Date(a.startTime || 0).getTime());
 
   // Sort upcoming: ascending (closest first)
   const upcoming = allMapped
     .filter((m: any) => ['NS', 'TBD', 'SCHEDULED', 'UPCOMING', 'PST'].includes(m.status))
-    .sort((a, b) => new Date(a.startTime || 0).getTime() - new Date(b.startTime || 0).getTime());
+    .sort((a: any, b: any) => new Date(a.startTime || 0).getTime() - new Date(b.startTime || 0).getTime());
 
   return {
     live: allMapped.filter((m: any) => m.isLive),

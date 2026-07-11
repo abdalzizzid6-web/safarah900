@@ -3,7 +3,14 @@ import { motion, AnimatePresence } from 'motion/react';
 import { CalendarClock, History } from 'lucide-react';
 import MatchCard from '../MatchCard';
 
-export default function TeamMatchesSection({ matchesObj }) {
+interface TeamMatchesSectionProps {
+  matchesObj: {
+    upcoming?: any[];
+    recent?: any[];
+  };
+}
+
+export default function TeamMatchesSection({ matchesObj }: TeamMatchesSectionProps) {
   const [activeTab, setActiveTab] = useState('upcoming');
 
   const { upcoming = [], recent = [] } = matchesObj || {};
@@ -51,7 +58,7 @@ export default function TeamMatchesSection({ matchesObj }) {
       <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
         <AnimatePresence mode="popLayout">
           {currentList.length > 0 ? (
-            currentList.map((match, index) => (
+            currentList.map((match: any, index: number) => (
               <motion.div
                 key={match.id}
                 initial={{ opacity: 0, y: 12 }}

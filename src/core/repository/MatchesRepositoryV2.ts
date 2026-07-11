@@ -36,7 +36,7 @@ const mapWCMatchToMatch = (wcMatch: any): Match => {
     source: 'world-cup',
     provider: 'Football-Data/OpenFootball',
     approved: true
-  });
+  }) as Match;
 };
 
 export enum MatchStatus {
@@ -241,7 +241,7 @@ export class MatchesRepositoryV2 extends BaseRepository<Match> {
       if ('homeTeam' in obj || 'utcDate' in obj || 'fixture' in obj || 'teams' in obj) {
         const id = obj.id || obj.fixture?.id || obj._id || 'unknown';
         const normalized = this.mapFirestoreMatch(String(id), obj as DocumentData);
-        if (!normalized) return null;
+        if (!normalized) return null as unknown as T;
         const adjusted = this.adjustMatchStatus(normalized);
         
         if (adjusted.isHidden) {
@@ -513,6 +513,9 @@ export class MatchesRepositoryV2 extends BaseRepository<Match> {
       if (response.data) {
         // MUST Normalize the API response to ensure it fits the Match interface
         const normalized = this.mapFirestoreMatch(id, response.data as DocumentData);
+        if (!normalized) {
+          throw new Error('Failed to normalize API match data');
+        }
         const adjusted = this.adjustMatchStatus(normalized);
         cacheManager.set(cacheKey, adjusted, 300000, true);
         return adjusted;

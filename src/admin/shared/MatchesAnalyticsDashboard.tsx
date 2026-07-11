@@ -107,7 +107,7 @@ export default function MatchesAnalyticsDashboard({ stats }: MatchesAnalyticsDas
                   contentStyle={{ backgroundColor: '#070c16', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '1rem', textAlign: 'right' }}
                 />
                 <Bar dataKey="value" radius={[0, 4, 4, 0]}>
-                  {stats.leagueData.map((entry, index) => (
+                  {stats.leagueData.map((entry: any, index: number) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Bar>

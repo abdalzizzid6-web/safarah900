@@ -169,7 +169,7 @@ class ApiManagerService implements IApiConfigProvider {
       // 1. Fetch Providers
       const providersSnap = await firestore.collection('api_providers').get();
       const providers: ApiProviderDoc[] = [];
-      providersSnap.forEach(doc => {
+      providersSnap.forEach((doc: any) => {
         providers.push({ id: doc.id, ...doc.data() } as ApiProviderDoc);
       });
 
@@ -494,7 +494,7 @@ class ApiManagerService implements IApiConfigProvider {
                  status: 'healthy',
                  statusMessage: 'Recovered from high latency',
                  updatedAt: new Date().toISOString()
-             }).catch(e => console.error('[Circuit Breaker] Auto-recovery update failed:', e));
+             }).catch((e: any) => console.error('[Circuit Breaker] Auto-recovery update failed:', e));
         }
       }
     }
@@ -506,7 +506,7 @@ class ApiManagerService implements IApiConfigProvider {
   private async firestoreUsageUpdate(providerId: string, incToday: number, incMonth: number) {
     const docRef = firestore.collection('api_providers').doc(providerId);
     try {
-      await firestore.runTransaction(async (transaction) => {
+      await firestore.runTransaction(async (transaction: any) => {
         const docSnap = await transaction.get(docRef);
         if (!docSnap.exists) return;
         const data = docSnap.data() as ApiProviderDoc;
@@ -555,7 +555,7 @@ class ApiManagerService implements IApiConfigProvider {
           const ref = firestore.collection('api_logs_v2').doc(log.id);
           batch.set(ref, log);
         });
-        await batch.commit().catch(err => console.error('[ApiManager] Batch log write failed:', err));
+        await batch.commit().catch((err: any) => console.error('[ApiManager] Batch log write failed:', err));
       }
     }
 
@@ -570,7 +570,7 @@ class ApiManagerService implements IApiConfigProvider {
           updatedAt: new Date().toISOString()
         });
       }
-      await batch.commit().catch(err => console.error('[ApiManager] Batch latency update failed:', err));
+      await batch.commit().catch((err: any) => console.error('[ApiManager] Batch latency update failed:', err));
     }
 
     // Refresh memory cache in the background after flushing to stay synced with Firestore limits
@@ -584,7 +584,7 @@ class ApiManagerService implements IApiConfigProvider {
     const providersSnap = await firestore.collection('api_providers').get();
     const batch = firestore.batch();
     
-    providersSnap.forEach(doc => {
+    providersSnap.forEach((doc: any) => {
       batch.update(doc.ref, {
         usedToday: 0,
         status: 'healthy',

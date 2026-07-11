@@ -245,7 +245,9 @@ const Schedule = React.memo(function Schedule() {
       const bFav = favoriteLeagues.includes(bLeagueName) ? 1 : 0;
       
       if (aFav !== bFav) return bFav - aFav;
-      return new Date(a.utcDate).getTime() - new Date(b.utcDate).getTime();
+      const aTime = new Date(a.utcDate || a.startTime || 0).getTime();
+      const bTime = new Date(b.utcDate || b.startTime || 0).getTime();
+      return aTime - bTime;
     });
   }, [matches, activeTab, selectedLeague, searchQuery, favoriteLeagues]);
 

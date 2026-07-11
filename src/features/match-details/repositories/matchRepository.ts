@@ -12,7 +12,7 @@ const mapWCMatchToMatch = (wcMatch: any): Match => {
         source: 'world-cup',
         provider: 'Football-Data/OpenFootball',
         approved: true
-    });
+    }) as Match;
 };
 
 export const subscribeToMatch = (id: string, onUpdate: (match: Match) => void, onError: (error: Error) => void) => {
@@ -97,5 +97,5 @@ export const bulkDelete = async (ids: string[]) => {
 };
 
 export const mapFirestoreMatch = (id: string, data: any): Match => {
-    return matchesRepositoryV2.mapFirestoreMatch(id, data);
+    return matchesRepositoryV2.mapFirestoreMatch(id, data) as Match;
 };

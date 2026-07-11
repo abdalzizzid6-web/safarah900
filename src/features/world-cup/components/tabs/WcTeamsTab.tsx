@@ -72,7 +72,7 @@ export function WcTeamsTab({
               </div>
             ) : (
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 max-h-[500px] overflow-y-auto">
-                {dbTeams.map(t => (
+                {dbTeams.map((t: any) => (
                   <div key={t.id} className="p-3 bg-black border border-white/5 rounded-2xl flex flex-col justify-between items-center text-center gap-2">
                     <img src={t.logo} className="w-8 h-8 object-contain" alt="" referrerPolicy="no-referrer" />
                     <div>

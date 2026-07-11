@@ -3,13 +3,13 @@ import { Users, Shield, Award, UserCheck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { createSlugPath } from '../../utils/slugify';
 
-export default function SquadSection({ players }) {
+export default function SquadSection({ players }: { players: any[] }) {
   const navigate = useNavigate();
   // Group players by position
   const groupedPlayers = useMemo(() => {
     if (!Array.isArray(players)) return {};
     
-    return players.reduce((acc, player) => {
+    return players.reduce((acc: any, player: any) => {
       let posGroup = 'أخرى';
       const pos = player.position || '';
       
@@ -57,7 +57,7 @@ export default function SquadSection({ players }) {
 
                 {/* Player Row Card List */}
                 <div className="grid gap-3 grid-cols-1 sm:grid-cols-2">
-                  {list.map((player) => (
+                  {list.map((player: any) => (
                     <div 
                       key={player.id} 
                       onClick={() => navigate(`/player/${createSlugPath(player.name, player.id)}`)}

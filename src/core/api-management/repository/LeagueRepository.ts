@@ -10,7 +10,7 @@ export class LeagueRepository extends BaseRepository<LeagueSettings> implements 
   }
 
   async getLeagues(): Promise<LeagueSettings[]> {
-    const cached = CacheLayer.get('leagues');
+    const cached = CacheLayer.get<LeagueSettings[]>('leagues');
     if (cached) return cached;
 
     const leagues = await this.getAll(500);

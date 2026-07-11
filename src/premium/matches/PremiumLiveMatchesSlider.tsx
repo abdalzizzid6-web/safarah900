@@ -25,7 +25,7 @@ export default function PremiumLiveMatchesSlider() {
             </div>
             <div className="flex justify-between items-center font-bold text-white gap-3">
               <span className="truncate">{typeof match.homeTeam === 'object' ? match.homeTeam.name : match.homeTeam}</span>
-              <ScoreFlash homeScore={match.homeScore} awayScore={match.awayScore} size="sm" />
+              <ScoreFlash homeScore={match.homeScore ?? 0} awayScore={match.awayScore ?? 0} size="sm" />
               <span className="truncate">{typeof match.awayTeam === 'object' ? match.awayTeam.name : match.awayTeam}</span>
             </div>
           </motion.div>

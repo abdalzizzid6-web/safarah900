@@ -73,14 +73,14 @@ export async function getCachedTeamsAndPlayers() {
       console.log("[Smart Linking Cache] Fetching teams and players for local memory cache...");
       if (firestore) {
         const teamsSnap = await firestore.collection('teams').limit(150).get();
-        (global as any).cachedTeams = teamsSnap.docs.map(doc => {
+        (global as any).cachedTeams = teamsSnap.docs.map((doc: any) => {
           const d = doc.data();
           return { id: doc.id, name: d.name || "", arabicName: d.arabicName || "" };
         });
         cachedTeams = (global as any).cachedTeams;
 
         const playersSnap = await firestore.collection('players').limit(150).get();
-        (global as any).cachedPlayers = playersSnap.docs.map(doc => {
+        (global as any).cachedPlayers = playersSnap.docs.map((doc: any) => {
           const d = doc.data();
           return { id: doc.id, name: d.name || "", arabicName: d.arabicName || "" };
         });
@@ -111,7 +111,7 @@ export async function getCachedLeagues() {
       if (firestore) {
         console.log("[Smart Linking Cache] Fetching leagues for local memory cache...");
         const leaguesSnap = await firestore.collection('leagues').limit(50).get();
-        (global as any).cachedLeagues = leaguesSnap.docs.map(doc => {
+        (global as any).cachedLeagues = leaguesSnap.docs.map((doc: any) => {
           const d = doc.data();
           return { id: doc.id, name: d.name || "", arabicName: d.arabicName || "" };
         });

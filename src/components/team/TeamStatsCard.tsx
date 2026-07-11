@@ -1,7 +1,18 @@
 import React from 'react';
 import { Award, Percent } from 'lucide-react';
 
-export default function TeamStatsCard({ stats }) {
+interface TeamStatsProps {
+  stats: {
+    played: number;
+    wins: number;
+    losses: number;
+    draws: number;
+    goals: number;
+    cleanSheets: number;
+  } | null | undefined;
+}
+
+export default function TeamStatsCard({ stats }: TeamStatsProps) {
   if (!stats) return null;
 
   // Calculate victory percentage

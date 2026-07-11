@@ -219,7 +219,7 @@ export default function PremiumMatchesScheduleSection({ title = "جدول الم
                   {/* Score / Time */}
                   <div className="flex flex-col items-center justify-center w-1/3">
                     {match.status === 'FINISHED' || match.status === 'LIVE' || match.isLive ? (
-                      <ScoreFlash homeScore={match.homeScore} awayScore={match.awayScore} size="lg" />
+                      <ScoreFlash homeScore={match.homeScore ?? 0} awayScore={match.awayScore ?? 0} size="lg" />
                     ) : (
                       <div className="flex flex-col items-center">
                         <span className="text-xs font-bold text-white/60 bg-white/5 px-3 py-1 rounded-full">

@@ -15,7 +15,7 @@ router.get("/matches", async (req, res) => {
       .orderBy('date', 'asc')
       .get();
     
-    const matches = snapshot.docs.map(doc => ({
+    const matches = snapshot.docs.map((doc: any) => ({
       id: doc.id,
       ...doc.data()
     }));
@@ -36,7 +36,7 @@ router.get("/standings", async (req, res) => {
       .orderBy('group', 'asc')
       .get();
     
-    const standings = snapshot.docs.map(doc => ({
+    const standings = snapshot.docs.map((doc: any) => ({
       id: doc.id,
       ...doc.data()
     }));

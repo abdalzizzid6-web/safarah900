@@ -5,7 +5,7 @@ const router = express.Router();
 const FOOTBALL_DATA_KEY = process.env.VITE_FOOTBALL_DATA_KEY || process.env.FOOTBALL_DATA_KEY;
 
 router.get("/football-data/*", async (req, res) => {
-    const apiPath = req.params[0];
+    const apiPath = (req.params as any)[0];
     try {
         const response = await axios.get(`https://api.football-data.org/v4/${apiPath}`, {
             headers: FOOTBALL_DATA_KEY ? { 'X-Auth-Token': FOOTBALL_DATA_KEY } : {},

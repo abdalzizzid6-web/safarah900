@@ -12,6 +12,8 @@ interface ConnectedAccount {
   avatarUrl?: string;
   status: 'active' | 'expired' | 'disconnected' | 'error';
   permissions: string[];
+  tokenExpiresAt?: string;
+  pages?: Array<{ id: string; name: string; category?: string; avatarUrl?: string }>;
 }
 
 const ConnectedAccounts: React.FC = () => {
@@ -66,7 +68,7 @@ const ConnectedAccounts: React.FC = () => {
     // Listen for OAuth Success Messages from popup
     const handleOAuthSuccess = (event: MessageEvent) => {
       const origin = event.origin;
-      if (!origin.endsWith('.run.app') && !origin.includes('localhost')) {
+      if (origin !== window.location.origin && !origin.endsWith('.run.app') && !origin.includes('localhost')) {
         return;
       }
       if (event.data?.type === 'OAUTH_AUTH_SUCCESS') {
@@ -85,7 +87,8 @@ const ConnectedAccounts: React.FC = () => {
     try {
       const response = await fetch(`/api/social/connect/${platformId}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ origin: window.location.origin })
       });
       
       const data = await response.json();
@@ -114,6 +117,7 @@ const ConnectedAccounts: React.FC = () => {
       }
     } catch (err: any) {
       setToast({ message: err.message, type: 'error' });
+      setShowAddModal(false);
     } finally {
       setIsConnecting(false);
     }
@@ -275,8 +279,47 @@ const ConnectedAccounts: React.FC = () => {
                     <div className="min-w-0">
                       <h4 className="text-white font-semibold truncate leading-snug">{acc.name}</h4>
                       <p className="text-xs text-gray-500 truncate font-mono mt-0.5">@{acc.handle || acc.platform}</p>
+                      <div className="flex items-center gap-1.5 mt-1">
+                        <span className={`w-2 h-2 rounded-full ${acc.status === 'active' ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`} />
+                        <span className="text-[10px] text-gray-400">
+                          {acc.status === 'active' ? 'متصل (Connected)' : 'غير متصل / منتهي'}
+                        </span>
+                      </div>
                     </div>
                   </div>
+                  
+                  {acc.tokenExpiresAt && (
+                    <div className="mt-3 mb-4 text-[11px] text-gray-400 bg-white/5 p-2.5 rounded-lg border border-white/5 flex flex-col gap-0.5">
+                      <span className="text-gray-500 text-[10px]">تاريخ انتهاء الصلاحية (Expires):</span>
+                      <span className="font-mono">
+                        {new Date(acc.tokenExpiresAt).toLocaleString('ar-EG', {
+                          year: 'numeric',
+                          month: 'numeric',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </span>
+                    </div>
+                  )}
+
+                  {acc.platform === 'facebook' && acc.pages && acc.pages.length > 0 && (
+                    <div className="mt-3 mb-4 space-y-1.5">
+                      <span className="text-[10px] text-gray-500 block">الصفحات المتاحة ({acc.pages.length}):</span>
+                      <div className="max-h-24 overflow-y-auto space-y-1 pr-1 custom-scrollbar">
+                        {acc.pages.map((page: any) => (
+                          <div key={page.id} className="flex items-center gap-2 p-1.5 rounded bg-surface-elevated border border-white/5 text-[11px] text-white">
+                            {page.avatarUrl ? (
+                              <img src={page.avatarUrl} alt={page.name} className="w-4 h-4 rounded-full object-cover" />
+                            ) : (
+                              <span className="w-4 h-4 rounded-full bg-white/10 flex items-center justify-center text-[8px]">P</span>
+                            )}
+                            <span className="truncate flex-1 font-medium">{page.name}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                   
                   {testResult && (
                     <div className={`p-2.5 rounded-lg text-xs mb-4 border ${
@@ -351,8 +394,12 @@ const ConnectedAccounts: React.FC = () => {
                       <button
                         key={p.id}
                         onClick={() => {
-                          setSelectedPlatform(p.id);
-                          setManualFields({});
+                          if (p.isManual) {
+                            setSelectedPlatform(p.id);
+                            setManualFields({});
+                          } else {
+                            handleConnectOAuth(p.id);
+                          }
                         }}
                         className="bg-surface-elevated hover:bg-surface-elevated/80 border border-white/5 hover:border-primary/30 p-4 rounded-xl flex flex-col items-center gap-2 text-center group transition-all"
                       >

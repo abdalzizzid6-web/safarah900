@@ -55,7 +55,7 @@ export default function PremiumHeroSection({ match }: PremiumHeroSectionProps) {
 
           {/* Score & Status */}
           <div className="flex flex-col items-center">
-            <ScoreFlash homeScore={match.homeScore} awayScore={match.awayScore} size="xl" className="mb-2" />
+            <ScoreFlash homeScore={match.homeScore ?? 0} awayScore={match.awayScore ?? 0} size="xl" className="mb-2" />
             
             <div className="flex items-center gap-2">
               {match.minute && (

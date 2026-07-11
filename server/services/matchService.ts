@@ -28,7 +28,7 @@ export const syncMatchesForNotifications = async () => {
   try {
     if (!firestore) return;
 
-    await firestore.runTransaction(async (transaction) => {
+    await firestore.runTransaction(async (transaction: any) => {
       const statesDocRef = firestore.collection('system_state').doc('match_states');
       const statesDoc = await transaction.get(statesDocRef);
       const lastProcessedMatchStates: Record<string, string> = statesDoc.exists ? statesDoc.data()!.states : {};

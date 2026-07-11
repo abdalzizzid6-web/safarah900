@@ -53,7 +53,8 @@ export default function MatchHeader({ match: propMatch }: MatchHeaderProps) {
 
   const formattedTime = React.useMemo(() => {
     try {
-      return new Date(match.startTime).toLocaleTimeString('ar-EG', {
+      const timeStr = match.startTime || (match as any).utcDate || new Date().toISOString();
+      return new Date(timeStr).toLocaleTimeString('ar-EG', {
         hour: '2-digit',
         minute: '2-digit',
         hour12: true
@@ -61,11 +62,12 @@ export default function MatchHeader({ match: propMatch }: MatchHeaderProps) {
     } catch {
       return '22:00';
     }
-  }, [match.startTime]);
+  }, [match.startTime, (match as any).utcDate]);
 
   const formattedDate = React.useMemo(() => {
     try {
-      return new Date(match.startTime).toLocaleDateString('ar-EG', {
+      const dateStr = match.startTime || (match as any).utcDate || new Date().toISOString();
+      return new Date(dateStr).toLocaleDateString('ar-EG', {
         year: 'numeric',
         month: 'long',
         day: 'numeric'

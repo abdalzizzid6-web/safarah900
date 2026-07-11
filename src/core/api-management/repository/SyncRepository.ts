@@ -11,7 +11,7 @@ export class SyncRepository extends BaseRepository<ISyncSettings> implements ISy
   }
 
   async getSyncSettings(): Promise<ISyncSettings[]> {
-    const cached = CacheLayer.get('sync_settings');
+    const cached = CacheLayer.get<ISyncSettings[]>('sync_settings');
     if (cached) return cached;
 
     const settings = await this.getAll(500);

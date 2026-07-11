@@ -233,11 +233,11 @@ export function WcMatchesTab({
                     onChange={(e) => setMatchSearchTerm(e.target.value)}
                 />
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[600px] overflow-y-auto pr-1">
-                  {dbMatches.filter(m => 
+                  {dbMatches.filter((m: any) => 
                     worldCupService.translateTeam(m.homeTeam.name).includes(matchSearchTerm) || 
                     worldCupService.translateTeam(m.awayTeam.name).includes(matchSearchTerm) ||
                     String(m.id).includes(matchSearchTerm)
-                  ).map(m => (
+                  ).map((m: any) => (
                     <div key={m.id} className="p-3.5 rounded-2xl bg-black border border-white/5 flex items-center justify-between gap-4">
                       <div className="text-right space-y-1">
                         <p className="text-[10px] text-gray-400 font-bold">مباراة #{m.id.replace('2026-m-', '')} - {m.stage === 'GROUP_STAGE' ? 'مجموعات' : 'إقصائي'}</p>

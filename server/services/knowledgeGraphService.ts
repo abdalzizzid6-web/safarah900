@@ -179,7 +179,7 @@ export async function getOrGeneratePlayerKnowledge(playerId: string, playerName?
       .get();
     
     if (!articlesSnap.empty) {
-      linkedNewsSummary = articlesSnap.docs.map(doc => {
+      linkedNewsSummary = articlesSnap.docs.map((doc: any) => {
         const d = doc.data();
         return `- Title: ${d.title}, Content: ${d.excerpt || d.content?.slice(0, 100)}`;
       }).join("\n");
@@ -375,7 +375,7 @@ export async function getOrGenerateTeamKnowledgeGraph(teamId: string, teamName?:
       .where('relatedContent.teams', 'array-contains', tName)
       .limit(6)
       .get();
-    relatedNews = newsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    relatedNews = newsSnap.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
   } catch (err) {
     console.warn("Error finding news for team:", err);
   }
@@ -385,7 +385,7 @@ export async function getOrGenerateTeamKnowledgeGraph(teamId: string, teamName?:
   let upcomingMatches: any[] = [];
   try {
     const matchesSnap = await firestore.collection('matches').limit(50).get();
-    const allMatches = matchesSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const allMatches = matchesSnap.docs.map((d: any) => ({ id: d.id, ...d.data() }));
     
     const teamMatches = allMatches.filter((m: any) => 
       String(m.homeTeamId) === String(teamId) || 
@@ -544,7 +544,7 @@ export async function getOrGenerateMatchKnowledge(matchId: string, matchData: an
   let relatedNews: any[] = [];
   try {
     const newsSnap = await firestore.collection('news').limit(4).get();
-    const allNews = newsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const allNews = newsSnap.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
     relatedNews = allNews.filter((art: any) => {
       const title = (art.title || "").toLowerCase();
       const desc = (art.content || art.description || "").toLowerCase();
@@ -677,7 +677,7 @@ export async function performSemanticSearch(queryStr: string) {
   // 3. Query News articles matching query semantically
   try {
     const newsSnap = await firestore.collection('news').limit(30).get();
-    const allNews = newsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const allNews = newsSnap.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
     
     // Simple filter matching semantic names
     relatedNews = allNews.filter((art: any) => {
@@ -698,7 +698,7 @@ export async function performSemanticSearch(queryStr: string) {
   // 4. Query Matches matching query
   try {
     const matchesSnap = await firestore.collection('matches').limit(50).get();
-    const allMatches = matchesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const allMatches = matchesSnap.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
 
     matches = allMatches.filter((m: any) => {
       const h = (m.homeTeamName || m.homeTeam?.name || "").toLowerCase();

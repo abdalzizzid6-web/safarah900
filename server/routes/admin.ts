@@ -397,7 +397,7 @@ router.get("/api-management/stats", authMiddleware('editor'), async (req, res) =
         // 1. Fetch Providers
         const providersSnap = await firestore.collection('api_providers').orderBy('priority', 'asc').get();
         const providers: any[] = [];
-        providersSnap.forEach(doc => {
+        providersSnap.forEach((doc: any) => {
             providers.push({ id: doc.id, ...doc.data() });
         });
 
@@ -421,7 +421,7 @@ router.get("/api-management/stats", authMiddleware('editor'), async (req, res) =
             .get();
             
         const recentLogs: any[] = [];
-        logsSnap.forEach(doc => {
+        logsSnap.forEach((doc: any) => {
             recentLogs.push(doc.data());
         });
 
@@ -721,7 +721,7 @@ router.post("/diagnostics/run-tests", authMiddleware('admin'), async (req, res) 
                 isConfigured: false,
                 isValid: false,
                 isQuotaExceeded: false,
-                lastSuccess: null,
+                lastSuccess: "",
                 error: "مفتاح GEMINI_API_KEY غير موجود في الخادم."
             };
         }

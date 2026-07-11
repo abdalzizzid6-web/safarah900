@@ -41,7 +41,7 @@ async function runActiveRssSyncCycle() {
       const snapshot = await firestore.collection("rss_sources")
         .where("enabled", "==", true)
         .get();
-      sources = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      sources = snapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
       rssSourcesCache = sources;
       lastSourcesFetch = now;
     }

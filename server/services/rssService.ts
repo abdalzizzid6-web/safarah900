@@ -2,7 +2,6 @@ import RSSParser from "rss-parser";
 import crypto from "crypto";
 import { isUrlSafe } from "../utils/slugify";
 import { firestore, isFirestoreQuotaExceeded, setFirestoreQuotaExceeded, isFirebaseQuotaError } from "../firestore/collections";
-import { generateSitemap } from "../scripts/generateSitemap";
 
 // Import modular sub-services
 import { 
@@ -618,7 +617,6 @@ export async function transitionImportedArticleStatus(articleId: string, newStat
     };
     await newsDocRef.set(newsPayload);
     // Auto-update sitemap on publication
-    generateSitemap().catch(e => console.error("Sitemap gen failed on pub:", e));
   }
 
   return true;

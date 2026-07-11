@@ -822,9 +822,6 @@ export async function bootstrap() {
   startRssJobs();
 
   // Async Initialization
-  generateSitemap();
-  // Periodic Sitemap generation every hour
-  setInterval(generateSitemap, 60 * 60 * 1000);
   const cacheFile = path.join(process.cwd(), 'public', 'data', 'matches.json');
   let shouldGenerate = true;
   if (fs.existsSync(cacheFile)) {

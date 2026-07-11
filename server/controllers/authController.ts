@@ -1,5 +1,6 @@
 import passport from 'passport';
 import { Strategy as FacebookStrategy } from 'passport-facebook';
+import crypto from 'crypto';
 import { firestore } from '../firestore/collections';
 import { encrypt, decrypt } from '../utils/crypto';
 import { Request, Response, NextFunction } from 'express';
@@ -12,20 +13,16 @@ export async function facebookConnect(req: Request, res: Response, next: NextFun
     const origin = process.env.APP_URL || 'https://korea90.xyz';
     const redirectUri = `${origin}/api/social/callback/facebook`;
     
-    // Fetch Facebook credentials from Firestore
-    const credsDoc = await firestore.collection('social_settings').doc('api_credentials').get();
-    const creds = credsDoc.exists ? credsDoc.data()?.facebook || {} : {};
+    // Fetch Facebook credentials from Environment Variables
+    const clientID = process.env.FACEBOOK_CLIENT_ID;
+    const clientSecret = process.env.FACEBOOK_CLIENT_SECRET;
     
-    const clientIdEnc = creds.clientId || creds.client_id;
-    const clientSecretEnc = creds.clientSecret || creds.client_secret;
-    
-    if (!clientIdEnc || !clientSecretEnc) {
+    if (!clientID || !clientSecret) {
       return res.status(400).json({
-        error: "لم يتم تهيئة إعدادات الفيسبوك (Facebook) بشكل كامل. يرجى إدخال معرف التطبيق (App ID) والرمز السري (Client Secret) في لوحة التحكم 'إدارة مفاتيح الـ API'."
+        error: "لم يتم تهيئة إعدادات الفيسبوك (Facebook) بشكل كامل في متغيرات البيئة. يرجى التأكد من ضبط FACEBOOK_CLIENT_ID و FACEBOOK_CLIENT_SECRET."
       });
     }
     
-    const clientID = decrypt(clientIdEnc);
     const state = crypto.randomBytes(16).toString('hex');
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString(); // 15 minutes TTL
     
@@ -58,31 +55,16 @@ export async function facebookConnect(req: Request, res: Response, next: NextFun
  */
 export async function facebookCallback(req: Request, res: Response, next: NextFunction) {
   try {
-    // Determine origin for callback
-    let origin = process.env.APP_URL;
-    if (!origin) {
-      const host = req.get('host') || 'localhost:3000';
-      const protocol = req.secure ? 'https' : 'http';
-      origin = `${protocol}://${host}`;
-    }
-    if (origin.endsWith('/')) {
-      origin = origin.slice(0, -1);
-    }
+    const origin = process.env.APP_URL || 'https://korea90.xyz';
     const redirectUri = `${origin}/api/social/callback/facebook`;
     
-    // Fetch Facebook credentials from Firestore
-    const credsDoc = await firestore.collection('social_settings').doc('api_credentials').get();
-    const creds = credsDoc.exists ? credsDoc.data()?.facebook || {} : {};
+    // Fetch Facebook credentials from Environment Variables
+    const clientID = process.env.FACEBOOK_CLIENT_ID;
+    const clientSecret = process.env.FACEBOOK_CLIENT_SECRET;
     
-    const clientIdEnc = creds.clientId || creds.client_id;
-    const clientSecretEnc = creds.clientSecret || creds.client_secret;
-    
-    if (!clientIdEnc || !clientSecretEnc) {
-      throw new Error("لم يتم العثور على إعدادات فيسبوك في قاعدة البيانات.");
+    if (!clientID || !clientSecret) {
+      throw new Error("لم يتم العثور على إعدادات فيسبوك في متغيرات البيئة.");
     }
-    
-    const clientID = decrypt(clientIdEnc);
-    const clientSecret = decrypt(clientSecretEnc);
     
     // Re-register Facebook strategy for callback handling
     passport.use('facebook-callback', new FacebookStrategy({

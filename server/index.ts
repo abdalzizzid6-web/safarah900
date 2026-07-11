@@ -23,7 +23,12 @@ import { socialRouter } from "./routes/social";
 import { startNotificationJob } from "./jobs/syncNotifications";
 import { startRssJobs } from "./jobs/rssPolling";
 import { generateAndWriteCacheFiles } from "./firestore/cache";
+import { handleSitemap } from "./routes/sitemapDynamic";
 
+// ... (other imports)
+
+import { enhanceSeo } from "./utils/seoEnhancer";
+import { generateBaseSchema, generateNewsSchema } from "./utils/schemaGenerator";
 import { authMiddleware } from "./middleware/auth";
 import { firestore, isFirestoreQuotaExceeded, messaging } from "./firestore/collections";
 import { generateContentWithRetry } from "./services/aiService";
@@ -38,6 +43,10 @@ app.use(passport.initialize());
 const PORT = 3000;
 
 // Domain Unification & HTTPS Redirection (SEO-01)
+app.get('/sitemap.xml', (req, res) => { req.params.type = 'main'; handleSitemap(req, res); });
+app.get('/sitemap-matches.xml', (req, res) => { req.params.type = 'matches'; handleSitemap(req, res); });
+app.get('/sitemap-news.xml', (req, res) => { req.params.type = 'news'; handleSitemap(req, res); });
+
 app.use((req, res, next) => {
   const host = req.get('host') || '';
   const xForwardedProto = req.get('x-forwarded-proto');
@@ -46,14 +55,14 @@ app.use((req, res, next) => {
   const isWww = host.startsWith('www.');
 
   if (process.env.NODE_ENV === 'production') {
-    // Force https://korea90.xyz but skip if on preview domain (run.app)
+    // Force https://www.korea90.xyz but skip if on preview domain (run.app)
     const isPreview = host.endsWith('.run.app') || host.includes('localhost');
-    if (!isPreview && (isWww || !isHttps || host !== 'korea90.xyz')) {
-      return res.redirect(301, `https://korea90.xyz${req.originalUrl}`);
+    if (!isPreview && (!isWww || !isHttps || host !== 'www.korea90.xyz')) {
+      return res.redirect(301, `https://www.korea90.xyz${req.originalUrl}`);
     }
-  } else if (isWww) {
-    // In dev/test, just remove www if it's there
-    return res.redirect(301, `${protocol}://${host.replace(/^www\./, '')}${req.originalUrl}`);
+  } else if (!isWww && host !== 'localhost' && host !== '127.0.0.1' && !host.endsWith('.run.app')) {
+    // In dev, if not www, ensure we use it (if desired)
+    return res.redirect(301, `${protocol}://www.${host}${req.originalUrl}`);
   }
   next();
 });
@@ -73,51 +82,7 @@ const getIndexHtml = (distPath: string) => {
   }
 };
 
-const injectSeo = (html: string, options: { 
-  title?: string, 
-  description?: string, 
-  url?: string, 
-  image?: string,
-  type?: string,
-  structuredData?: any 
-}) => {
-  const { title, description, url, image = 'https://korea90.xyz/logo-master.png', type = 'website', structuredData } = options;
-  
-  let result = html;
-  if (title) {
-    const fullTitle = `${title} | صافرة 90`;
-    result = result.replace(/<title>.*?<\/title>/, `<title>${fullTitle}</title>`);
-    result = result.replace(/<meta property="og:title" content=".*?" \/>/, `<meta property="og:title" content="${fullTitle}" />`);
-  }
-  
-  if (description) {
-    result = result.replace(/<meta name="description" content=".*?" \/>/, `<meta name="description" content="${description}" />`);
-    result = result.replace(/<meta property="og:description" content=".*?" \/>/, `<meta property="og:description" content="${description}" />`);
-  }
-
-  if (url) {
-    result = result.replace(/<meta property="og:url" content=".*?" \/>/, `<meta property="og:url" content="${url}" />`);
-    // Add canonical
-    if (result.includes('</head>')) {
-      result = result.replace('</head>', `  <link rel="canonical" href="${url}" />\n</head>`);
-    }
-  }
-
-  if (image) {
-    result = result.replace(/<meta property="og:image" content=".*?" \/>/, `<meta property="og:image" content="${image}" />`);
-  }
-
-  if (type) {
-    result = result.replace(/<meta property="og:type" content=".*?" \/>/, `<meta property="og:type" content="${type}" />`);
-  }
-
-  if (structuredData && result.includes('</head>')) {
-    const ldJson = `  <script type="application/ld+json">\n${JSON.stringify(structuredData, null, 2)}\n  </script>\n</head>`;
-    result = result.replace('</head>', ldJson);
-  }
-
-  return result;
-};
+// Removed brittle injectSeo function
 
 // CRITICAL: SEO Routes must take precedence before static files or other catch-alls
 app.use("/", seoRoutes);
@@ -853,10 +818,13 @@ app.use('/data', express.static(path.join(process.cwd(), 'public', 'data')));
 export async function bootstrap() {
   
   // Background Tasks
-  // startNotificationJob();
-  // startRssJobs();
+  startNotificationJob();
+  startRssJobs();
 
   // Async Initialization
+  generateSitemap();
+  // Periodic Sitemap generation every hour
+  setInterval(generateSitemap, 60 * 60 * 1000);
   const cacheFile = path.join(process.cwd(), 'public', 'data', 'matches.json');
   let shouldGenerate = true;
   if (fs.existsSync(cacheFile)) {
@@ -947,7 +915,7 @@ export async function bootstrap() {
             "location": { "@type": "Place", "name": data.venue || "ملعب المباراة" }
           };
 
-          html = injectSeo(html, {
+          html = enhanceSeo(html, {
             title,
             description,
             url: `https://korea90.xyz/match/${slug}`,
@@ -998,21 +966,16 @@ export async function bootstrap() {
         const description = data.seo?.metaDescription || data.excerpt || data.content?.substring(0, 160);
         const image = data.featuredImage?.url || data.image || 'https://korea90.xyz/logo-master.png';
 
-        const structuredData = {
-          "@context": "https://schema.org",
-          "@type": "NewsArticle",
-          "headline": title,
-          "description": description,
-          "image": [image],
-          "datePublished": data.publishDate?.toDate?.()?.toISOString() || data.publishDate,
-          "dateModified": data.updatedAt?.toDate?.()?.toISOString() || data.updatedAt,
-          "author": { "@type": "Organization", "name": "صافرة 90" }
-        };
+        const newsUrl = `https://www.korea90.xyz/news/${slug}`;
+        const structuredData = [
+          ...generateBaseSchema(newsUrl),
+          generateNewsSchema(data, newsUrl)
+        ];
 
-        html = injectSeo(html, {
+        html = enhanceSeo(html, {
           title,
           description,
-          url: `https://korea90.xyz/news/${slug}`,
+          url: newsUrl,
           image,
           type: 'article',
           structuredData
@@ -1029,7 +992,7 @@ export async function bootstrap() {
       const html = getIndexHtml(distPath);
       // Default home page SEO if it's the root
       if (req.path === '/') {
-        const homeSeo = injectSeo(html, {
+        const homeSeo = enhanceSeo(html, {
           title: "الرئيسية - أهم أخبار ونتائج مباريات كرة القدم",
           description: "صافرة 90 هي منصتك الأولى لمتابعة نتائج مباريات كرة القدم، البث المباشر، وأحدث الأخبار الرياضية العالمية والعربية لحظة بلحظة.",
           url: "https://korea90.xyz/",

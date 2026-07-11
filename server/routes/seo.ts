@@ -7,12 +7,6 @@ import { createSlugPath } from "../utils/slugify";
 const router = express.Router();
 
 const getBaseUrl = (req: express.Request) => {
-  if (process.env.BASE_URL) return process.env.BASE_URL.replace(/\/$/, '');
-  const host = req.get('host');
-  const protocol = req.get('x-forwarded-proto') || req.protocol;
-  if (host?.includes('run.app') || host?.includes('localhost')) {
-    return `${protocol}://${host}`;
-  }
   return "https://korea90.xyz";
 };
 
@@ -118,6 +112,7 @@ router.get("/sitemap-matches.xml", async (req, res) => {
         };
 
         if (isPlaceholder(match.homeName) && isPlaceholder(match.awayName)) return;
+        if (!match.slug || match.slug === 'undefined' || match.slug.includes('[object Object]')) return;
         
         urls.push({
           loc: `${host}/match/${match.slug}`,
@@ -147,6 +142,7 @@ router.get("/sitemap-news.xml", async (req, res) => {
         const data = doc.data();
         const news = normalizeNews({ ...data, id: doc.id });
         const pubDate = (data.publishDate?.toDate?.() || new Date()).toISOString();
+        if (!news.slug || news.slug === 'undefined' || news.slug.includes('[object Object]')) return;
         
         urls.push({
           loc: `${host}/news/${news.slug}`,
@@ -176,10 +172,14 @@ router.get("/sitemap-images.xml", async (req, res) => {
       const newsSnap = await collections.news().orderBy('publishDate', 'desc').limit(100).get();
       newsSnap.forEach(doc => {
         const data = doc.data();
-        if (data.image) {
+        const news = normalizeNews({ ...data, id: doc.id });
+        const imageField = data.image || data.featuredImage?.url;
+        if (!news.slug || news.slug === 'undefined' || news.slug.includes('[object Object]')) return;
+        if (imageField) {
+          const imgUrl = imageField.startsWith('http') ? imageField : `${host}${imageField.startsWith('/') ? '' : '/'}${imageField}`;
           urls.push({
-            loc: `${host}/news/${createSlugPath(data.title, doc.id)}`,
-            images: [{ loc: data.image, title: data.title }]
+            loc: `${host}/news/${news.slug}`,
+            images: [{ loc: imgUrl, title: news.title }]
           });
         }
       });
@@ -202,6 +202,7 @@ router.get("/sitemap-leagues.xml", async (req, res) => {
       const snap = await collections.leagues().limit(100).get();
       snap.forEach(doc => {
         const league = normalizeLeague({ ...doc.data(), id: doc.id });
+        if (!league.slug || league.slug === 'undefined' || league.slug.includes('[object Object]')) return;
         urls.push({ loc: `${host}/league/${league.slug}`, changefreq: 'daily', priority: '0.8' });
       });
       return generateSitemapXml(urls);
@@ -222,6 +223,7 @@ router.get("/sitemap-teams.xml", async (req, res) => {
       const snap = await collections.teams().limit(500).get();
       snap.forEach(doc => {
         const team = normalizeTeam({ ...doc.data(), id: doc.id });
+        if (!team.slug || team.slug === 'undefined' || team.slug.includes('[object Object]')) return;
         urls.push({ loc: `${host}/team/${team.slug}`, changefreq: 'weekly', priority: '0.7' });
       });
       return generateSitemapXml(urls);
@@ -243,6 +245,7 @@ router.get("/sitemap-players.xml", async (req, res) => {
       snap.forEach(doc => {
         const data = doc.data();
         const slug = createSlugPath(data.name || "player", doc.id);
+        if (!slug || slug === 'undefined' || slug.includes('[object Object]')) return;
         urls.push({ loc: `${host}/player/${slug}`, changefreq: 'weekly', priority: '0.6' });
       });
       return generateSitemapXml(urls);

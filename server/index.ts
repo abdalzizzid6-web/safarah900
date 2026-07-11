@@ -120,7 +120,7 @@ const injectSeo = (html: string, options: {
 app.use("/", seoRoutes);
 
 app.get("/robots.txt", (req, res) => {
-  const host = (process.env.BASE_URL || `https://korea90.xyz`).replace(/\/$/, '');
+  const host = "https://korea90.xyz";
   res.header('Content-Type', 'text/plain; charset=utf-8');
   res.send(`User-agent: *
 Allow: /

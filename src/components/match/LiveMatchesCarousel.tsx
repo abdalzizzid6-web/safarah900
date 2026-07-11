@@ -14,11 +14,13 @@ export default function LiveMatchesCarousel() {
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Fetch Live Matches
-  const { data: liveMatches = [], isLoading: isLiveLoading } = useLiveMatches();
+  const { data: rawLiveMatches, isLoading: isLiveLoading } = useLiveMatches();
+  const liveMatches = Array.isArray(rawLiveMatches) ? rawLiveMatches : [];
 
   // Fetch Today's Matches (to extract upcoming matches)
   const todayStr = format(new Date(), 'yyyy-MM-dd');
-  const { data: todayMatches = [], isLoading: isTodayLoading } = useMatches({ date: todayStr });
+  const { data: rawTodayMatches, isLoading: isTodayLoading } = useMatches({ date: todayStr });
+  const todayMatches = Array.isArray(rawTodayMatches) ? rawTodayMatches : [];
 
   // Filter out upcoming matches (not live and scheduled for today or later)
   const upcomingMatches = todayMatches

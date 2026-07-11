@@ -1,3 +1,5 @@
+import { safeExtractString, createSlugPath } from "./slugify";
+
 export interface NormalizedMatch {
   id: string;
   homeTeam: any;
@@ -156,18 +158,18 @@ export const normalizeMatch = (data: any): NormalizedMatch => {
 
 export const normalizeTeam = (data: any) => ({
   id: String(data.id || ''),
-  name: data.name || '',
-  slug: data.slug || (data.name || 'team').toLowerCase().replace(/\s+/g, '-'),
+  name: safeExtractString(data.name) || '',
+  slug: data.slug || createSlugPath(safeExtractString(data.name || 'team'), String(data.id || '')),
 });
 
 export const normalizeLeague = (data: any) => ({
   id: String(data.id || ''),
-  name: data.name || '',
-  slug: data.slug || (data.name || 'league').toLowerCase().replace(/\s+/g, '-'),
+  name: safeExtractString(data.name) || '',
+  slug: data.slug || createSlugPath(safeExtractString(data.name || 'league'), String(data.id || '')),
 });
 
 export const normalizeNews = (data: any) => ({
   id: String(data.id || ''),
-  title: data.title || '',
-  slug: data.seo?.slug || data.slug || data.id,
+  title: safeExtractString(data.title) || '',
+  slug: data.seo?.slug || data.slug || createSlugPath(safeExtractString(data.title || 'news'), String(data.id || '')),
 });

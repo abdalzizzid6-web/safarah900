@@ -76,16 +76,16 @@ export default function PremiumMatchesScheduleSection({ title = "جدول الم
   let loading = false;
 
   if (type === BlockType.TODAY_MATCHES) {
-    matches = todayRes.data || [];
+    matches = Array.isArray(todayRes.data) ? todayRes.data : [];
     loading = todayRes.isLoading;
   } else if (type === BlockType.TOMORROW_MATCHES) {
-    matches = tomorrowRes.data || [];
+    matches = Array.isArray(tomorrowRes.data) ? tomorrowRes.data : [];
     loading = tomorrowRes.isLoading;
   } else if (type === BlockType.FINISHED_MATCHES) {
-    matches = resultsRes.data || [];
+    matches = Array.isArray(resultsRes.data) ? resultsRes.data : [];
     loading = resultsRes.isLoading;
   } else {
-    matches = todayRes.data || [];
+    matches = Array.isArray(todayRes.data) ? todayRes.data : [];
     loading = todayRes.isLoading;
   }
 

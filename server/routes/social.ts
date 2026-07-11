@@ -188,17 +188,9 @@ router.post('/connect/facebook', facebookConnect);
 router.post('/connect/:platform', async (req, res) => {
   try {
     const { platform } = req.params;
-    const { customName, customHandle, customAvatar, manualToken, fields, origin: clientOrigin } = req.body;
+    const { customName, customHandle, customAvatar, manualToken, fields } = req.body;
     
-    let origin = clientOrigin || process.env.APP_URL;
-    if (!origin) {
-      const host = req.get('host') || 'localhost:3000';
-      const protocol = req.secure ? 'https' : 'http';
-      origin = `${protocol}://${host}`;
-    }
-    if (origin.endsWith('/')) {
-      origin = origin.slice(0, -1);
-    }
+    const origin = process.env.APP_URL || 'https://korea90.xyz';
     const redirectUri = `${origin}/api/social/callback/${platform}`;
     
     // Stored API credentials Check
@@ -272,6 +264,14 @@ router.post('/connect/:platform', async (req, res) => {
       expiresAt,
       createdAt: new Date().toISOString()
     });
+
+    // Debug logging
+    console.log('[OAuth Debug] Connect:', {
+      APP_URL: process.env.APP_URL,
+      redirect_uri: redirectUri,
+      client_id: clientId.substring(0, 5) + '***',
+      platform
+    });
     
     let oauthUrl = '';
     switch (platform) {
@@ -294,7 +294,7 @@ router.post('/connect/:platform', async (req, res) => {
         oauthUrl = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=w_member_social&state=${state}`;
         break;
       default:
-        oauthUrl = `https://mock.oauth.url/${platform}?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&state=${state}`;
+        return res.status(400).json({ error: `Platform ${platform} is not supported for automatic OAuth connection` });
     }
     
     res.json({ url: oauthUrl });
@@ -350,15 +350,7 @@ router.get('/callback/:platform', async (req, res) => {
     const verifier = stateData.verifier;
     await stateDocRef.delete(); // Single use state verification token consumption to prevent replay attacks
     
-    let origin = process.env.APP_URL;
-    if (!origin) {
-      const host = req.get('host') || 'localhost:3000';
-      const protocol = req.secure ? 'https' : 'http';
-      origin = `${protocol}://${host}`;
-    }
-    if (origin.endsWith('/')) {
-      origin = origin.slice(0, -1);
-    }
+    const origin = process.env.APP_URL || 'https://korea90.xyz';
     const redirectUri = `${origin}/api/social/callback/${platform}`;
     
     // Exchange Code for Access Token

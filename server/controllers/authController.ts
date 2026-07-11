@@ -9,18 +9,7 @@ import { Request, Response, NextFunction } from 'express';
  */
 export async function facebookConnect(req: Request, res: Response, next: NextFunction) {
   try {
-    const { origin: clientOrigin } = req.body;
-    
-    // Determine redirect origin
-    let origin = clientOrigin || process.env.APP_URL;
-    if (!origin) {
-      const host = req.get('host') || 'localhost:3000';
-      const protocol = req.secure ? 'https' : 'http';
-      origin = `${protocol}://${host}`;
-    }
-    if (origin.endsWith('/')) {
-      origin = origin.slice(0, -1);
-    }
+    const origin = process.env.APP_URL || 'https://korea90.xyz';
     const redirectUri = `${origin}/api/social/callback/facebook`;
     
     // Fetch Facebook credentials from Firestore
@@ -37,25 +26,27 @@ export async function facebookConnect(req: Request, res: Response, next: NextFun
     }
     
     const clientID = decrypt(clientIdEnc);
-    const clientSecret = decrypt(clientSecretEnc);
+    const state = crypto.randomBytes(16).toString('hex');
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString(); // 15 minutes TTL
     
-    // Dynamically register Facebook Strategy with passport
-    passport.use('facebook-connect', new FacebookStrategy({
-      clientID,
-      clientSecret,
-      callbackURL: redirectUri,
-      profileFields: ['id', 'displayName', 'photos', 'emails'],
-      passReqToCallback: true
-    }, async (request, accessToken, refreshToken, profile, done) => {
-      return done(null, { accessToken, refreshToken, profile });
-    }));
+    // Save state store
+    await firestore.collection('social_oauth_states').doc(state).set({
+      platform: 'facebook',
+      expiresAt,
+      createdAt: new Date().toISOString()
+    });
+
+    // Debug logging
+    console.log('[OAuth Debug] Facebook Connect:', {
+      APP_URL: process.env.APP_URL,
+      redirect_uri: redirectUri,
+      client_id: clientID.substring(0, 5) + '***',
+      platform: 'facebook'
+    });
     
-    // Invoke passport authentication
-    passport.authenticate('facebook-connect', {
-      scope: ['pages_manage_posts', 'pages_read_engagement', 'publish_to_groups'],
-      state: (req.query.state as string) || (req.body.state as string) || 'default_state',
-      session: false
-    })(req, res, next);
+    const oauthUrl = `https://www.facebook.com/v18.0/dialog/oauth?client_id=${clientID}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=pages_manage_posts,pages_read_engagement,publish_to_groups&state=${state}`;
+    
+    res.json({ url: oauthUrl });
     
   } catch (error: any) {
     res.status(500).json({ error: 'فشل في تهيئة عملية الربط مع فيسبوك: ' + error.message });

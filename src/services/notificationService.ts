@@ -1,8 +1,10 @@
-import { collection, addDoc, query, where, getDocs, orderBy, limit, onSnapshot, doc, updateDoc, writeBatch, serverTimestamp, setDoc, getDoc } from 'firebase/firestore';
+import { notificationRepositoryV2 } from '../core/repository/NotificationRepositoryV2';
+
 import { db, messaging } from '../firebase';
 import { getToken, onMessage } from 'firebase/messaging';
 import { AppNotification, NotificationType } from '../types';
 import { telemetry } from '../core/monitoring/telemetry';
+import { writeBatch } from 'firebase/firestore';
 
 export const notificationService = {
   // FCM Token Management
@@ -15,12 +17,10 @@ export const notificationService = {
 
       const token = await getToken(messaging, { vapidKey });
       if (token) {
-        const tokensRef = collection(db, 'fcm_tokens');
-        const q = query(tokensRef, where('token', '==', token), limit(1));
-        const snap = await getDocs(q);
+        const snap = await notificationRepositoryV2.findFCMTokenByToken(token);
         
         if (snap.empty) {
-          await addDoc(tokensRef, {
+          await notificationRepositoryV2.addFCMToken({
             token,
             userId,
             device: navigator.userAgent,
@@ -28,7 +28,7 @@ export const notificationService = {
           });
         } else {
           const docId = snap.docs[0].id;
-          await updateDoc(doc(db, 'fcm_tokens', docId), {
+          await notificationRepositoryV2.updateFCMToken(docId, {
             userId,
             updatedAt: new Date().toISOString()
           });
@@ -49,29 +49,27 @@ export const notificationService = {
       callback([]);
       return () => {};
     }
-    const q = query(
-      collection(db, 'notifications'),
-      where('targetUids', 'array-contains', userId),
-      orderBy('timestamp', 'desc'),
-      limit(50)
-    );
     
-    return onSnapshot(q, (snap) => {
-      const notifications = snap.docs.map(d => ({ id: d.id, ...d.data() } as AppNotification));
-      callback(notifications);
-    }, (error: any) => {
-      if (error.message?.includes('quota') || error.code === 'resource-exhausted') {
-        telemetry.setFirestoreQuotaExceeded(true);
+    return notificationRepositoryV2.subscribeToUserNotifications(
+      userId,
+      (snap: any) => {
+        const notifications = snap.docs.map((d: any) => ({ id: d.id, ...d.data() } as AppNotification));
+        callback(notifications);
+      },
+      (error: any) => {
+        if (error.message?.includes('quota') || error.code === 'resource-exhausted') {
+          telemetry.setFirestoreQuotaExceeded(true);
+        }
+        console.warn("[NotificationService] Firestore onSnapshot failed for user notifications:", error);
+        callback([]); 
       }
-      console.warn("[NotificationService] Firestore onSnapshot failed for user notifications:", error);
-      callback([]); 
-    });
+    );
   },
 
   async markAsRead(notificationId: string) {
     if (telemetry.isFirestoreQuotaExceeded()) return;
     try {
-      await updateDoc(doc(db, 'notifications', notificationId), { isRead: true });
+      await notificationRepositoryV2.markAsRead(notificationId);
     } catch (err: any) {
       if (err.message?.includes('quota') || err.code === 'resource-exhausted') {
         telemetry.setFirestoreQuotaExceeded(true);
@@ -82,15 +80,9 @@ export const notificationService = {
   async markAllAsRead(userId: string) {
     if (telemetry.isFirestoreQuotaExceeded()) return;
     try {
-      const q = query(
-        collection(db, 'notifications'),
-        where('targetUids', 'array-contains', userId),
-        where('isRead', '==', false),
-        limit(100)
-      );
-      const snap = await getDocs(q);
+      const snap = await notificationRepositoryV2.markAllNotificationsAsRead(userId);
       const batch = writeBatch(db);
-      snap.docs.forEach(d => batch.update(d.ref, { isRead: true }));
+      snap.docs.forEach((d: any) => batch.update(d.ref, { isRead: true }));
       await batch.commit();
     } catch (err: any) {
       if (err.message?.includes('quota') || err.code === 'resource-exhausted') {
@@ -111,10 +103,10 @@ export const notificationService = {
       imageUrl: '/safera-logo-512.png'
     };
     
-    const docRef = await addDoc(collection(db, 'notifications'), notifData);
+    const docRef = await notificationRepositoryV2.addNotification(notifData);
 
     // Add to notification history log
-    await addDoc(collection(db, 'notification_history'), {
+    await notificationRepositoryV2.addNotificationHistory({
       notificationId: docRef.id,
       title,
       body,
@@ -126,9 +118,8 @@ export const notificationService = {
   },
 
   async getNotificationHistory() {
-    const q = query(collection(db, 'notification_history'), orderBy('timestamp', 'desc'), limit(50));
-    const snap = await getDocs(q);
-    return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const snap = await notificationRepositoryV2.fetchNotificationHistory();
+    return snap.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
   },
 
   // Real-time listener for FCM foreground messages
@@ -151,12 +142,12 @@ export const notificationService = {
       });
       
       if (response.ok) {
-        // Track follows in Firestore for UI state
-        const followRef = doc(db, 'match_follows', `${userId}_${matchId}`);
-        await setDoc(followRef, {
+        // Track follows in Firestore for UI state via Repository
+        await notificationRepositoryV2.saveMatchGoalFollow(userId, matchId, {
           userId,
           matchId,
           topic: `match_${matchId}`,
+          active: true,
           createdAt: new Date().toISOString()
         });
         return true;
@@ -180,8 +171,7 @@ export const notificationService = {
       });
 
       if (response.ok) {
-        const followRef = doc(db, 'match_follows', `${userId}_${matchId}`);
-        await setDoc(followRef, { active: false }, { merge: true });
+        await notificationRepositoryV2.saveMatchGoalFollow(userId, matchId, { active: false });
         return true;
       }
       return false;
@@ -193,8 +183,7 @@ export const notificationService = {
 
   async isFollowingMatch(userId: string, matchId: string): Promise<boolean> {
     try {
-      const followRef = doc(db, 'match_follows', `${userId}_${matchId}`);
-      const snap = await getDoc(followRef);
+      const snap = await notificationRepositoryV2.fetchMatchGoalFollow(userId, matchId);
       return snap.exists() && snap.data()?.active !== false;
     } catch (err) {
       return false;

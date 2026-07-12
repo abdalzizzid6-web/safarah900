@@ -77,5 +77,15 @@ export const apiManagementService = {
     if (!res.ok) {
       throw new Error('فشل تصفير عدادات الاستهلاك');
     }
+  },
+
+  async clearCache(): Promise<void> {
+    const res = await fetch('/api/admin/clear-cache', {
+      method: 'POST',
+      headers: getHeaders()
+    });
+    if (!res.ok) {
+      throw new Error('فشل تنظيف ذاكرة التخزين المؤقت');
+    }
   }
 };

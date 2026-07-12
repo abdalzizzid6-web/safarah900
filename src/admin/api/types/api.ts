@@ -42,6 +42,13 @@ export interface ApiHealth {
   rateLimitsCount: number;
   authErrorsCount: number;
   failoverStatus: 'active' | 'inactive';
+  requestsPerSecond?: number;
+  cacheHitRate?: number;
+  cacheMissRate?: number;
+  retryCount?: number;
+  timeoutCount?: number;
+  quotaUsage?: number;
+  providerAvailability?: number;
 }
 
 export interface ApiStatus {
@@ -86,6 +93,14 @@ export interface DashboardStats {
       suspendedCount: number;
     };
     hourlyTrends: Array<{ hour: string; requests: number; success: number; errors: number; cost: number }>;
+    // Real health dashboard indicators
+    requestsPerSecond: number;
+    cacheHitRate: number;
+    cacheMissRate: number;
+    retryCount: number;
+    timeoutCount: number;
+    quotaUsage: number;
+    providerAvailability: number;
   };
 }
 

@@ -43,9 +43,9 @@ app.use(passport.initialize());
 const PORT = 3000;
 
 // Domain Unification & HTTPS Redirection (SEO-01)
-app.get('/sitemap.xml', (req, res) => { req.params.type = 'main'; handleSitemap(req, res); });
-app.get('/sitemap-matches.xml', (req, res) => { req.params.type = 'matches'; handleSitemap(req, res); });
-app.get('/sitemap-news.xml', (req, res) => { req.params.type = 'news'; handleSitemap(req, res); });
+app.get('/sitemap.xml', (req, res) => { (req.params as any).type = 'main'; handleSitemap(req, res); });
+app.get('/sitemap-matches.xml', (req, res) => { (req.params as any).type = 'matches'; handleSitemap(req, res); });
+app.get('/sitemap-news.xml', (req, res) => { (req.params as any).type = 'news'; handleSitemap(req, res); });
 
 app.use((req, res, next) => {
   const host = req.get('host') || '';
@@ -56,13 +56,10 @@ app.use((req, res, next) => {
 
   if (process.env.NODE_ENV === 'production') {
     // Force https://www.korea90.xyz but skip if on preview domain (run.app)
-    const isPreview = host.endsWith('.run.app') || host.includes('localhost');
+    const isPreview = host.endsWith('.run.app') || host.includes('localhost') || host.includes('127.0.0.1');
     if (!isPreview && (!isWww || !isHttps || host !== 'www.korea90.xyz')) {
       return res.redirect(301, `https://www.korea90.xyz${req.originalUrl}`);
     }
-  } else if (!isWww && host !== 'localhost' && host !== '127.0.0.1' && !host.endsWith('.run.app')) {
-    // In dev, if not www, ensure we use it (if desired)
-    return res.redirect(301, `${protocol}://www.${host}${req.originalUrl}`);
   }
   next();
 });
@@ -610,202 +607,6 @@ function translateToApiFootball(provider: string, endpoint: string, data: any) {
     response: response
   };
 }
-
-// A robust client-side proxy route for API-Football to completely avoid CORS and Network Errors in the browser
-app.all("/api/football-api/*", async (req, res) => {
-  const subPath = (req.params as any)[0] || "";
-  
-  // 1. Determine category
-  const clientCategory = (req.headers['x-api-category'] || req.headers['X-API-Category'] || '').toString();
-  let category = clientCategory;
-  if (!category) {
-    if (subPath.includes("worldcup") || subPath.includes("world-cup")) {
-      category = 'worldCup';
-    } else if (subPath.includes("fixtures") && (req.query.league === '39' || req.query.league === '140')) {
-      category = 'premierLeague';
-    } else if (subPath.includes("fixtures") && ['307', '233', '308', '479'].includes(String(req.query.league))) {
-      category = 'arabMatches';
-    } else if (subPath.includes("players")) {
-      category = 'players';
-    } else if (subPath.includes("teams")) {
-      category = 'teams';
-    } else if (subPath.includes("events") || subPath.includes("statistics") || subPath.includes("lineups")) {
-      category = 'stats';
-    } else if (subPath.includes("stream")) {
-      category = 'streaming';
-    } else {
-      category = 'stats'; // Default section
-    }
-  }
-
-  const startTime = Date.now();
-  let keyDoc: any = null;
-  let retryCount = 0;
-  const maxRetries = 2; // Total 3 attempts with different keys if needed
-
-  while (retryCount <= maxRetries) {
-    try {
-      // 2. Select best key from the pool (forced to API-Football as we are routing through football-api endpoint with matching shapes)
-      const { key, providerDoc, targetProviderName } = await apiManager.getActiveKeyForCategory(category);
-      keyDoc = providerDoc;
-
-      let targetUrl = '';
-      const headers: Record<string, string> = {
-        'Accept': 'application/json'
-      };
-
-      // Format headers and target URL based on selected provider and key length
-      const isApiSports = key.length === 32;
-      const isRapidApiFootball = key.length === 50;
-      const isFreeApi = !isApiSports && !isRapidApiFootball && providerDoc.provider === 'API-Football';
-
-      // Normalize path and query options to match selected provider key
-      const { subPath: normalizedSubPath, query: normalizedQuery } = normalizeRequestForProvider(subPath, req.query, isFreeApi);
-      const queryString = new URLSearchParams(normalizedQuery as any).toString();
-
-      let cleanSubPath = normalizedSubPath;
-      if (cleanSubPath.startsWith("/")) {
-        cleanSubPath = cleanSubPath.slice(1);
-      }
-
-      if (providerDoc.provider === 'API-Football') {
-        if (isApiSports) {
-          if (cleanSubPath.startsWith("v3/")) {
-            cleanSubPath = cleanSubPath.slice(3);
-          }
-          targetUrl = `https://v3.football.api-sports.io/${cleanSubPath}`;
-          headers['x-apisports-key'] = key;
-        } else if (isRapidApiFootball) {
-          if (!cleanSubPath.startsWith("v3/")) {
-            cleanSubPath = "v3/" + cleanSubPath;
-          }
-          targetUrl = `https://api-football-v1.p.rapidapi.com/${cleanSubPath}`;
-          headers['X-RapidAPI-Key'] = key;
-          headers['X-RapidAPI-Host'] = 'api-football-v1.p.rapidapi.com';
-        } else {
-          if (cleanSubPath.startsWith("v3/")) {
-            cleanSubPath = cleanSubPath.slice(3);
-          }
-          targetUrl = `https://free-api-live-football-data.p.rapidapi.com/${cleanSubPath}`;
-          headers['X-RapidAPI-Key'] = key;
-          headers['X-RapidAPI-Host'] = 'free-api-live-football-data.p.rapidapi.com';
-        }
-      } else if (providerDoc.provider === 'SportMonks') {
-        targetUrl = `https://api.sportmonks.com/v3/${cleanSubPath}`;
-        headers['Authorization'] = key;
-      } else if (providerDoc.provider === 'TheSportsDB') {
-        targetUrl = `https://www.thesportsdb.com/api/v1/json/${key}/${cleanSubPath}`;
-      } else {
-        // Custom API
-        targetUrl = `${providerDoc.fallbackProvider && providerDoc.fallbackProvider !== 'none' ? providerDoc.fallbackProvider : 'https://api-football-v1.p.rapidapi.com'}/${cleanSubPath}`;
-        headers['Authorization'] = `Bearer ${key}`;
-      }
-
-      const finalUrl = `${targetUrl}${queryString ? `?${queryString}` : ""}`;
-
-      const fetchResponse = await fetch(finalUrl, {
-        method: req.method,
-        headers: headers,
-        body: req.method !== 'GET' && req.method !== 'HEAD' ? JSON.stringify(req.body) : undefined
-      });
-
-      const latency = Date.now() - startTime;
-      const contentType = fetchResponse.headers.get("content-type") || "";
-      const text = await fetchResponse.text();
-
-      // Content-Type and HTML sanity check to eliminate "Unexpected token '<'" errors
-      if (!contentType.includes("application/json") || text.trim().startsWith("<!DOCTYPE html>") || text.trim().startsWith("<")) {
-        console.warn(`[Proxy Content-Type Mismatch] Expected JSON but got "${contentType}" for URL: ${finalUrl}`);
-        
-        if (fetchResponse.status === 429) {
-          throw { status: 429, message: 'Rate limited by upstream API provider' };
-        } else if (fetchResponse.status === 403 || fetchResponse.status === 401) {
-          throw { status: 403, message: 'Authorization error / invalid token on chosen key' };
-        } else {
-          throw new Error(`Upstream returned non-JSON response. HTTP Status: ${fetchResponse.status}`);
-        }
-      }
-
-      const data = JSON.parse(text);
-
-      // Check for inner API-Football warnings/errors returned inside JSON payloads
-      if (data && data.errors && Object.keys(data.errors).length > 0) {
-        const errorMsg = JSON.stringify(data.errors);
-        if (errorMsg.includes('token') || errorMsg.includes('limit') || errorMsg.includes('key') || errorMsg.includes('requests')) {
-          const isLimit = errorMsg.includes('limit') || errorMsg.includes('requests');
-          throw { status: isLimit ? 429 : 403, message: `API payload error: ${errorMsg}` };
-        }
-      }
-
-      let finalData = data;
-      // Normalization Gateway
-      if (providerDoc.provider !== 'API-Football' && (!data.response || !Array.isArray(data.response))) {
-          finalData = translateToApiFootball(providerDoc.provider, subPath, data);
-      }
-
-      // Log successful API call
-      await apiManager.logApiCall({
-        providerId: providerDoc.id,
-        providerName: providerDoc.name,
-        endpoint: subPath,
-        method: req.method,
-        category,
-        statusCode: fetchResponse.status,
-        latency,
-        cost: providerDoc.costPerCall || 0,
-        status: 'success'
-      });
-
-      if (req.method === 'GET') {
-        proxyCache[req.originalUrl] = { data: finalData, expiry: Date.now() + 5 * 60 * 1000 };
-      }
-
-      return res.json(finalData);
-
-    } catch (err: any) {
-      const latency = Date.now() - startTime;
-      const status = err.status || 502;
-      const errorMsg = err.message || String(err);
-      
-      console.error(`[Football API Proxy Failure] Category: ${category}, Retry Attempt: ${retryCount}, Error: ${errorMsg}`);
-
-      if (keyDoc) {
-        const targetStatus = status === 403 ? 'unauthorized' : status === 429 ? 'suspended' : 'degraded';
-        await apiManager.reportKeyFailure(keyDoc.id, targetStatus, errorMsg);
-
-        await apiManager.logApiCall({
-          providerId: keyDoc.id,
-          providerName: keyDoc.name,
-          endpoint: subPath,
-          method: req.method,
-          category,
-          statusCode: status,
-          latency,
-          cost: 0,
-          status: status === 429 ? 'rate-limit' : status === 403 ? 'auth-error' : 'network-error',
-          errorMessage: errorMsg
-        });
-      }
-
-      retryCount++;
-      if (retryCount <= maxRetries) {
-        continue;
-      }
-
-      // 4. Stale Data Fallback Recovery
-      if (req.method === 'GET' && proxyCache[req.originalUrl]) {
-        console.warn(`[Football API Proxy Fallback] Returning stale cache for ${req.originalUrl}`);
-        return res.json(proxyCache[req.originalUrl].data);
-      }
-
-      return res.status(status).json({
-        error: "Enterprise API Routing Error",
-        message: "تم استنفاد محاولات الاتصال بكافة المفاتيح المتاحة وتفعيل خطط الدعم الطارئ لمزودي الخدمة",
-        details: errorMsg
-      });
-    }
-  }
-});
 
 app.use("/", (req, res, next) => {
   // Catch all remaining API routes or fall through

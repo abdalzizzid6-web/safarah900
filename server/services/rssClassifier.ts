@@ -153,7 +153,7 @@ export function runFallbackClassification(title: string, description: string) {
       altText: title,
       caption: title,
       credit: "محرر سفارة ٩٠",
-      suggestedImages: []
+      suggestedImages: [] as string[]
     },
     aiEditor: {
       headlineSuggestions: [title, `تطورات جديدة: ${title}`, `متابعة حية: ${title}`],

@@ -1,5 +1,4 @@
-import { doc, getDoc, setDoc, updateDoc, collection, query, where, getDocs, limit } from 'firebase/firestore';
-import { db } from '../firebase';
+import { userRepositoryV2 } from '../core/repository/UserRepositoryV2';
 import { UserAccount, UserRole } from '../types';
 import { User as FirebaseUser } from 'firebase/auth';
 
@@ -11,16 +10,14 @@ export const userService = {
   async getOrCreateUserProfile(firebaseUser: FirebaseUser): Promise<UserAccount> {
     const cachedKey = `safera_90_profile_${firebaseUser.uid}`;
     try {
-      const userDocRef = doc(db, 'users', firebaseUser.uid);
-      const userDocSnap = await getDoc(userDocRef);
-
-      if (userDocSnap.exists()) {
+      const userDocSnap = await userRepositoryV2.getDocRaw(firebaseUser.uid);
+      if (userDocSnap && userDocSnap.exists()) {
         const data = userDocSnap.data() as UserAccount;
         
         // Auto-upgrade specified core admin
         if (firebaseUser.email === 'abdalziz2022@gmail.com' && data.role !== UserRole.SUPER_ADMIN) {
           try {
-            await updateDoc(userDocRef, { role: UserRole.SUPER_ADMIN });
+            await userRepositoryV2.updateUser(firebaseUser.uid, { role: UserRole.SUPER_ADMIN });
             data.role = UserRole.SUPER_ADMIN;
           } catch (upgErr) {
             console.warn('[userService] Failed to auto-upgrade to SUPER_ADMIN, using local state.', upgErr);
@@ -46,7 +43,7 @@ export const userService = {
         };
         
         try {
-          await setDoc(userDocRef, newProfile);
+          await userRepositoryV2.setDocRaw(firebaseUser.uid, newProfile);
         } catch (setErr) {
           console.warn('[userService] Failed to setDoc for new profile, using local object.', setErr);
         }
@@ -89,24 +86,21 @@ export const userService = {
 
   async updateLastLogin(uid: string) {
     try {
-      const userDocRef = doc(db, 'users', uid);
-      await updateDoc(userDocRef, { lastLogin: new Date().toISOString() });
+      await userRepositoryV2.updateLastLogin(uid);
     } catch (err) {
       console.warn('[userService] Failed to update last login timestamp:', err);
     }
   },
 
   async updateProfile(uid: string, updates: Partial<UserAccount>) {
-    const userDocRef = doc(db, 'users', uid);
-    await updateDoc(userDocRef, { ...updates, updatedAt: new Date().toISOString() });
+    await userRepositoryV2.updateUser(uid, updates);
   },
 
   async toggleVip(uid: string, isVip: boolean, expiryDays: number = 30) {
-    const userDocRef = doc(db, 'users', uid);
     const expiryDate = new Date();
     expiryDate.setDate(expiryDate.getDate() + expiryDays);
     
-    await updateDoc(userDocRef, {
+    await userRepositoryV2.updateUser(uid, {
       isVip,
       role: isVip ? UserRole.VIP_USER : UserRole.USER,
       vipExpiry: isVip ? expiryDate.toISOString() : null
@@ -133,17 +127,13 @@ export const userService = {
     if (usersCache && now - usersCacheTimestamp < USERS_CACHE_TTL) {
       return (usersCache as any).data;
     }
-
     try {
-      const q = query(collection(db, 'users'), limit(50));
-      const snapshot = await getDocs(q);
-      const data = snapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() } as UserAccount));
+      const data = await userRepositoryV2.getAllUsers(50);
       
       // Update global/module cache
       (usersCache as any) = { data, timestamp: now };
       usersCacheTimestamp = now;
-
-      return data;
+      return data as UserAccount[];
     } catch (e) {
       return [];
     }

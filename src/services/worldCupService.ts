@@ -1,9 +1,11 @@
+import { worldCupRepositoryV2 } from '../core/repository/WorldCupRepositoryV2';
+import { cmsRepositoryV2 } from '../core/repository/CmsRepositoryV2';
 import { dataProviderManager } from './worldCupDataProvider';
 import { ARABIC_TEAM_NAMES, STAGE_TRANSLATIONS, STATUS_TRANSLATIONS, FIFA_TO_ISO2 } from './worldCupConstants';
 import { translationService } from './translationService';
 import { mapApiFootballMatches } from './apiFootballMapper.js';
-import { collection, getDocs, addDoc, serverTimestamp, query, limit } from 'firebase/firestore';
-import { db } from '../firebase';
+
+import { serverTimestamp } from 'firebase/firestore';
 
 import { openFootballService } from './openFootballService';
 
@@ -16,7 +18,7 @@ const memoryCache = new Map<string, { data: any; timestamp: number }>();
 
 const logSystemError = async (source: string, error: string, context: any = {}) => {
   try {
-    await addDoc(collection(db, 'system_logs'), {
+    await worldCupRepositoryV2.addSystemLog({
       type: 'API_FAILURE',
       source,
       error,
@@ -362,8 +364,8 @@ export const worldCupService = {
       if (cached && (Date.now() - cached.timestamp < CACHE_TTL)) {
         overridesSnap = cached.data;
       } else {
-        const snap = await getDocs(query(collection(db, 'cms_match_overrides'), limit(100)));
-        overridesSnap = snap.docs.map(doc => ({ id: String(doc.id), data: doc.data() }));
+        const rawOverrides = await cmsRepositoryV2.getMatchOverrides();
+        overridesSnap = Object.keys(rawOverrides).map(id => ({ id, data: rawOverrides[id] }));
         memoryCache.set(cacheKey, { data: overridesSnap, timestamp: Date.now() });
       }
 
@@ -505,7 +507,7 @@ export const worldCupService = {
   },
 
   async fetchApiFootballMatches(year: number, ignoreCache: boolean): Promise<WCMatch[]> {
-    const data = await this.safeGet(`/api/football-api/fixtures?league=1&season=${year}`, async () => null, ignoreCache);
+    const data = await this.safeGet<any>(`/api/football-api/fixtures?league=1&season=${year}`, async () => null, ignoreCache);
     if (!data || !data.response || data.response.length === 0) return [];
     
     const mapped = mapApiFootballMatches(data);
@@ -633,7 +635,7 @@ export const worldCupService = {
     if (!serviceHealthMetrics.forceBackupMode && (targetYear === 2026 || targetYear === 2022)) {
       try {
         // Try API-Football Standings
-        const footballApiData = await this.safeGet(`/api/football-api/standings?league=1&season=${targetYear}`, async () => {
+        const footballApiData = await this.safeGet<any>(`/api/football-api/standings?league=1&season=${targetYear}`, async () => {
           return null;
         });
 
@@ -719,7 +721,7 @@ export const worldCupService = {
     if (!serviceHealthMetrics.forceBackupMode && (targetYear === 2026 || targetYear === 2022)) {
       try {
         // Try API-Football Teams
-        const footballApiData = await this.safeGet(`/api/football-api/teams?league=1&season=${targetYear}`, async () => {
+        const footballApiData = await this.safeGet<any>(`/api/football-api/teams?league=1&season=${targetYear}`, async () => {
           return null;
         });
 
@@ -780,8 +782,8 @@ export const worldCupService = {
       if (cached && (Date.now() - cached.timestamp < CACHE_TTL)) {
         overridesSnap = cached.data;
       } else {
-        const snap = await getDocs(query(collection(db, 'cms_teams'), limit(100)));
-        overridesSnap = snap.docs.map(doc => ({ id: String(doc.id), data: doc.data() }));
+        const list = await cmsRepositoryV2.getTeams();
+        overridesSnap = list.map((item: any) => ({ id: String(item.id), data: item }));
         memoryCache.set(cacheKey, { data: overridesSnap, timestamp: Date.now() });
       }
 
@@ -822,7 +824,7 @@ export const worldCupService = {
     if (!serviceHealthMetrics.forceBackupMode && (targetYear === 2026 || targetYear === 2022)) {
       try {
         // Try API-Football Scorers
-        const footballApiData = await this.safeGet(`/api/football-api/players/topscorers?league=1&season=${targetYear}`, async () => {
+        const footballApiData = await this.safeGet<any>(`/api/football-api/players/topscorers?league=1&season=${targetYear}`, async () => {
           return null;
         });
 

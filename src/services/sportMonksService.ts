@@ -1,33 +1,29 @@
-import axios from 'axios';
+import apiClient from '../api/apiClient';
 import { League, Match } from '../types';
 import { TeamDetail } from './teamMapper';
 import { PlayerDetail } from './playerMapper';
 import { dataSourceService } from './dataSourceService';
 
-const BASE_URL = 'https://api.sportmonks.com/v3';
 
-function getApiKey(): string {
-  const settings = dataSourceService.getSettingsSync();
-  const key = settings.sportMonksKey;
-  if (!key) {
-    throw new Error('NO_API_KEY: الرجاء إدخال مفتاح API لـ SportMonks للاتصال.');
-  }
-  return key.trim();
-}
+
+
 
 /**
  * Standard utility for SportMonks V3 requests
  */
+
 async function fetchSportMonks(endpoint: string, params: Record<string, string> = {}): Promise<any> {
-  const token = getApiKey();
-  const queryParams = new URLSearchParams({
-    api_token: token,
-    ...params
+  const queryParams = new URLSearchParams(params);
+  const url = `/football-api/${endpoint}?${queryParams.toString()}`;
+  const response = await apiClient.get(url, {
+    headers: {
+      'x-api-category': 'matches',
+      'x-api-provider-override': 'SportMonks'
+    }
   });
-  const url = `${BASE_URL}/${endpoint}?${queryParams.toString()}`;
-  const response = await axios.get(url);
   return response.data;
 }
+
 
 export const sportMonksService = {
   /**

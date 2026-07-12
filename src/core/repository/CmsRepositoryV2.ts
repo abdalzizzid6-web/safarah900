@@ -262,6 +262,34 @@ export class CmsRepositoryV2 extends BaseRepository<any> {
       throw e;
     }
   }
+
+  async getMatchOverrides(): Promise<Record<string, any>> {
+    telemetry.logApiCall('CmsRepositoryV2.getMatchOverrides');
+    try {
+      const snap = await getDocs(query(collection(db, 'cms_match_overrides'), limit(100)));
+      const overrides: Record<string, any> = {};
+      snap.docs.forEach(docDoc => {
+        overrides[docDoc.id] = { id: docDoc.id, ...docDoc.data() };
+      });
+      return overrides;
+    } catch (e) {
+      telemetry.logError('CMS_GET_OVERRIDES_FAILURE', e);
+      return {};
+    }
+  }
+
+  async setMatchOverride(matchId: string, override: any) {
+    telemetry.logApiCall('CmsRepositoryV2.setMatchOverride');
+    try {
+      await setDoc(doc(db, 'cms_match_overrides', String(matchId)), {
+        ...override,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+    } catch (e) {
+      telemetry.logError('CMS_SET_OVERRIDE_FAILURE', e);
+      throw e;
+    }
+  }
 }
 
 export const cmsRepositoryV2 = new CmsRepositoryV2();

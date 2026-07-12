@@ -4,12 +4,12 @@ dotenv.config();
 
 async function run() {
   const providersSnap = await firestore.collection('api_providers').get();
-  providersSnap.forEach(doc => {
+  providersSnap.forEach((doc: any) => {
     console.log(doc.id, doc.data());
   });
   
   const settingsSnap = await firestore.collection('system_settings').get();
-  settingsSnap.forEach(doc => {
+  settingsSnap.forEach((doc: any) => {
     console.log(doc.id, doc.data());
   });
 }

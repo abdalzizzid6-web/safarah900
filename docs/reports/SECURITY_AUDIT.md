@@ -1,19 +1,18 @@
-# SECURITY AUDIT
+# SECURITY_AUDIT - Safara 90
 
-## نسبة الاكتمال
-80%
+## Overview
+A comprehensive audit of security configurations, specifically Firestore rules.
 
-## المشاكل المكتشفة
-- Hardcoded secrets risk.
+## Key Findings
 
-## الملفات المتأثرة
-- /server/index.ts
+### 1. Insecure Firestore Rules (Critical)
+The following collections have `allow read: if true` configured:
+- `news`, `news_categories`, `stadiums`, `matches`, `competitions`, `sports_events`, `products`, `match_ai_content`, `matchStreams`, `cms_leagues`, `cms_match_overrides`, `cms_teams`, `cms_team_overrides`, `announcements`, `ads`, `world_cup_players`, `standings`, `news_tags`, `leagues`, `teams`, `players`, `channels`, `prizes`, `deleted_matches`, `homepage_blocks`, `homepage_layouts`, `homepage_templates`.
 
-## مستوى الخطورة
-- High
+This allows unauthenticated access to potentially sensitive or internal application state data.
 
-## طريقة الإصلاح
-- Environment variable enforcement.
+### 2. Secrets Management
+The project uses `dotenv` and `process.env`. Need to ensure no secrets are exposed in client-side code (`src/` directory).
 
-## الأولوية
-High
+### 3. Authentication
+The `isSignedIn()` and `isAdmin()` functions are defined but not consistently applied.

@@ -14,6 +14,7 @@ interface ConnectedAccount {
   permissions: string[];
   tokenExpiresAt?: string;
   pages?: Array<{ id: string; name: string; category?: string; avatarUrl?: string }>;
+  defaultPageId?: string;
 }
 
 const ConnectedAccounts: React.FC = () => {

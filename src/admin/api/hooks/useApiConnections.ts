@@ -143,6 +143,19 @@ export function useApiConnections() {
     setActionLoading(null);
   }, [stats, loadStats, showNotification]);
 
+  const clearCache = useCallback(async () => {
+    setActionLoading('clear-cache');
+    try {
+      await apiManagementService.clearCache();
+      showNotification('تم تنظيف ذاكرة التخزين المؤقت لقاعدة البيانات والـ API بنجاح');
+      await loadStats(true);
+    } catch (err: any) {
+      showNotification(err.message || 'فشل تنظيف ذاكرة التخزين المؤقت', 'error');
+    } finally {
+      setActionLoading(null);
+    }
+  }, [loadStats, showNotification]);
+
   useEffect(() => {
     loadStats();
   }, [loadStats]);
@@ -161,6 +174,7 @@ export function useApiConnections() {
     resetQuotas,
     testKey,
     testAllActiveKeys,
+    clearCache,
     showNotification
   };
 }

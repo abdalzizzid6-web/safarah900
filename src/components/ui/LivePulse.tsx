@@ -53,7 +53,17 @@ export default function LivePulse({
       />
 
       {/* Core Dot */}
-      <div className={cn("relative rounded-full shadow-lg shadow-red-500/50", selectedSize, color)} />
+      <motion.div
+        animate={{
+          scale: [0.9, 1.15, 0.9],
+        }}
+        transition={{
+          duration: 2,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
+        className={cn("relative rounded-full shadow-lg", selectedSize, color, color.includes('bg-') ? color.replace('bg-', 'shadow-') + '/50' : 'shadow-red-500/50')}
+      />
     </div>
   );
 }

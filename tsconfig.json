@@ -31,5 +31,13 @@
     "dist",
     "backup_before_changes",
     "backup_before_changes.ts"
+  ],
+  "include": [
+    "src/**/*",
+    "server/**/*",
+    "server.ts",
+    "vite.config.ts",
+    "vitest.config.ts",
+    "capacitor.config.ts"
   ]
 }

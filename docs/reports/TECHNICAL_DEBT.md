@@ -1,19 +1,28 @@
-# TECHNICAL DEBT
+# TECHNICAL_DEBT - Safara 90
 
-## نسبة الاكتمال
-70%
+## Overview
+Significant technical debt identified in the server-side architecture and frontend monolith.
 
-## المشاكل المكتشفة
-- Large server.ts, hardcoded keys.
+## Key Findings
 
-## الملفات المتأثرة
-- /server/index.ts
+### 1. Monolithic `server.ts` (Critical)
+The `/server/index.ts` file is a massive monolith containing:
+- Route definitions
+- Middlewares
+- SEO enhancements
+- Firestore cache orchestration
+- Job definitions
+- AI Service orchestration
+- Static asset handling
 
-## مستوى الخطورة
-- High
+This file is a major bottleneck for maintainability, testing, and scaling.
 
-## طريقة الإصلاح
-- Modularization and secret management.
+### 2. Frontend Structure
+While modularized to some extent (admin, components, pages), the `App.tsx` file is overly responsible for routing configuration and startup logic.
 
-## الأولوية
-High
+### 3. API Management
+The proxy logic for external APIs (football-data, etc.) in `server.ts` is complex and brittle. It should be extracted into dedicated service classes under `/server/services/`.
+
+## Recommendations
+- Refactor `server.ts` into a structured Express router-controller architecture.
+- Extract AI and API service logic into `/core-engine/`.

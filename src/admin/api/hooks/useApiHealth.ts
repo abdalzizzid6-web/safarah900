@@ -15,7 +15,19 @@ export function useApiHealth(stats: DashboardStats | null): ApiHealth {
       };
     }
 
-    const { health, averageLatency, rateLimitsCount, authErrorsCount } = stats.analytics;
+    const { 
+      health, 
+      averageLatency, 
+      rateLimitsCount, 
+      authErrorsCount,
+      requestsPerSecond,
+      cacheHitRate,
+      cacheMissRate,
+      retryCount,
+      timeoutCount,
+      quotaUsage,
+      providerAvailability
+    } = stats.analytics;
 
     return {
       healthyCount: health.healthyCount || 0,
@@ -24,7 +36,14 @@ export function useApiHealth(stats: DashboardStats | null): ApiHealth {
       averageLatency: averageLatency || 120,
       rateLimitsCount: rateLimitsCount || 0,
       authErrorsCount: authErrorsCount || 0,
-      failoverStatus: 'active'
+      failoverStatus: 'active',
+      requestsPerSecond: requestsPerSecond || 0.1,
+      cacheHitRate: cacheHitRate !== undefined ? cacheHitRate : 100,
+      cacheMissRate: cacheMissRate !== undefined ? cacheMissRate : 0,
+      retryCount: retryCount || 0,
+      timeoutCount: timeoutCount || 0,
+      quotaUsage: quotaUsage || 0,
+      providerAvailability: providerAvailability !== undefined ? providerAvailability : 100
     };
   }, [stats]);
 }

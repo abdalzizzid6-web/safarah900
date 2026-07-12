@@ -1,5 +1,7 @@
+import { settingsRepositoryV2 } from '../core/repository/SettingsRepositoryV2';
 import { db } from '../firebase';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
+
 
 export type FootballProvider = 'TheSportsDB' | 'API-Football' | 'SportMonks' | 'Custom' | 'None';
 
@@ -139,8 +141,7 @@ export const dataSourceService = {
     } catch (err) {}
 
     try {
-      const docRef = doc(db, 'settings', 'data_sources');
-      await setDoc(docRef, settings);
+      await settingsRepositoryV2.saveDataSourceSettings(settings);
     } catch (err: any) {
       console.error('[dataSourceService] Failed to save settings to Firestore:', err);
       throw err;

@@ -3,6 +3,7 @@ import { motion } from 'motion/react';
 import { useLiveMatches } from '../../hooks/useMatchesV2';
 import { Match } from '../../types';
 import { ScoreFlash } from '../components/shared';
+import LivePulse from '../../components/ui/LivePulse';
 
 export default function PremiumLiveMatchesSlider() {
   const { data: liveMatches = [], isLoading } = useLiveMatches();
@@ -21,7 +22,10 @@ export default function PremiumLiveMatchesSlider() {
           >
             <div className="flex justify-between items-center mb-2">
               <span className="text-[10px] text-white/60">{typeof match.league === 'object' ? match.league.name : match.league}</span>
-              <span className="text-[10px] text-error font-bold animate-pulse">LIVE {match.minute}'</span>
+              <div className="flex items-center gap-1">
+                <LivePulse size="sm" color="bg-red-500" />
+                <span className="text-[10px] text-error font-bold">LIVE {match.minute}'</span>
+              </div>
             </div>
             <div className="flex justify-between items-center font-bold text-white gap-3">
               <span className="truncate">{typeof match.homeTeam === 'object' ? match.homeTeam.name : match.homeTeam}</span>

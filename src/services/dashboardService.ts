@@ -1,5 +1,5 @@
-import { db, handleFirestoreError, OperationType } from '../firebase';
-import { collection, getCountFromServer, query, orderBy, limit, getDocs } from 'firebase/firestore';
+import { dashboardRepositoryV2 } from '../core/repository/DashboardRepositoryV2';
+import { handleFirestoreError, OperationType } from '../firebase';
 
 export const dashboardService = {
   async getStats() {
@@ -31,10 +31,9 @@ export const dashboardService = {
       ];
 
       for (const item of collections) {
-          const collRef = collection(db, item.col);
           try {
-            const snapshot = await getCountFromServer(collRef);
-            counts[item.key] = snapshot.data().count;
+            const count = await dashboardRepositoryV2.getCollectionCount(item.col);
+            counts[item.key] = count;
           } catch (e) {
             console.warn(`Failed to count ${item.col}`, e);
           }
@@ -48,22 +47,17 @@ export const dashboardService = {
   },
   async getAggregateStats() {
     try {
-      // Real data points
-      const teamsRef = collection(db, 'teams');
-      const teamsQuery = query(teamsRef, orderBy('stats.wins', 'desc'), limit(5));
-      const teamsSnapshot = await getDocs(teamsQuery);
-      
-      const playersRef = collection(db, 'players');
-      const playersQuery = query(playersRef, orderBy('stats.goals', 'desc'), limit(5));
-      const playersSnapshot = await getDocs(playersQuery);
+      // Real data points fetched via Repository
+      const teamsSnapshot = await dashboardRepositoryV2.getTopTeams(5);
+      const playersSnapshot = await dashboardRepositoryV2.getTopPlayers(5);
       
       return {
-          teams: teamsSnapshot.docs.map(doc => ({
+          teams: teamsSnapshot.docs.map((doc: any) => ({
               name: doc.data().name,
               wins: doc.data().stats?.wins || 0,
               matches: doc.data().stats?.matchesPlayed || 0
           })),
-          players: playersSnapshot.docs.map(doc => ({
+          players: playersSnapshot.docs.map((doc: any) => ({
               name: doc.data().name,
               goals: doc.data().stats?.goals || 0,
               assists: doc.data().stats?.assists || 0

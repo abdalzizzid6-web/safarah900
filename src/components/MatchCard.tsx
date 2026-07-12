@@ -345,7 +345,7 @@ export default React.memo(function MatchCard({ match }: MatchCardProps) {
           <div className="flex items-center gap-1.5">
             {match.status === 'LIVE' ? (
               <div className="flex items-center gap-1.5 bg-red-500/10 text-red-500 px-2 py-0.5 rounded-full border border-red-500/20">
-                <div className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse" />
+                <LivePulse size="sm" color="bg-red-500" />
                 <span className="text-[10px] font-bold">'{match.minute}</span>
               </div>
             ) : match.status === 'FINISHED' ? (

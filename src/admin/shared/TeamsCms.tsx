@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { matchesRepositoryV2 } from '../../core/repository/MatchesRepositoryV2';
-import { cmsService, TeamSettings } from '../../core/compatibility/cmsService';
+import { cmsService, TeamSettings } from '../../services/cmsService';
 import { cmsRepositoryV2 } from '../../core/repository/CmsRepositoryV2';
 import { featureFlags } from '../../core/config/featureFlags';
 import { teamService } from '../../services/teamService';

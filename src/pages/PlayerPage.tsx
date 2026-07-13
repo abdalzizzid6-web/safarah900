@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getPlayerById, getPlayerMatches, getPlayerStats } from '../api/playerApi';
-import { getIdFromSlug } from '../utils/slugify';
+import { getIdFromSlug, createSlugPath } from '../utils/slugify';
 import { mapPlayerHeader, mapPlayerInfo, mapPlayerStats, mapPlayerMatches } from '../services/playerMapper';
 import { motion } from 'motion/react';
 import { AlertCircle, RefreshCw, ChevronRight } from 'lucide-react';
@@ -147,6 +147,10 @@ export default function PlayerPage() {
           "image": headerInfo.photo,
           "description": `الصفحة الشخصية لمتابعة أهداف وإحصائيات اللاعب ${headerInfo.name} على صافرة 90.`
         }}
+        breadcrumbs={[
+          { name: 'اللاعبين', item: '/players' },
+          { name: headerInfo.name, item: `/player/${createSlugPath(headerInfo.name, id)}` }
+        ]}
       />
       
       {/* Main container */}

@@ -112,11 +112,6 @@ export class MatchesRepositoryV2 extends BaseRepository<Match> {
     super('matches');
   }
 
-  async getDocRaw(id: string) {
-    const docRef = doc(db, 'matches', id);
-    return await getDoc(docRef);
-  }
-
   /**
    * Automatically calculates live or finished status of a match based on the scheduled start time.
    * If a match startTime has arrived and is within 115 minutes, it is automatically returned as LIVE with current minute.

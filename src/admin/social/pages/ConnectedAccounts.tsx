@@ -14,7 +14,6 @@ interface ConnectedAccount {
   permissions: string[];
   tokenExpiresAt?: string;
   pages?: Array<{ id: string; name: string; category?: string; avatarUrl?: string }>;
-  defaultPageId?: string;
 }
 
 const ConnectedAccounts: React.FC = () => {
@@ -179,25 +178,6 @@ const ConnectedAccounts: React.FC = () => {
     }
   };
 
-  const handleSetDefaultPage = async (accountId: string, pageId: string) => {
-    try {
-      const response = await fetch(`/api/social/accounts/${accountId}/default-page`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pageId })
-      });
-      if (response.ok) {
-        setToast({ message: 'تم تعيين الصفحة الافتراضية بنجاح', type: 'success' });
-        fetchAccounts();
-      } else {
-        const data = await response.json();
-        setToast({ message: data.error || 'فشل تعيين الصفحة الافتراضية', type: 'error' });
-      }
-    } catch (err: any) {
-      setToast({ message: err.message, type: 'error' });
-    }
-  };
-
   const handleTestConnection = async (id: string) => {
     setIsTesting(id);
     setToast(null);
@@ -325,17 +305,19 @@ const ConnectedAccounts: React.FC = () => {
 
                   {acc.platform === 'facebook' && acc.pages && acc.pages.length > 0 && (
                     <div className="mt-3 mb-4 space-y-1.5">
-                      <span className="text-[10px] text-gray-500 block">الصفحة الافتراضية للنشر:</span>
-                      <select 
-                        className="w-full bg-surface-elevated border border-white/10 rounded-lg p-2 text-xs text-white"
-                        value={acc.defaultPageId || ''}
-                        onChange={(e) => handleSetDefaultPage(acc.id, e.target.value)}
-                      >
-                        <option value="">اختر صفحة...</option>
+                      <span className="text-[10px] text-gray-500 block">الصفحات المتاحة ({acc.pages.length}):</span>
+                      <div className="max-h-24 overflow-y-auto space-y-1 pr-1 custom-scrollbar">
                         {acc.pages.map((page: any) => (
-                          <option key={page.id} value={page.id}>{page.name}</option>
+                          <div key={page.id} className="flex items-center gap-2 p-1.5 rounded bg-surface-elevated border border-white/5 text-[11px] text-white">
+                            {page.avatarUrl ? (
+                              <img src={page.avatarUrl} alt={page.name} className="w-4 h-4 rounded-full object-cover" />
+                            ) : (
+                              <span className="w-4 h-4 rounded-full bg-white/10 flex items-center justify-center text-[8px]">P</span>
+                            )}
+                            <span className="truncate flex-1 font-medium">{page.name}</span>
+                          </div>
                         ))}
-                      </select>
+                      </div>
                     </div>
                   )}
                   

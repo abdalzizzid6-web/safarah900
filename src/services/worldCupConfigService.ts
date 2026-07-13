@@ -1,7 +1,5 @@
-import { worldCupRepositoryV2 } from '../core/repository/WorldCupRepositoryV2';
-
-import { db } from '../firebase';
 import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
+import { db } from '../firebase';
 import { telemetry } from '../core/monitoring/telemetry';
 
 export interface WorldCupConfig {
@@ -81,7 +79,7 @@ export const worldCupConfigService = {
       return () => {};
     }
     const docRef = doc(db, 'settings', 'world_cup');
-    return onSnapshot(docRef, (snap: any) => {
+    return onSnapshot(docRef, (snap) => {
       if (snap.exists()) {
         const data = snap.data() as WorldCupConfig;
         localStorage.setItem(STORAGE_KEY, JSON.stringify(data));

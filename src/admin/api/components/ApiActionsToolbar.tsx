@@ -1,13 +1,11 @@
 import React from 'react';
-import { RefreshCw, Plus, Zap, Database, RotateCw } from 'lucide-react';
+import { RefreshCw, Plus, Zap } from 'lucide-react';
 import { ApiProvider } from '../types/api';
 
 interface ApiActionsToolbarProps {
   onResetQuotas: () => void;
   onAddKey: (defaultValues: Partial<ApiProvider>) => void;
   onTestAll: () => void;
-  onClearCache: () => void;
-  onReload: () => void;
   actionLoading: string | null;
 }
 
@@ -15,8 +13,6 @@ export const ApiActionsToolbar: React.FC<ApiActionsToolbarProps> = React.memo(({
   onResetQuotas,
   onAddKey,
   onTestAll,
-  onClearCache,
-  onReload,
   actionLoading
 }) => {
   const handleAddNewKey = () => {
@@ -38,25 +34,7 @@ export const ApiActionsToolbar: React.FC<ApiActionsToolbarProps> = React.memo(({
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-3 self-end md:self-auto">
-      <button
-        onClick={onReload}
-        disabled={!!actionLoading}
-        title="إعادة تحميل البيانات"
-        className="flex items-center justify-center p-2.5 bg-gray-900 border border-gray-800 text-gray-300 hover:text-white rounded-lg text-sm font-semibold transition cursor-pointer disabled:opacity-50"
-      >
-        <RotateCw className={`w-4 h-4 ${actionLoading === 'reload' ? 'animate-spin' : ''}`} />
-      </button>
-
-      <button
-        onClick={onClearCache}
-        disabled={!!actionLoading}
-        className="flex items-center gap-2 bg-amber-600/10 border border-amber-500/20 text-amber-400 hover:text-amber-300 px-4 py-2.5 rounded-lg text-sm font-semibold transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        <Database className={`w-4 h-4 ${actionLoading === 'clear-cache' ? 'animate-bounce' : ''}`} />
-        تنظيف الكاش
-      </button>
-
+    <div className="flex items-center gap-3 self-end md:self-auto">
       <button
         onClick={onTestAll}
         disabled={!!actionLoading}

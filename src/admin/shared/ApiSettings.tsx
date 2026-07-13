@@ -23,6 +23,7 @@ export default function ApiSettings() {
   const [customApis, setCustomApis] = useState<ApiProvider[]>([]);
   const [savingSettings, setSavingSettings] = useState(false);
   const [testingConnection, setTestingConnection] = useState<Record<string, boolean>>({});
+  const [saveToSessionOnly, setSaveToSessionOnly] = useState(false);
 
   const [newCustomApi, setNewCustomApi] = useState<Partial<ApiProvider>>({ name: '', key: '' });
 
@@ -41,6 +42,21 @@ export default function ApiSettings() {
       allKeys.forEach(k => {
         if (keyMap[k.provider] !== undefined) keyMap[k.provider] = k.key;
       });
+
+      // Try to load from session storage if present
+      const sessionKeys: Record<string, string> = {
+        'API-Football': sessionStorage.getItem('api_key_API-Football') || '',
+        'TheSportsDB': sessionStorage.getItem('api_key_TheSportsDB') || '',
+        'SportMonks': sessionStorage.getItem('api_key_SportMonks') || ''
+      };
+      const hasAnySessionKey = Object.values(sessionKeys).some(k => k);
+      if (hasAnySessionKey) {
+        setSaveToSessionOnly(true);
+        for (const [p, k] of Object.entries(sessionKeys)) {
+          if (k) keyMap[p] = k;
+        }
+      }
+
       setKeys(keyMap);
       
       setCustomApis(allProviders.filter(p => p.provider === 'Custom'));
@@ -58,32 +74,54 @@ export default function ApiSettings() {
     try {
       await repositories.apiManagement.configRepository.updateRouting(routing);
       
-      // Update standard keys
-      for (const [provider, key] of Object.entries(keys)) {
-        const existingKey = (await repositories.apiManagement.apiKeyRepository.getKeys()).find(k => k.provider === provider);
-        if (existingKey) {
-          await repositories.apiManagement.apiKeyRepository.updateKey({ ...existingKey, key });
-        } else {
-          await repositories.apiManagement.apiKeyRepository.addKey({
-            id: provider.toLowerCase(),
-            name: provider,
-            provider: provider as any,
-            key,
-            active: true,
-            updatedAt: new Date().toISOString(),
-            quotaDaily: 0,
-            quotaMonthly: 0,
-            usedToday: 0,
-            usedMonth: 0,
-            priority: 0,
-            costPerCall: 0,
-            status: 'healthy',
-            fallbackProvider: ''
-          });
+      if (saveToSessionOnly) {
+        // Save to sessionStorage securely
+        for (const [provider, key] of Object.entries(keys)) {
+          sessionStorage.setItem(`api_key_${provider}`, key);
         }
+        if (keys['API-Football']) {
+          sessionStorage.setItem('Safara 90_user_api_key', keys['API-Football']);
+          localStorage.setItem('Safara 90_user_api_key', keys['API-Football']);
+        }
+        showToast('تم حفظ المفاتيح بأمان في الجلسة الحالية فقط (مؤقتاً). سيتم مسحها عند إغلاق التبويب.', 'success');
+      } else {
+        // Clear any temporary session keys
+        sessionStorage.removeItem('api_key_API-Football');
+        sessionStorage.removeItem('api_key_TheSportsDB');
+        sessionStorage.removeItem('api_key_SportMonks');
+        sessionStorage.removeItem('Safara 90_user_api_key');
+
+        if (keys['API-Football']) {
+          localStorage.setItem('Safara 90_user_api_key', keys['API-Football']);
+        }
+
+        // Update standard keys permanently in Firestore
+        for (const [provider, key] of Object.entries(keys)) {
+          const existingKey = (await repositories.apiManagement.apiKeyRepository.getKeys()).find(k => k.provider === provider);
+          if (existingKey) {
+            await repositories.apiManagement.apiKeyRepository.updateKey({ ...existingKey, key });
+          } else {
+            await repositories.apiManagement.apiKeyRepository.addKey({
+              id: provider.toLowerCase(),
+              name: provider,
+              provider: provider as any,
+              key,
+              active: true,
+              updatedAt: new Date().toISOString(),
+              quotaDaily: 0,
+              quotaMonthly: 0,
+              usedToday: 0,
+              usedMonth: 0,
+              priority: 0,
+              costPerCall: 0,
+              status: 'healthy',
+              fallbackProvider: ''
+            });
+          }
+        }
+        showToast('تم حفظ كافة إعدادات مسارات البث وتكوين الـ API في قاعدة البيانات.', 'success');
       }
 
-      showToast('تم حفظ كافة إعدادات مسارات البث وتكوين الـ API.', 'success');
       loadData();
     } catch (err: any) {
       showToast(`فشل تخزين الإعدادات: ${err.message || err}`, 'error');
@@ -271,9 +309,22 @@ export default function ApiSettings() {
 
       {/* 4. DEFAULT PROVIDERS KEY MANAGER */}
       <div className="glass p-6 md:p-8 rounded-[2.5rem] border border-white/5 space-y-8">
-        <div className="flex items-center gap-2">
-            <KeyRound className="text-primary w-5 h-5" />
-            <h2 className="text-lg font-bold text-white">مفاتيح المزودين الافتراضيين</h2>
+        <div className="flex justify-between items-center flex-wrap gap-4 border-b border-white/5 pb-4">
+            <div className="flex items-center gap-2">
+                <KeyRound className="text-primary w-5 h-5" />
+                <h2 className="text-lg font-bold text-white">مفاتيح المزودين الافتراضيين</h2>
+            </div>
+            
+            {/* Session usage option */}
+            <label className="flex items-center gap-2 cursor-pointer bg-white/5 hover:bg-white/10 px-4 py-2 rounded-xl border border-white/5 transition-all">
+                <input 
+                  type="checkbox" 
+                  checked={saveToSessionOnly} 
+                  onChange={(e) => setSaveToSessionOnly(e.target.checked)}
+                  className="accent-primary w-4 h-4 rounded cursor-pointer"
+                />
+                <span className="text-xs font-bold text-gray-200">حفظ في الجلسة الحالية فقط (مؤقت)</span>
+            </label>
         </div>
         
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

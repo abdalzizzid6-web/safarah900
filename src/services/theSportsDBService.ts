@@ -1,18 +1,9 @@
-import apiClient from '../api/apiClient';
+import axios from 'axios';
 import { League, Match } from '../types';
 import { TeamDetail } from './teamMapper';
 import { dataSourceService } from './dataSourceService';
 
 const BASE_URL = 'https://www.thesportsdb.com/api/v1/json';
-
-export function getTheSportsDBApiKey(): string {
-  if (typeof window !== 'undefined') {
-    return localStorage.getItem('Safara 90_thesportsdb_user_api_key') || '3';
-  }
-  return '3';
-}
-
-
 
 // Get active API provider settings
 export type ApiProvider = 'API-Football' | 'TheSportsDB';
@@ -33,7 +24,13 @@ export function setActiveApiProvider(provider: ApiProvider) {
   }
 }
 
-
+export function getTheSportsDBApiKey(): string {
+  if (typeof window !== 'undefined') {
+    const userKey = localStorage.getItem('Safara 90_thesportsdb_user_api_key');
+    if (userKey) return userKey.trim();
+  }
+  return '123'; // Default key as requested
+}
 
 export function setTheSportsDBApiKey(key: string) {
   if (typeof window !== 'undefined') {
@@ -44,20 +41,66 @@ export function setTheSportsDBApiKey(key: string) {
 // In-memory cache for TheSportsDB to prevent redundant fetches
 const theSportsDBCache = new Map<string, { data: any; expiry: number }>();
 
-
 async function fetchWithCache(url: string, params: any = {}): Promise<any> {
-  const queryParams = new URLSearchParams(params);
-  const fullUrl = `/football-api/${url}?${queryParams.toString()}`;
+  const settings = dataSourceService.getSettingsSync();
+  const cacheEnabled = settings.cacheEnabled !== false;
+  const cacheKey = `${url}_${JSON.stringify(params)}`;
+  const now = Date.now();
+  const cached = theSportsDBCache.get(cacheKey);
   
-  const response = await apiClient.get(fullUrl, {
-    headers: {
-      'x-api-category': 'matches',
-      'x-api-provider-override': 'TheSportsDB'
+  if (cacheEnabled) {
+    if (cached && cached.expiry > now) {
+      return cached.data;
     }
-  });
-  return response.data;
-}
 
+    // Also check localStorage
+    try {
+      const lsItem = localStorage.getItem(`sportsdb_cache_${cacheKey}`);
+      if (lsItem) {
+        const parsed = JSON.parse(lsItem);
+        if (parsed && parsed.expiry > now) {
+          theSportsDBCache.set(cacheKey, { data: parsed.data, expiry: parsed.expiry });
+          return parsed.data;
+        }
+      }
+    } catch (e) {
+      console.warn('[TheSportsDB] Error reading localStorage cache:', e);
+    }
+  }
+
+  try {
+    const response = await axios.get(url, { params, timeout: 12000 });
+    const data = response.data;
+    
+    // Cache the response
+    if (cacheEnabled) {
+      const customTtl = (settings.cacheTtlMinutes || 10) * 60 * 1000;
+      const expiry = now + customTtl;
+      theSportsDBCache.set(cacheKey, { data, expiry });
+      try {
+        localStorage.setItem(`sportsdb_cache_${cacheKey}`, JSON.stringify({ data, expiry }));
+      } catch (e) {}
+    }
+    
+    return data;
+  } catch (error) {
+    console.error(`[TheSportsDB] Error fetching API of url: ${url}`, error);
+    // If request fails and we have a stale cache, return it
+    if (cached) {
+      console.warn('[TheSportsDB] Returning stale in-memory cache as fallback.');
+      return cached.data;
+    }
+    try {
+      const lsItem = localStorage.getItem(`sportsdb_cache_${cacheKey}`);
+      if (lsItem) {
+        const parsed = JSON.parse(lsItem);
+        console.warn('[TheSportsDB] Returning stale localStorage cache as fallback.');
+        return parsed.data;
+      }
+    } catch (e) {}
+    throw error;
+  }
+}
 
 export const theSportsDBService = {
   /**

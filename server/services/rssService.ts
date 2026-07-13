@@ -2,7 +2,6 @@ import RSSParser from "rss-parser";
 import crypto from "crypto";
 import { isUrlSafe } from "../utils/slugify";
 import { firestore, isFirestoreQuotaExceeded, setFirestoreQuotaExceeded, isFirebaseQuotaError } from "../firestore/collections";
-import { unifiedApiManager } from "./unifiedApiManager";
 
 // Import modular sub-services
 import { 
@@ -99,11 +98,123 @@ export async function syncRssProvider(providerId: string): Promise<{ success: bo
       console.warn(`[rssService] Failed to update status to SYNCING for ${providerId}:`, err.message);
     }
 
-    const xml = await unifiedApiManager.fetchRssFeed(feedUrl, {
-      category: 'RSS',
-      providerId,
-      providerName: provider.name
-    });
+    let response: any = null;
+    let fetchError: any = null;
+
+    // Stage 1: Try with default rssHeaders
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 12000);
+      
+      const headers = getHeadersForUrl(feedUrl);
+      if (providerId === 'filgoal') {
+        headers['User-Agent'] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36';
+        headers['Referer'] = 'https://www.filgoal.com/';
+        headers['Accept'] = 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8';
+        headers['Accept-Language'] = 'en-US,en;q=0.5';
+      }
+
+      response = await fetch(feedUrl, { headers, signal: controller.signal });
+      clearTimeout(timeoutId);
+    } catch (err: any) {
+      fetchError = err;
+    }
+
+    // Stage 2: If failed, or 403/401/500, try with simplified headers
+    if (!response || !response.ok || [401, 403, 500, 502, 503].includes(response.status)) {
+      console.log(`[RSS Service] Stage 2: Retrying ${provider.name} with simple browser headers...`);
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 12000);
+        const simpleHeaders = {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+          'Accept-Language': 'ar,en;q=0.9',
+          'Cache-Control': 'no-cache',
+          'Referer': 'https://www.google.com/'
+        };
+        const retryRes = await fetch(feedUrl, { headers: simpleHeaders, signal: controller.signal });
+        clearTimeout(timeoutId);
+        if (retryRes.ok) {
+          response = retryRes;
+        } else if (!response || (response.status === 403 && retryRes.status !== 403)) {
+          response = retryRes;
+        }
+      } catch (err: any) {
+        // silent
+      }
+    }
+
+    // Stage 3: If still blocked (e.g. 403), try with Googlebot
+    if (!response || !response.ok || response.status === 403) {
+      console.log(`[RSS Service] Stage 3: Retrying ${provider.name} with search-crawler profile...`);
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 12000);
+        const botHeaders = {
+          'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
+          'Accept': '*/*',
+          'Accept-Language': 'en-US,en;q=0.9'
+        };
+        const botRes = await fetch(feedUrl, { headers: botHeaders, signal: controller.signal });
+        clearTimeout(timeoutId);
+        if (botRes.ok) {
+          response = botRes;
+        } else if (response.status === 403 && botRes.status !== 403) {
+          response = botRes;
+        }
+      } catch (err: any) {
+        // silent
+      }
+    }
+
+    // Stage 4: If STILL blocked (e.g. 403), use a secure public proxy fallback
+    if (!response || !response.ok || response.status === 403) {
+      console.log(`[RSS Service] Stage 4: Using secure CORS/RSS proxy fallback for ${provider.name}...`);
+      
+      const proxies = [
+        `https://api.allorigins.win/raw?url=${encodeURIComponent(feedUrl)}`,
+        `https://corsproxy.io/?${encodeURIComponent(feedUrl)}`,
+        `https://corsproxy.org/?${encodeURIComponent(feedUrl)}`,
+        `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(feedUrl)}`,
+        `https://thingproxy.freeboard.io/fetch/${feedUrl}`
+      ];
+
+      for (const proxyUrl of proxies) {
+        try {
+          console.log(`[RSS Service] Trying proxy: ${proxyUrl}`);
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 15000); 
+          
+          const headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36'
+          };
+
+          const proxyRes = await fetch(proxyUrl, { headers, signal: controller.signal });
+          clearTimeout(timeoutId);
+          
+          if (proxyRes.ok) {
+            let xmlContent = await proxyRes.text();
+            if (xmlContent && (xmlContent.includes('<rss') || xmlContent.includes('<feed') || xmlContent.includes('<?xml'))) {
+              response = {
+                ok: true,
+                status: 200,
+                text: async () => xmlContent
+              };
+              console.log(`[RSS Service] Successfully fetched ${provider.name} RSS feed via proxy: ${proxyUrl}`);
+              break;
+            }
+          }
+        } catch (err: any) {
+          // silent
+        }
+      }
+    }
+
+    if (!response || !response.ok) {
+      throw new Error(`HTTP Error ${response ? response.status : 'unknown'}`);
+    }
+    const xml = await response.text();
     let parsedFeed: any = null;
     try {
       parsedFeed = await parseRssFeedSafely(xml);
@@ -333,19 +444,12 @@ export async function syncRssProvider(providerId: string): Promise<{ success: bo
       setFirestoreQuotaExceeded(true);
       return { success: false, importedCount: 0, duplicateCount: 0, error: "Firestore Quota Exceeded" };
     }
-    
-    // Treat 403 as a warning, not a critical error for RSS sync
-    if (err.message.includes("403")) {
-        console.warn(`[RSS Service Warning] Provider ${providerId} returned 403 Forbidden. Skipping this sync cycle.`);
-    } else {
-        console.error(`[RSS Service Error] Provider sync failed for ${providerId}: ${err.message}`);
-    }
-
+    console.error(`[RSS Service Error] Provider sync failed for ${providerId}: ${err.message}`);
     try {
       await firestore.collection("rss_sources").doc(providerId).set({
         lastError: err.message,
         lastSync: new Date().toISOString(),
-        status: err.message.includes("403") ? "ACTIVE" : "FAILED"
+        status: "FAILED"
       }, { merge: true });
     } catch (saveErr: any) {
       console.warn(`[rssService] Failed to update failure status for provider ${providerId}:`, saveErr.message);
@@ -512,7 +616,6 @@ export async function transitionImportedArticleStatus(articleId: string, newStat
       version: 1
     };
     await newsDocRef.set(newsPayload);
-    // Auto-update sitemap on publication
   }
 
   return true;

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getTeamById, getTeamMatches, getTeamStandings, getTeamPlayers } from '../api/teamApi';
-import { getIdFromSlug } from '../utils/slugify';
+import { getIdFromSlug, createSlugPath } from '../utils/slugify';
 import { mapTeamHeader, mapTeamMatches, mapTeamPlayers, mapTeamStats } from '../services/teamMapper';
 import { motion } from 'motion/react';
 import { AlertCircle, RefreshCw, ChevronRight } from 'lucide-react';
@@ -153,6 +153,10 @@ export default function TeamPage() {
             "name": teamHeader.leagueName || "الدوري"
           }
         }}
+        breadcrumbs={[
+          { name: 'الفرق', item: '/teams' },
+          { name: teamHeader.name, item: `/team/${createSlugPath(teamHeader.name, id)}` }
+        ]}
       />
       
       {/* Main Container */}

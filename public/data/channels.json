@@ -1,1 +1,43 @@
-[]
+[
+  {
+    "id": "2",
+    "featured": false,
+    "color": "",
+    "customName": "",
+    "enabled": true,
+    "logoUrl": "",
+    "order": 1,
+    "visibleInSchedule": true,
+    "updatedAt": "2026-07-09T14:39:23.798Z"
+  },
+  {
+    "id": "140",
+    "featured": false,
+    "color": "",
+    "customName": "",
+    "enabled": true,
+    "logoUrl": "",
+    "order": 3,
+    "updatedAt": "2026-07-09T08:55:33.291Z"
+  },
+  {
+    "id": "307",
+    "featured": false,
+    "color": "",
+    "customName": "",
+    "enabled": true,
+    "logoUrl": "",
+    "order": 2,
+    "updatedAt": "2026-07-09T08:55:29.075Z"
+  },
+  {
+    "id": "39",
+    "featured": false,
+    "color": "",
+    "customName": "",
+    "enabled": true,
+    "logoUrl": "",
+    "order": 4,
+    "updatedAt": "2026-07-09T08:55:37.811Z"
+  }
+]

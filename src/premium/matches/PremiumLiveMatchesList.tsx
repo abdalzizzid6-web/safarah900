@@ -5,7 +5,6 @@ import { useLiveMatches } from '../../hooks/useMatchesV2';
 import { Match } from '../../types';
 import { Link } from 'react-router-dom';
 import { ScoreFlash } from '../components/shared';
-import LivePulse from '../../components/ui/LivePulse';
 
 interface Props {
   title?: string;
@@ -37,7 +36,10 @@ export default function PremiumLiveMatchesList({ title = "مباريات مبا�
       {title && title.trim() !== "" && (
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <LivePulse size="sm" color="bg-red-500" className="ml-1" />
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-error opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-error"></span>
+            </span>
             <h2 className="text-lg font-black text-white">{title}</h2>
           </div>
           <Link to="/matches" className="text-xs text-amber-500 font-bold hover:text-amber-400 transition-colors">
@@ -79,7 +81,10 @@ export default function PremiumLiveMatchesList({ title = "مباريات مبا�
                     if (isLive) {
                       return (
                         <div className="flex items-center gap-1 bg-green-600/20 px-2 py-0.5 rounded-full mt-1 border border-green-500/20">
-                          <LivePulse size="sm" color="bg-green-500" className="ml-1" />
+                          <span className="relative flex h-1 w-1">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-500 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-1 w-1 bg-green-500"></span>
+                          </span>
                           <span className="text-[10px] font-bold text-green-500">{match.minute ? `${match.minute}'` : 'جارية الآن'}</span>
                         </div>
                       );

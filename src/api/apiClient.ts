@@ -8,8 +8,13 @@ const PROXY_HOST = 'free-api-live-football-data.p.rapidapi.com';
 
 // Dynamic API Key override (allows secure configuration from the UI)
 export function getActiveApiKey(): string {
-  const userKey = typeof window !== 'undefined' ? localStorage.getItem('Safara 90_user_api_key') : null;
-  return (userKey || import.meta.env.VITE_API_KEY || '').trim();
+  if (typeof window !== 'undefined') {
+    const sessionKey = sessionStorage.getItem('Safara 90_user_api_key');
+    if (sessionKey) return sessionKey.trim();
+    const localKey = localStorage.getItem('Safara 90_user_api_key');
+    if (localKey) return localKey.trim();
+  }
+  return (import.meta.env.VITE_API_KEY || '').trim();
 }
 
 // Helper to ensure any base URL has a scheme (e.g., https://)

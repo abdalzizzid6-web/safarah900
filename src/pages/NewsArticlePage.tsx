@@ -63,8 +63,19 @@ export default function NewsArticlePage() {
     <div className="min-h-screen bg-[var(--color-background)] py-10 px-4" dir="rtl">
       <SEO 
         title={`${article.title} | صافرة 90`} 
-        description={article.excerpt}
+        description={article.excerpt || article.content?.summary || article.content?.fullText?.substring(0, 150) || article.title}
         ogImage={article.featuredImage?.url}
+        ogType="article"
+        article={{
+          headline: article.title,
+          description: article.excerpt || article.content?.summary || article.content?.fullText?.substring(0, 150) || article.title,
+          datePublished: article.publishDate || new Date().toISOString(),
+          image: article.featuredImage?.url
+        }}
+        breadcrumbs={[
+          { name: 'الأخبار', item: '/news' },
+          { name: article.title, item: `/news/${slug}` }
+        ]}
       />
 
       <article className="max-w-3xl mx-auto space-y-10">

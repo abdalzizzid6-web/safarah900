@@ -5,8 +5,8 @@ import SocialDashboard from './pages/SocialDashboard';
 import ConnectedAccounts from './pages/ConnectedAccounts';
 import SocialScheduler from './pages/SocialScheduler';
 import MediaLibrary from './pages/MediaLibrary';
+import ApiKeyManager from './pages/ApiKeyManager';
 import SocialSettings from './pages/SocialSettings';
-import DefaultSettings from './pages/DefaultSettings';
 
 const SocialMediaCenter: React.FC = () => {
   const location = useLocation();
@@ -16,7 +16,7 @@ const SocialMediaCenter: React.FC = () => {
     { name: 'الحسابات المتصلة', path: '/admin/social/accounts', icon: Share2 },
     { name: 'الجدولة والنشر', path: '/admin/social/scheduler', icon: Calendar },
     { name: 'مكتبة الوسائط', path: '/admin/social/media', icon: Library },
-    { name: 'الإعدادات الافتراضية', path: '/admin/social/defaults', icon: Settings },
+    { name: 'إدارة مفاتيح الـ API', path: '/admin/social/apikeys', icon: Key },
     { name: 'الإعدادات العامة', path: '/admin/social/settings', icon: Settings },
   ];
 
@@ -71,7 +71,7 @@ const SocialMediaCenter: React.FC = () => {
           <Route path="accounts" element={<ConnectedAccounts />} />
           <Route path="scheduler" element={<SocialScheduler />} />
           <Route path="media" element={<MediaLibrary />} />
-          <Route path="defaults" element={<DefaultSettings />} />
+          <Route path="apikeys" element={<ApiKeyManager />} />
           <Route path="settings" element={<SocialSettings />} />
         </Routes>
       </div>

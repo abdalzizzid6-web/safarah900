@@ -1,8 +1,6 @@
-import { matchesRepositoryV2 } from '../core/repository/MatchesRepositoryV2';
-
+import { doc, getDoc, setDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
 import { db } from '../firebase';
 import { Match } from '../types';
-import { doc, setDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
 
 export const syncMatch = async (
   rawMatchData: any,
@@ -15,7 +13,10 @@ export const syncMatch = async (
     const normalizedData = normalizeFn(rawMatchData);
     const matchId = normalizedData.id || `apf-${provider}-${rawMatchData.id}`;
     
-    const existingDoc = await matchesRepositoryV2.getDocRaw(matchId);
+    const matchRef = doc(db, 'matches', matchId);
+    
+    // Check if exists
+    const existingDoc = await getDoc(matchRef);
     const now = new Date().toISOString();
     
     const matchToSave: any = {
@@ -42,7 +43,6 @@ export const syncMatch = async (
         matchToSave.createdAt = serverTimestamp();
     }
     
-    const matchRef = doc(db, 'matches', matchId);
     await setDoc(matchRef, matchToSave, { merge: true });
     
     return { success: true, matchId };

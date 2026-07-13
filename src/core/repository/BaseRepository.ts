@@ -71,10 +71,31 @@ export abstract class BaseRepository<T> {
     }
   }
 
+  protected invalidateCache(id?: string): void {
+    if (typeof window !== 'undefined' && window.sessionStorage) {
+      const prefix = 'safara_cache_';
+      const keysToClear: string[] = [];
+      for (let i = 0; i < sessionStorage.length; i++) {
+        const key = sessionStorage.key(i);
+        if (key && (
+          key.startsWith(prefix + this.collectionName) ||
+          key.includes(this.collectionName)
+        )) {
+          keysToClear.push(key);
+        }
+      }
+      keysToClear.forEach(key => sessionStorage.removeItem(key));
+    }
+    if (id) {
+      CacheLayer.invalidate(`${this.collectionName}_doc_${id}`);
+    }
+  }
+
   async create(data: Omit<T, 'id'>): Promise<string> {
     if (telemetry.isFirestoreQuotaExceeded()) throw new Error('Firestore Quota Exceeded');
     try {
       const docRef = await addDoc(collection(db, this.collectionName), data as any);
+      this.invalidateCache(docRef.id);
       return docRef.id;
     } catch (e: any) {
       if (e.message?.includes('quota') || e.code === 'resource-exhausted') {
@@ -89,6 +110,7 @@ export abstract class BaseRepository<T> {
     try {
       const docRef = doc(db, this.collectionName, id);
       await setDoc(docRef, data as any, { merge: true });
+      this.invalidateCache(id);
     } catch (e: any) {
       if (e.message?.includes('quota') || e.code === 'resource-exhausted') {
         telemetry.setFirestoreQuotaExceeded(true);
@@ -102,6 +124,7 @@ export abstract class BaseRepository<T> {
     try {
       const docRef = doc(db, this.collectionName, id);
       await updateDoc(docRef, data as any);
+      this.invalidateCache(id);
     } catch (e: any) {
       if (e.message?.includes('quota') || e.code === 'resource-exhausted') {
         telemetry.setFirestoreQuotaExceeded(true);
@@ -115,6 +138,7 @@ export abstract class BaseRepository<T> {
     try {
       const docRef = doc(db, this.collectionName, id);
       await deleteDoc(docRef);
+      this.invalidateCache(id);
     } catch (e: any) {
       if (e.message?.includes('quota') || e.code === 'resource-exhausted') {
         telemetry.setFirestoreQuotaExceeded(true);
@@ -131,6 +155,7 @@ export abstract class BaseRepository<T> {
         batch.update(doc(db, this.collectionName, id), data as any);
       });
       await batch.commit();
+      ids.forEach(id => this.invalidateCache(id));
     } catch (e: any) {
       if (e.message?.includes('quota') || e.code === 'resource-exhausted') {
         telemetry.setFirestoreQuotaExceeded(true);
@@ -147,6 +172,7 @@ export abstract class BaseRepository<T> {
         batch.delete(doc(db, this.collectionName, id));
       });
       await batch.commit();
+      ids.forEach(id => this.invalidateCache(id));
     } catch (e: any) {
       if (e.message?.includes('quota') || e.code === 'resource-exhausted') {
         telemetry.setFirestoreQuotaExceeded(true);

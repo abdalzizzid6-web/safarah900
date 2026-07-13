@@ -2,7 +2,6 @@ import express from 'express';
 import crypto from 'crypto';
 import { firestore } from '../firestore/collections';
 import { encrypt, decrypt } from '../utils/crypto';
-import { facebookConnect, facebookCallback } from '../controllers/authController';
 
 const router = express.Router();
 
@@ -125,16 +124,83 @@ router.get('/accounts', async (req, res) => {
   }
 });
 
-// --- 4. Connect Account / OAuth URL Generator (with PKCE S256 & Anti-CSRF State Store) ---
-router.post('/connect/facebook', facebookConnect);
+// --- 2. Fetch API Keys / Credentials ---
+router.get('/apikeys', async (req, res) => {
+  try {
+    const docRef = await firestore.collection('social_settings').doc('api_credentials').get();
+    const credentials = docRef.exists ? docRef.data() : {};
+    
+    const status: Record<string, any> = {};
+    const platforms = [
+      'facebook', 'instagram', 'twitter', 'telegram', 'youtube',
+      'tiktok', 'threads', 'linkedin', 'discord', 'wordpress', 'google'
+    ];
+    
+    platforms.forEach(p => {
+      const pConfig = credentials?.[p] || {};
+      const keys = Object.keys(pConfig);
+      status[p] = {
+        configured: keys.length > 0 && keys.every(k => !!pConfig[k]),
+        fields: keys.reduce((acc, k) => {
+          acc[k] = '********';
+          return acc;
+        }, {} as Record<string, string>)
+      };
+    });
+    
+    res.json({ status });
+  } catch (error: any) {
+    res.status(500).json({ error: 'Failed to fetch credentials status: ' + error.message });
+  }
+});
 
+// --- 3. Save API Keys / Credentials (AES-256 encrypted) ---
+router.post('/apikeys', async (req, res) => {
+  try {
+    const { platform, keys } = req.body;
+    if (!platform || !keys) {
+      return res.status(400).json({ error: 'Platform and keys are required' });
+    }
+    
+    const encryptedKeys: Record<string, string> = {};
+    for (const [keyName, value] of Object.entries(keys)) {
+      if (typeof value === 'string' && value.trim() !== '') {
+        encryptedKeys[keyName] = encrypt(value.trim());
+      }
+    }
+    
+    const docRef = firestore.collection('social_settings').doc('api_credentials');
+    await docRef.set({
+      [platform]: encryptedKeys
+    }, { merge: true });
+    
+    await logAuditEvent('SAVE_API_KEYS', platform, 'success', `Successfully configured API keys for ${platform}`);
+    res.json({ success: true, message: `Successfully configured API keys for ${platform}` });
+  } catch (error: any) {
+    res.status(500).json({ error: 'Failed to save credentials: ' + error.message });
+  }
+});
+
+// --- 4. Connect Account / OAuth URL Generator (with PKCE S256 & Anti-CSRF State Store) ---
 router.post('/connect/:platform', async (req, res) => {
   try {
     const { platform } = req.params;
-    const { customName, customHandle, customAvatar, manualToken, fields } = req.body;
+    const { customName, customHandle, customAvatar, manualToken, fields, origin: clientOrigin } = req.body;
     
-    const origin = process.env.APP_URL || 'https://korea90.xyz';
+    let origin = clientOrigin || process.env.APP_URL;
+    if (!origin) {
+      const host = req.get('host') || 'localhost:3000';
+      const protocol = req.secure ? 'https' : 'http';
+      origin = `${protocol}://${host}`;
+    }
+    if (origin.endsWith('/')) {
+      origin = origin.slice(0, -1);
+    }
     const redirectUri = `${origin}/api/social/callback/${platform}`;
+    
+    // Stored API credentials Check
+    const credsDoc = await firestore.collection('social_settings').doc('api_credentials').get();
+    const creds = credsDoc.exists ? credsDoc.data()?.[platform] || {} : {};
     
     // For manual connection platforms
     if (manualToken || ['telegram', 'discord', 'wordpress'].includes(platform)) {
@@ -162,14 +228,34 @@ router.post('/connect/:platform', async (req, res) => {
     }
     
     // OAuth-based Platforms
-    const clientId = process.env[`${platform.toUpperCase()}_CLIENT_ID`];
-    const clientSecret = process.env[`${platform.toUpperCase()}_CLIENT_SECRET`];
+    const requiredKeys: Record<string, string[]> = {
+      facebook: ['clientId', 'clientSecret'],
+      instagram: ['clientId', 'clientSecret'],
+      twitter: ['clientId', 'clientSecret'],
+      linkedin: ['clientId', 'clientSecret'],
+      youtube: ['clientId', 'clientSecret'],
+      google: ['clientId', 'clientSecret']
+    };
     
-    if (!clientId || !clientSecret) {
-      return res.status(400).json({
-        error: `لم يتم تهيئة إعدادات ${platform.toUpperCase()} في متغيرات البيئة. يرجى ضبط ${platform.toUpperCase()}_CLIENT_ID و ${platform.toUpperCase()}_CLIENT_SECRET.`
+    const reqKeys = requiredKeys[platform];
+    if (reqKeys) {
+      const missing: string[] = [];
+      reqKeys.forEach(k => {
+        const value = creds[k] || creds[k === 'clientId' ? 'client_id' : 'client_secret'];
+        if (!value) {
+          missing.push(k === 'clientId' ? 'معرف العميل (Client ID / App ID)' : 'الرمز السري للعميل (Client Secret)');
+        }
       });
+      
+      if (missing.length > 0) {
+        return res.status(400).json({
+          error: `لم يتم تهيئة إعدادات ${platform.toUpperCase()} بشكل كامل. يرجى إدخال الحقول التالية في قسم 'إدارة مفاتيح الـ API': ${missing.join('، ')}`
+        });
+      }
     }
+    
+    const clientIdEnc = creds.clientId || creds.client_id;
+    const clientId = decrypt(clientIdEnc);
     
     // PKCE S256 and Anti-CSRF Setup
     const { verifier, challenge } = generatePkce();
@@ -182,14 +268,6 @@ router.post('/connect/:platform', async (req, res) => {
       verifier,
       expiresAt,
       createdAt: new Date().toISOString()
-    });
-
-    // Debug logging
-    console.log('[OAuth Debug] Connect:', {
-      APP_URL: process.env.APP_URL,
-      redirect_uri: redirectUri,
-      client_id: clientId.substring(0, 5) + '***',
-      platform
     });
     
     let oauthUrl = '';
@@ -213,7 +291,7 @@ router.post('/connect/:platform', async (req, res) => {
         oauthUrl = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=w_member_social&state=${state}`;
         break;
       default:
-        return res.status(400).json({ error: `Platform ${platform} is not supported for automatic OAuth connection` });
+        oauthUrl = `https://mock.oauth.url/${platform}?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&state=${state}`;
     }
     
     res.json({ url: oauthUrl });
@@ -223,8 +301,6 @@ router.post('/connect/:platform', async (req, res) => {
 });
 
 // --- 5. OAuth Callback Receiver (with state validation & replay attack prevention) ---
-router.get('/callback/facebook', facebookCallback);
-
 router.get('/callback/:platform', async (req, res) => {
   const { platform } = req.params;
   const { code, state, error } = req.query;
@@ -269,16 +345,27 @@ router.get('/callback/:platform', async (req, res) => {
     const verifier = stateData.verifier;
     await stateDocRef.delete(); // Single use state verification token consumption to prevent replay attacks
     
-    const origin = process.env.APP_URL || 'https://korea90.xyz';
+    let origin = process.env.APP_URL;
+    if (!origin) {
+      const host = req.get('host') || 'localhost:3000';
+      const protocol = req.secure ? 'https' : 'http';
+      origin = `${protocol}://${host}`;
+    }
+    if (origin.endsWith('/')) {
+      origin = origin.slice(0, -1);
+    }
     const redirectUri = `${origin}/api/social/callback/${platform}`;
     
     // Exchange Code for Access Token
-    const clientId = process.env[`${platform.toUpperCase()}_CLIENT_ID`];
-    const clientSecret = process.env[`${platform.toUpperCase()}_CLIENT_SECRET`];
+    const credsDoc = await firestore.collection('social_settings').doc('api_credentials').get();
+    const creds = credsDoc.exists ? credsDoc.data()?.[platform] || {} : {};
     
-    if (!clientId || !clientSecret) {
-      throw new Error(`Missing environment credentials for ${platform}`);
+    if (!creds.clientId && !creds.client_secret) {
+      throw new Error(`Missing client credentials for ${platform}`);
     }
+    
+    const clientId = decrypt(creds.clientId || creds.client_id);
+    const clientSecret = decrypt(creds.clientSecret || creds.client_secret);
     
     let tokenUrl = '';
     const bodyParams = new URLSearchParams();
@@ -847,7 +934,7 @@ async function processQueuedPost(queueId: string) {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              chat_id: account.defaultPageId || account.metadata?.chatId || account.handle || '@safara_90_channel',
+              chat_id: account.metadata?.chatId || account.handle || '@safara_90_channel',
               text: content,
               parse_mode: 'HTML'
             })
@@ -910,10 +997,10 @@ async function processQueuedPost(queueId: string) {
           let apiBody: any = {};
           
           if (platform === 'facebook') {
-            apiEndpoint = `https://graph.facebook.com/v18.0/${account.defaultPageId || account.metadata?.pageId || 'me'}/feed`;
+            apiEndpoint = `https://graph.facebook.com/v18.0/${account.metadata?.pageId || 'me'}/feed`;
             apiBody = { message: content };
           } else if (platform === 'instagram') {
-            apiEndpoint = `https://graph.facebook.com/v18.0/${account.defaultPageId || account.metadata?.igUserId || 'me'}/media`;
+            apiEndpoint = `https://graph.facebook.com/v18.0/${account.metadata?.igUserId || 'me'}/media`;
             apiBody = { caption: content };
           } else if (platform === 'twitter') {
             apiEndpoint = `https://api.twitter.com/2/tweets`;
@@ -1021,6 +1108,8 @@ async function refreshOAuthTokens() {
   
   try {
     const accountsSnapshot = await firestore.collection('social_accounts').get();
+    const credsDoc = await firestore.collection('social_settings').doc('api_credentials').get();
+    const credentials = credsDoc.exists ? credsDoc.data() : {};
     
     for (const doc of accountsSnapshot.docs) {
       const account = doc.data();
@@ -1030,11 +1119,14 @@ async function refreshOAuthTokens() {
         const expiresAt = new Date(account.tokenExpiresAt);
         if (expiresAt <= fifteenMinsFromNow) {
           const platform = account.platform;
-          const clientId = process.env[`${platform.toUpperCase()}_CLIENT_ID`];
-          const clientSecret = process.env[`${platform.toUpperCase()}_CLIENT_SECRET`];
+          const pCreds = credentials?.[platform] || {};
+          const clientIdEnc = pCreds.clientId || pCreds.client_id;
+          const clientSecretEnc = pCreds.clientSecret || pCreds.client_secret;
           
-          if (!clientId) continue;
+          if (!clientIdEnc) continue;
           
+          const clientId = decrypt(clientIdEnc);
+          const clientSecret = clientSecretEnc ? decrypt(clientSecretEnc) : '';
           const refreshToken = decrypt(account.refreshToken);
           
           let refreshUrl = '';

@@ -163,6 +163,10 @@ export default function LeaguePage() {
           "logo": leagueData.logo,
           "description": `الصفحة الرسمية لمتابعة نتائج وترتيب ${translateLeagueName(leagueData.name)} على Safara 90.`
         }}
+        breadcrumbs={[
+          { name: 'البطولات', item: '/leagues' },
+          { name: translateLeagueName(leagueData.name), item: `/league/${createSlugPath(leagueData.name, id)}` }
+        ]}
       />
 
       <main className="max-w-7xl mx-auto px-4 pt-6 space-y-6">

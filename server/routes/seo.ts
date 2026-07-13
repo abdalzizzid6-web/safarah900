@@ -23,6 +23,65 @@ export const clearSitemapCache = () => {
 };
 
 /**
+ * Robust date parser supporting:
+ * - Firestore Timestamp (with toDate method or _seconds/seconds fields)
+ * - JavaScript Date
+ * - String
+ * - Number
+ * - null/undefined (falls back safely to current Date)
+ */
+const safeToDate = (val: any): Date => {
+  if (!val) return new Date();
+  
+  if (typeof val.toDate === "function") {
+    try {
+      return val.toDate();
+    } catch (e) {
+      // ignore and fall through
+    }
+  }
+  
+  if (typeof val.seconds === "number" || typeof val._seconds === "number") {
+    const s = val.seconds ?? val._seconds;
+    const ns = val.nanoseconds ?? val._nanoseconds ?? 0;
+    return new Date(s * 1000 + ns / 1000000);
+  }
+  
+  if (val instanceof Date) {
+    return isNaN(val.getTime()) ? new Date() : val;
+  }
+  
+  if (typeof val === "string" || typeof val === "number") {
+    const d = new Date(val);
+    return isNaN(d.getTime()) ? new Date() : d;
+  }
+  
+  return new Date();
+};
+
+/**
+ * URL segment encoder for sitemap URLs.
+ * Ensures Arabic slugs are percent-encoded correctly according to RFC 3986.
+ */
+const encodeUrlPath = (host: string, path: string): string => {
+  const sanitizedPath = path.split('/').map(segment => encodeURIComponent(segment)).join('/');
+  return `${host}/${sanitizedPath}`;
+};
+
+/**
+ * Robust URL encoder for images or full links
+ */
+const encodeFullUrl = (urlStr: string): string => {
+  try {
+    const url = new URL(urlStr);
+    const encodedPath = url.pathname.split('/').map(segment => encodeURIComponent(segment)).join('/');
+    return `${url.protocol}//${url.host}${encodedPath}${url.search}${url.hash}`;
+  } catch (e) {
+    return urlStr;
+  }
+};
+
+/**
  * LOGGING MIDDLEWARE for SEO
  */
 router.use((req, res, next) => {
@@ -48,7 +107,7 @@ router.get("/sitemap.xml", (req, res) => {
     res.header('Cache-Control', 'public, max-age=3600');
     res.send(generateSitemapIndexXml(sitemapsList));
   } catch (err: any) {
-    console.error("[SEO ERROR] Sitemap index failed:", err);
+    console.error("[SEO ERROR] Sitemap index generation failed:", err);
     res.header('Content-Type', 'application/xml; charset=utf-8');
     res.status(200).send(generateSitemapIndexXml([]));
   }
@@ -88,6 +147,7 @@ router.get("/sitemap-main.xml", async (req, res) => {
     res.header('Content-Type', 'application/xml; charset=utf-8');
     res.send(xml);
   } catch (err) {
+    console.error("[SEO ERROR] sitemap-main.xml generation failed:", err);
     res.header('Content-Type', 'application/xml; charset=utf-8');
     res.send(generateSitemapXml([]));
   }
@@ -101,31 +161,40 @@ router.get("/sitemap-matches.xml", async (req, res) => {
       const snap = await collections.matches().orderBy('startTime', 'desc').limit(1000).get();
       
       snap.forEach((doc: any) => {
-        const data = doc.data();
-        const match = normalizeMatch({ ...data, id: doc.id });
-        if (!match || match.isHidden) return;
+        try {
+          const data = doc.data();
+          if (!data) return;
+          const match = normalizeMatch({ ...data, id: doc.id });
+          if (!match || match.isHidden) return;
 
-        const isPlaceholder = (name: string) => {
-          if (!name) return true;
-          const lower = name.toLowerCase();
-          return lower.includes('unknown') || lower.includes('tbd') || lower === 'team' || name === 'قيد التحديد';
-        };
+          const isPlaceholder = (name: string) => {
+            if (!name) return true;
+            const lower = name.toLowerCase();
+            return lower.includes('unknown') || lower.includes('tbd') || lower === 'team' || name === 'قيد التحديد';
+          };
 
-        if (isPlaceholder(match.homeName) && isPlaceholder(match.awayName)) return;
-        if (!match.slug || match.slug === 'undefined' || match.slug.includes('[object Object]')) return;
-        
-        urls.push({
-          loc: `${host}/match/${match.slug}`,
-          changefreq: 'daily',
-          priority: '0.8',
-          lastmod: (data.updatedAt?.toDate?.() || data.startTime?.toDate?.() || new Date()).toISOString()
-        });
+          if (isPlaceholder(match.homeName) && isPlaceholder(match.awayName)) return;
+          if (!match.slug || match.slug === 'undefined' || match.slug.includes('[object Object]')) return;
+          
+          const rawLastMod = data.updatedAt || data.startTime;
+          const lastModDate = safeToDate(rawLastMod);
+
+          urls.push({
+            loc: encodeUrlPath(host, `match/${match.slug}`),
+            changefreq: 'daily',
+            priority: '0.8',
+            lastmod: lastModDate.toISOString()
+          });
+        } catch (docErr) {
+          console.error(`[SEO WARNING] Error processing match doc ${doc.id}:`, docErr);
+        }
       });
       return generateSitemapXml(urls);
     });
     res.header('Content-Type', 'application/xml; charset=utf-8');
     res.send(xml);
   } catch (err) {
+    console.error("[SEO ERROR] sitemap-matches.xml generation failed:", err);
     res.header('Content-Type', 'application/xml; charset=utf-8');
     res.send(generateSitemapXml([]));
   }
@@ -139,26 +208,33 @@ router.get("/sitemap-news.xml", async (req, res) => {
       const snap = await collections.news().orderBy('publishDate', 'desc').limit(500).get();
       
       snap.forEach((doc: any) => {
-        const data = doc.data();
-        const news = normalizeNews({ ...data, id: doc.id });
-        const pubDate = (data.publishDate?.toDate?.() || new Date()).toISOString();
-        if (!news.slug || news.slug === 'undefined' || news.slug.includes('[object Object]')) return;
-        
-        urls.push({
-          loc: `${host}/news/${news.slug}`,
-          title: news.title,
-          publicationDate: pubDate,
-          name: "سفراء 90",
-          language: "ar"
-        });
+        try {
+          const data = doc.data();
+          if (!data) return;
+          const news = normalizeNews({ ...data, id: doc.id });
+          if (!news || !news.slug || news.slug === 'undefined' || news.slug.includes('[object Object]')) return;
+          
+          const pubDate = safeToDate(data.publishDate).toISOString();
+          
+          urls.push({
+            loc: encodeUrlPath(host, `news/${news.slug}`),
+            title: news.title || "خبر جديد",
+            publicationDate: pubDate,
+            name: "سفراء 90",
+            language: "ar"
+          });
+        } catch (docErr) {
+          console.error(`[SEO WARNING] Error processing news doc ${doc.id}:`, docErr);
+        }
       });
       return generateNewsSitemapXml(urls);
     });
     res.header('Content-Type', 'application/xml; charset=utf-8');
     res.send(xml);
   } catch (err) {
+    console.error("[SEO ERROR] sitemap-news.xml generation failed:", err);
     res.header('Content-Type', 'application/xml; charset=utf-8');
-    res.send(generateSitemapXml([]));
+    res.send(generateNewsSitemapXml([]));
   }
 });
 
@@ -168,19 +244,24 @@ router.get("/sitemap-images.xml", async (req, res) => {
       const host = getBaseUrl(req);
       const urls: any[] = [];
       
-      // Add news images
       const newsSnap = await collections.news().orderBy('publishDate', 'desc').limit(100).get();
       newsSnap.forEach((doc: any) => {
-        const data = doc.data();
-        const news = normalizeNews({ ...data, id: doc.id });
-        const imageField = data.image || data.featuredImage?.url;
-        if (!news.slug || news.slug === 'undefined' || news.slug.includes('[object Object]')) return;
-        if (imageField) {
-          const imgUrl = imageField.startsWith('http') ? imageField : `${host}${imageField.startsWith('/') ? '' : '/'}${imageField}`;
-          urls.push({
-            loc: `${host}/news/${news.slug}`,
-            images: [{ loc: imgUrl, title: news.title }]
-          });
+        try {
+          const data = doc.data();
+          if (!data) return;
+          const news = normalizeNews({ ...data, id: doc.id });
+          if (!news || !news.slug || news.slug === 'undefined' || news.slug.includes('[object Object]')) return;
+          
+          const imageField = data.image || data.featuredImage?.url;
+          if (imageField) {
+            const imgUrl = imageField.startsWith('http') ? imageField : `${host}${imageField.startsWith('/') ? '' : '/'}${imageField}`;
+            urls.push({
+              loc: encodeUrlPath(host, `news/${news.slug}`),
+              images: [{ loc: encodeFullUrl(imgUrl), title: news.title || "صورة الخبر" }]
+            });
+          }
+        } catch (docErr) {
+          console.error(`[SEO WARNING] Error processing image for news doc ${doc.id}:`, docErr);
         }
       });
 
@@ -189,8 +270,9 @@ router.get("/sitemap-images.xml", async (req, res) => {
     res.header('Content-Type', 'application/xml; charset=utf-8');
     res.send(xml);
   } catch (err) {
+    console.error("[SEO ERROR] sitemap-images.xml generation failed:", err);
     res.header('Content-Type', 'application/xml; charset=utf-8');
-    res.send(generateSitemapXml([]));
+    res.send(generateImageSitemapXml([]));
   }
 });
 
@@ -201,15 +283,22 @@ router.get("/sitemap-leagues.xml", async (req, res) => {
       const urls: any[] = [];
       const snap = await collections.leagues().limit(100).get();
       snap.forEach((doc: any) => {
-        const league = normalizeLeague({ ...doc.data(), id: doc.id });
-        if (!league.slug || league.slug === 'undefined' || league.slug.includes('[object Object]')) return;
-        urls.push({ loc: `${host}/league/${league.slug}`, changefreq: 'daily', priority: '0.8' });
+        try {
+          const data = doc.data();
+          if (!data) return;
+          const league = normalizeLeague({ ...data, id: doc.id });
+          if (!league || !league.slug || league.slug === 'undefined' || league.slug.includes('[object Object]')) return;
+          urls.push({ loc: encodeUrlPath(host, `league/${league.slug}`), changefreq: 'daily', priority: '0.8' });
+        } catch (docErr) {
+          console.error(`[SEO WARNING] Error processing league doc ${doc.id}:`, docErr);
+        }
       });
       return generateSitemapXml(urls);
     });
     res.header('Content-Type', 'application/xml; charset=utf-8');
     res.send(xml);
   } catch (err) {
+    console.error("[SEO ERROR] sitemap-leagues.xml generation failed:", err);
     res.header('Content-Type', 'application/xml; charset=utf-8');
     res.send(generateSitemapXml([]));
   }
@@ -222,15 +311,22 @@ router.get("/sitemap-teams.xml", async (req, res) => {
       const urls: any[] = [];
       const snap = await collections.teams().limit(500).get();
       snap.forEach((doc: any) => {
-        const team = normalizeTeam({ ...doc.data(), id: doc.id });
-        if (!team.slug || team.slug === 'undefined' || team.slug.includes('[object Object]')) return;
-        urls.push({ loc: `${host}/team/${team.slug}`, changefreq: 'weekly', priority: '0.7' });
+        try {
+          const data = doc.data();
+          if (!data) return;
+          const team = normalizeTeam({ ...data, id: doc.id });
+          if (!team || !team.slug || team.slug === 'undefined' || team.slug.includes('[object Object]')) return;
+          urls.push({ loc: encodeUrlPath(host, `team/${team.slug}`), changefreq: 'weekly', priority: '0.7' });
+        } catch (docErr) {
+          console.error(`[SEO WARNING] Error processing team doc ${doc.id}:`, docErr);
+        }
       });
       return generateSitemapXml(urls);
     });
     res.header('Content-Type', 'application/xml; charset=utf-8');
     res.send(xml);
   } catch (err) {
+    console.error("[SEO ERROR] sitemap-teams.xml generation failed:", err);
     res.header('Content-Type', 'application/xml; charset=utf-8');
     res.send(generateSitemapXml([]));
   }
@@ -243,16 +339,22 @@ router.get("/sitemap-players.xml", async (req, res) => {
       const urls: any[] = [];
       const snap = await collections.players().limit(500).get();
       snap.forEach((doc: any) => {
-        const data = doc.data();
-        const slug = createSlugPath(data.name || "player", doc.id);
-        if (!slug || slug === 'undefined' || slug.includes('[object Object]')) return;
-        urls.push({ loc: `${host}/player/${slug}`, changefreq: 'weekly', priority: '0.6' });
+        try {
+          const data = doc.data();
+          if (!data) return;
+          const slug = createSlugPath(data.name || "player", doc.id);
+          if (!slug || slug === 'undefined' || slug.includes('[object Object]')) return;
+          urls.push({ loc: encodeUrlPath(host, `player/${slug}`), changefreq: 'weekly', priority: '0.6' });
+        } catch (docErr) {
+          console.error(`[SEO WARNING] Error processing player doc ${doc.id}:`, docErr);
+        }
       });
       return generateSitemapXml(urls);
     });
     res.header('Content-Type', 'application/xml; charset=utf-8');
     res.send(xml);
   } catch (err) {
+    console.error("[SEO ERROR] sitemap-players.xml generation failed:", err);
     res.header('Content-Type', 'application/xml; charset=utf-8');
     res.send(generateSitemapXml([]));
   }

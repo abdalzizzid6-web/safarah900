@@ -35,7 +35,7 @@ export function getTitleSimilarity(s1: string, s2: string): number {
 }
 
 // Deterministic backup classifier in case Gemini API is missing or fails
-export function runFallbackClassification(title: string, description: string) {
+export function runFallbackClassification(title: string, description: string): any {
   const text = `${title} ${description}`.toLowerCase();
   const suggestedTags: string[] = [];
   let league = "عام";
@@ -153,7 +153,7 @@ export function runFallbackClassification(title: string, description: string) {
       altText: title,
       caption: title,
       credit: "محرر سفارة ٩٠",
-      suggestedImages: [] as string[]
+      suggestedImages: []
     },
     aiEditor: {
       headlineSuggestions: [title, `تطورات جديدة: ${title}`, `متابعة حية: ${title}`],

@@ -2,13 +2,7 @@
 import { GoogleGenAI, Type } from "@google/genai";
 
 let _ai: GoogleGenAI | null = null;
-let isQuotaExceeded = false;
-let quotaResetTime = 0;
-
 export const getAi = () => {
-  if (Date.now() < quotaResetTime) {
-      throw new Error("AI Quota limit active, waiting for reset.");
-  }
   if (!_ai) {
     if (!process.env.GEMINI_API_KEY) {
       throw new Error("GEMINI_API_KEY environment variable is missing");
@@ -30,10 +24,6 @@ export async function generateContentWithRetry(params: {
   contents: any;
   config?: any;
 }, maxRetries = 3) {
-  if (isQuotaExceeded && Date.now() < quotaResetTime) {
-      throw new Error("AI Quota limit active, waiting for reset.");
-  }
-  
   const ai = getAi();
   
   // Create a comprehensive fallback cascade strategy
@@ -63,31 +53,22 @@ export async function generateContentWithRetry(params: {
           config: params.config
         });
         
-        isQuotaExceeded = false; // Reset on success
         return response;
       } catch (error: any) {
         lastError = error;
         const errorMessage = error?.message || String(error);
         const isQuotaLimit = errorMessage.toLowerCase().includes("quota") || errorMessage.toLowerCase().includes("limit exceeded") || errorMessage.includes("limit: ");
         const isRateLimit = errorMessage.includes("429") || errorMessage.includes("RESOURCE_EXHAUSTED") || isQuotaLimit;
-        
-        if (isRateLimit) {
-            isQuotaExceeded = true;
-            quotaResetTime = Date.now() + 60 * 60 * 1000; // Block for 1 hour
-            console.warn(`[AI Service] Quota limit hit. Blocking AI calls for 1 hour.`);
-            throw error; // Propagate to let caller handle
-        }
-
         const isServerUnavailable = errorMessage.includes("503") || errorMessage.includes("UNAVAILABLE") || errorMessage.includes("demand");
         
         console.warn(`[AI Service] Model ${modelName} failed (attempt ${attempt + 1}): ${errorMessage}`);
         
-        if (isServerUnavailable) {
-          // If the model experiences high demand, immediately try the next model without wasting latency
+        if (isQuotaLimit || isServerUnavailable) {
+          // If the model is quota-limited, exhausted, or experiences high demand, immediately try the next model without wasting latency
           break;
         }
 
-        if (attempt < maxRetries - 1) {
+        if (isRateLimit && attempt < maxRetries - 1) {
           const jitter = Math.random() * 500;
           const backoffTime = delay + jitter;
           await new Promise((resolve) => setTimeout(resolve, backoffTime));

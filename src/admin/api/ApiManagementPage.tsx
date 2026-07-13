@@ -30,8 +30,6 @@ export const ApiManagementPage: React.FC = () => {
     resetQuotas,
     testKey,
     testAllActiveKeys,
-    clearCache,
-    loadStats,
   } = useApiConnections();
 
   const health = useApiHealth(stats);
@@ -100,8 +98,6 @@ export const ApiManagementPage: React.FC = () => {
           onResetQuotas={resetQuotas}
           onAddKey={handleAddKey}
           onTestAll={testAllActiveKeys}
-          onClearCache={clearCache}
-          onReload={() => loadStats()}
           actionLoading={actionLoading}
         />
       </div>

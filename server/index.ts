@@ -23,30 +23,18 @@ import { socialRouter } from "./routes/social";
 import { startNotificationJob } from "./jobs/syncNotifications";
 import { startRssJobs } from "./jobs/rssPolling";
 import { generateAndWriteCacheFiles } from "./firestore/cache";
-import { handleSitemap } from "./routes/sitemapDynamic";
 
-// ... (other imports)
-
-import { enhanceSeo } from "./utils/seoEnhancer";
-import { generateBaseSchema, generateNewsSchema } from "./utils/schemaGenerator";
 import { authMiddleware } from "./middleware/auth";
 import { firestore, isFirestoreQuotaExceeded, messaging } from "./firestore/collections";
 import { generateContentWithRetry } from "./services/aiService";
 import { Type } from "@google/genai";
 import { apiManager } from "./services/apiManager";
 
-import passport from "passport";
-
 const app = express();
 app.use(express.json());
-app.use(passport.initialize());
 const PORT = 3000;
 
 // Domain Unification & HTTPS Redirection (SEO-01)
-app.get('/sitemap.xml', (req, res) => { (req.params as any).type = 'main'; handleSitemap(req, res); });
-app.get('/sitemap-matches.xml', (req, res) => { (req.params as any).type = 'matches'; handleSitemap(req, res); });
-app.get('/sitemap-news.xml', (req, res) => { (req.params as any).type = 'news'; handleSitemap(req, res); });
-
 app.use((req, res, next) => {
   const host = req.get('host') || '';
   const xForwardedProto = req.get('x-forwarded-proto');
@@ -55,11 +43,14 @@ app.use((req, res, next) => {
   const isWww = host.startsWith('www.');
 
   if (process.env.NODE_ENV === 'production') {
-    // Force https://www.korea90.xyz but skip if on preview domain (run.app)
-    const isPreview = host.endsWith('.run.app') || host.includes('localhost') || host.includes('127.0.0.1');
-    if (!isPreview && (!isWww || !isHttps || host !== 'www.korea90.xyz')) {
-      return res.redirect(301, `https://www.korea90.xyz${req.originalUrl}`);
+    // Force https://korea90.xyz but skip if on preview domain (run.app)
+    const isPreview = host.endsWith('.run.app') || host.includes('localhost');
+    if (!isPreview && (isWww || !isHttps || host !== 'korea90.xyz')) {
+      return res.redirect(301, `https://korea90.xyz${req.originalUrl}`);
     }
+  } else if (isWww) {
+    // In dev/test, just remove www if it's there
+    return res.redirect(301, `${protocol}://${host.replace(/^www\./, '')}${req.originalUrl}`);
   }
   next();
 });
@@ -79,7 +70,51 @@ const getIndexHtml = (distPath: string) => {
   }
 };
 
-// Removed brittle injectSeo function
+const injectSeo = (html: string, options: { 
+  title?: string, 
+  description?: string, 
+  url?: string, 
+  image?: string,
+  type?: string,
+  structuredData?: any 
+}) => {
+  const { title, description, url, image = 'https://korea90.xyz/logo-master.png', type = 'website', structuredData } = options;
+  
+  let result = html;
+  if (title) {
+    const fullTitle = `${title} | صافرة 90`;
+    result = result.replace(/<title>.*?<\/title>/, `<title>${fullTitle}</title>`);
+    result = result.replace(/<meta property="og:title" content=".*?" \/>/, `<meta property="og:title" content="${fullTitle}" />`);
+  }
+  
+  if (description) {
+    result = result.replace(/<meta name="description" content=".*?" \/>/, `<meta name="description" content="${description}" />`);
+    result = result.replace(/<meta property="og:description" content=".*?" \/>/, `<meta property="og:description" content="${description}" />`);
+  }
+
+  if (url) {
+    result = result.replace(/<meta property="og:url" content=".*?" \/>/, `<meta property="og:url" content="${url}" />`);
+    // Add canonical
+    if (result.includes('</head>')) {
+      result = result.replace('</head>', `  <link rel="canonical" href="${url}" />\n</head>`);
+    }
+  }
+
+  if (image) {
+    result = result.replace(/<meta property="og:image" content=".*?" \/>/, `<meta property="og:image" content="${image}" />`);
+  }
+
+  if (type) {
+    result = result.replace(/<meta property="og:type" content=".*?" \/>/, `<meta property="og:type" content="${type}" />`);
+  }
+
+  if (structuredData && result.includes('</head>')) {
+    const ldJson = `  <script type="application/ld+json">\n${JSON.stringify(structuredData, null, 2)}\n  </script>\n</head>`;
+    result = result.replace('</head>', ldJson);
+  }
+
+  return result;
+};
 
 // CRITICAL: SEO Routes must take precedence before static files or other catch-alls
 app.use("/", seoRoutes);
@@ -608,6 +643,202 @@ function translateToApiFootball(provider: string, endpoint: string, data: any) {
   };
 }
 
+// A robust client-side proxy route for API-Football to completely avoid CORS and Network Errors in the browser
+app.all("/api/football-api/*", async (req, res) => {
+  const subPath = (req.params as any)[0] || "";
+  
+  // 1. Determine category
+  const clientCategory = (req.headers['x-api-category'] || req.headers['X-API-Category'] || '').toString();
+  let category = clientCategory;
+  if (!category) {
+    if (subPath.includes("worldcup") || subPath.includes("world-cup")) {
+      category = 'worldCup';
+    } else if (subPath.includes("fixtures") && (req.query.league === '39' || req.query.league === '140')) {
+      category = 'premierLeague';
+    } else if (subPath.includes("fixtures") && ['307', '233', '308', '479'].includes(String(req.query.league))) {
+      category = 'arabMatches';
+    } else if (subPath.includes("players")) {
+      category = 'players';
+    } else if (subPath.includes("teams")) {
+      category = 'teams';
+    } else if (subPath.includes("events") || subPath.includes("statistics") || subPath.includes("lineups")) {
+      category = 'stats';
+    } else if (subPath.includes("stream")) {
+      category = 'streaming';
+    } else {
+      category = 'stats'; // Default section
+    }
+  }
+
+  const startTime = Date.now();
+  let keyDoc: any = null;
+  let retryCount = 0;
+  const maxRetries = 2; // Total 3 attempts with different keys if needed
+
+  while (retryCount <= maxRetries) {
+    try {
+      // 2. Select best key from the pool (forced to API-Football as we are routing through football-api endpoint with matching shapes)
+      const { key, providerDoc, targetProviderName } = await apiManager.getActiveKeyForCategory(category);
+      keyDoc = providerDoc;
+
+      let targetUrl = '';
+      const headers: Record<string, string> = {
+        'Accept': 'application/json'
+      };
+
+      // Format headers and target URL based on selected provider and key length
+      const isApiSports = key.length === 32;
+      const isRapidApiFootball = key.length === 50;
+      const isFreeApi = !isApiSports && !isRapidApiFootball && providerDoc.provider === 'API-Football';
+
+      // Normalize path and query options to match selected provider key
+      const { subPath: normalizedSubPath, query: normalizedQuery } = normalizeRequestForProvider(subPath, req.query, isFreeApi);
+      const queryString = new URLSearchParams(normalizedQuery as any).toString();
+
+      let cleanSubPath = normalizedSubPath;
+      if (cleanSubPath.startsWith("/")) {
+        cleanSubPath = cleanSubPath.slice(1);
+      }
+
+      if (providerDoc.provider === 'API-Football') {
+        if (isApiSports) {
+          if (cleanSubPath.startsWith("v3/")) {
+            cleanSubPath = cleanSubPath.slice(3);
+          }
+          targetUrl = `https://v3.football.api-sports.io/${cleanSubPath}`;
+          headers['x-apisports-key'] = key;
+        } else if (isRapidApiFootball) {
+          if (!cleanSubPath.startsWith("v3/")) {
+            cleanSubPath = "v3/" + cleanSubPath;
+          }
+          targetUrl = `https://api-football-v1.p.rapidapi.com/${cleanSubPath}`;
+          headers['X-RapidAPI-Key'] = key;
+          headers['X-RapidAPI-Host'] = 'api-football-v1.p.rapidapi.com';
+        } else {
+          if (cleanSubPath.startsWith("v3/")) {
+            cleanSubPath = cleanSubPath.slice(3);
+          }
+          targetUrl = `https://free-api-live-football-data.p.rapidapi.com/${cleanSubPath}`;
+          headers['X-RapidAPI-Key'] = key;
+          headers['X-RapidAPI-Host'] = 'free-api-live-football-data.p.rapidapi.com';
+        }
+      } else if (providerDoc.provider === 'SportMonks') {
+        targetUrl = `https://api.sportmonks.com/v3/${cleanSubPath}`;
+        headers['Authorization'] = key;
+      } else if (providerDoc.provider === 'TheSportsDB') {
+        targetUrl = `https://www.thesportsdb.com/api/v1/json/${key}/${cleanSubPath}`;
+      } else {
+        // Custom API
+        targetUrl = `${providerDoc.fallbackProvider && providerDoc.fallbackProvider !== 'none' ? providerDoc.fallbackProvider : 'https://api-football-v1.p.rapidapi.com'}/${cleanSubPath}`;
+        headers['Authorization'] = `Bearer ${key}`;
+      }
+
+      const finalUrl = `${targetUrl}${queryString ? `?${queryString}` : ""}`;
+
+      const fetchResponse = await fetch(finalUrl, {
+        method: req.method,
+        headers: headers,
+        body: req.method !== 'GET' && req.method !== 'HEAD' ? JSON.stringify(req.body) : undefined
+      });
+
+      const latency = Date.now() - startTime;
+      const contentType = fetchResponse.headers.get("content-type") || "";
+      const text = await fetchResponse.text();
+
+      // Content-Type and HTML sanity check to eliminate "Unexpected token '<'" errors
+      if (!contentType.includes("application/json") || text.trim().startsWith("<!DOCTYPE html>") || text.trim().startsWith("<")) {
+        console.warn(`[Proxy Content-Type Mismatch] Expected JSON but got "${contentType}" for URL: ${finalUrl}`);
+        
+        if (fetchResponse.status === 429) {
+          throw { status: 429, message: 'Rate limited by upstream API provider' };
+        } else if (fetchResponse.status === 403 || fetchResponse.status === 401) {
+          throw { status: 403, message: 'Authorization error / invalid token on chosen key' };
+        } else {
+          throw new Error(`Upstream returned non-JSON response. HTTP Status: ${fetchResponse.status}`);
+        }
+      }
+
+      const data = JSON.parse(text);
+
+      // Check for inner API-Football warnings/errors returned inside JSON payloads
+      if (data && data.errors && Object.keys(data.errors).length > 0) {
+        const errorMsg = JSON.stringify(data.errors);
+        if (errorMsg.includes('token') || errorMsg.includes('limit') || errorMsg.includes('key') || errorMsg.includes('requests')) {
+          const isLimit = errorMsg.includes('limit') || errorMsg.includes('requests');
+          throw { status: isLimit ? 429 : 403, message: `API payload error: ${errorMsg}` };
+        }
+      }
+
+      let finalData = data;
+      // Normalization Gateway
+      if (providerDoc.provider !== 'API-Football' && (!data.response || !Array.isArray(data.response))) {
+          finalData = translateToApiFootball(providerDoc.provider, subPath, data);
+      }
+
+      // Log successful API call
+      await apiManager.logApiCall({
+        providerId: providerDoc.id,
+        providerName: providerDoc.name,
+        endpoint: subPath,
+        method: req.method,
+        category,
+        statusCode: fetchResponse.status,
+        latency,
+        cost: providerDoc.costPerCall || 0,
+        status: 'success'
+      });
+
+      if (req.method === 'GET') {
+        proxyCache[req.originalUrl] = { data: finalData, expiry: Date.now() + 5 * 60 * 1000 };
+      }
+
+      return res.json(finalData);
+
+    } catch (err: any) {
+      const latency = Date.now() - startTime;
+      const status = err.status || 502;
+      const errorMsg = err.message || String(err);
+      
+      console.error(`[Football API Proxy Failure] Category: ${category}, Retry Attempt: ${retryCount}, Error: ${errorMsg}`);
+
+      if (keyDoc) {
+        const targetStatus = status === 403 ? 'unauthorized' : status === 429 ? 'suspended' : 'degraded';
+        await apiManager.reportKeyFailure(keyDoc.id, targetStatus, errorMsg);
+
+        await apiManager.logApiCall({
+          providerId: keyDoc.id,
+          providerName: keyDoc.name,
+          endpoint: subPath,
+          method: req.method,
+          category,
+          statusCode: status,
+          latency,
+          cost: 0,
+          status: status === 429 ? 'rate-limit' : status === 403 ? 'auth-error' : 'network-error',
+          errorMessage: errorMsg
+        });
+      }
+
+      retryCount++;
+      if (retryCount <= maxRetries) {
+        continue;
+      }
+
+      // 4. Stale Data Fallback Recovery
+      if (req.method === 'GET' && proxyCache[req.originalUrl]) {
+        console.warn(`[Football API Proxy Fallback] Returning stale cache for ${req.originalUrl}`);
+        return res.json(proxyCache[req.originalUrl].data);
+      }
+
+      return res.status(status).json({
+        error: "Enterprise API Routing Error",
+        message: "تم استنفاد محاولات الاتصال بكافة المفاتيح المتاحة وتفعيل خطط الدعم الطارئ لمزودي الخدمة",
+        details: errorMsg
+      });
+    }
+  }
+});
+
 app.use("/", (req, res, next) => {
   // Catch all remaining API routes or fall through
   next();
@@ -619,8 +850,8 @@ app.use('/data', express.static(path.join(process.cwd(), 'public', 'data')));
 export async function bootstrap() {
   
   // Background Tasks
-  startNotificationJob();
-  startRssJobs();
+  // startNotificationJob();
+  // startRssJobs();
 
   // Async Initialization
   const cacheFile = path.join(process.cwd(), 'public', 'data', 'matches.json');
@@ -713,7 +944,7 @@ export async function bootstrap() {
             "location": { "@type": "Place", "name": data.venue || "ملعب المباراة" }
           };
 
-          html = enhanceSeo(html, {
+          html = injectSeo(html, {
             title,
             description,
             url: `https://korea90.xyz/match/${slug}`,
@@ -764,16 +995,21 @@ export async function bootstrap() {
         const description = data.seo?.metaDescription || data.excerpt || data.content?.substring(0, 160);
         const image = data.featuredImage?.url || data.image || 'https://korea90.xyz/logo-master.png';
 
-        const newsUrl = `https://www.korea90.xyz/news/${slug}`;
-        const structuredData = [
-          ...generateBaseSchema(newsUrl),
-          generateNewsSchema(data, newsUrl)
-        ];
+        const structuredData = {
+          "@context": "https://schema.org",
+          "@type": "NewsArticle",
+          "headline": title,
+          "description": description,
+          "image": [image],
+          "datePublished": data.publishDate?.toDate?.()?.toISOString() || data.publishDate,
+          "dateModified": data.updatedAt?.toDate?.()?.toISOString() || data.updatedAt,
+          "author": { "@type": "Organization", "name": "صافرة 90" }
+        };
 
-        html = enhanceSeo(html, {
+        html = injectSeo(html, {
           title,
           description,
-          url: newsUrl,
+          url: `https://korea90.xyz/news/${slug}`,
           image,
           type: 'article',
           structuredData
@@ -790,7 +1026,7 @@ export async function bootstrap() {
       const html = getIndexHtml(distPath);
       // Default home page SEO if it's the root
       if (req.path === '/') {
-        const homeSeo = enhanceSeo(html, {
+        const homeSeo = injectSeo(html, {
           title: "الرئيسية - أهم أخبار ونتائج مباريات كرة القدم",
           description: "صافرة 90 هي منصتك الأولى لمتابعة نتائج مباريات كرة القدم، البث المباشر، وأحدث الأخبار الرياضية العالمية والعربية لحظة بلحظة.",
           url: "https://korea90.xyz/",

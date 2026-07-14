@@ -4,43 +4,83 @@
   "rewrites": [
     {
       "source": "/sitemap.xml",
-      "destination": "/api/sitemap?type=index"
+      "destination": "/api/seo?action=sitemap&type=index"
     },
     {
       "source": "/sitemap-main.xml",
-      "destination": "/api/sitemap?type=main"
+      "destination": "/api/seo?action=sitemap&type=main"
     },
     {
       "source": "/sitemap-matches.xml",
-      "destination": "/api/sitemap?type=matches"
+      "destination": "/api/seo?action=sitemap&type=matches"
     },
     {
       "source": "/sitemap-news.xml",
-      "destination": "/api/sitemap?type=news"
+      "destination": "/api/seo?action=sitemap&type=news"
     },
     {
       "source": "/sitemap-images.xml",
-      "destination": "/api/sitemap?type=images"
+      "destination": "/api/seo?action=sitemap&type=images"
     },
     {
       "source": "/sitemap-leagues.xml",
-      "destination": "/api/sitemap?type=leagues"
+      "destination": "/api/seo?action=sitemap&type=leagues"
     },
     {
       "source": "/sitemap-teams.xml",
-      "destination": "/api/sitemap?type=teams"
+      "destination": "/api/seo?action=sitemap&type=teams"
     },
     {
       "source": "/sitemap-players.xml",
-      "destination": "/api/sitemap?type=players"
+      "destination": "/api/seo?action=sitemap&type=players"
     },
     {
       "source": "/robots.txt",
-      "destination": "/api/robots"
+      "destination": "/api/seo?action=robots"
     },
     {
       "source": "/api/imagekit/files/:fileId",
-      "destination": "/api/imagekit/files?fileId=:fileId"
+      "destination": "/api/imagekit?action=files&fileId=:fileId"
+    },
+    {
+      "source": "/api/imagekit/files",
+      "destination": "/api/imagekit?action=files"
+    },
+    {
+      "source": "/api/imagekit/upload",
+      "destination": "/api/imagekit?action=upload"
+    },
+    {
+      "source": "/api/ai/match-analysis",
+      "destination": "/api/ai?action=match-analysis"
+    },
+    {
+      "source": "/api/ai/tactical-analysis",
+      "destination": "/api/ai?action=tactical-analysis"
+    },
+    {
+      "source": "/api/ai/match-content",
+      "destination": "/api/ai?action=match-content"
+    },
+    {
+      "source": "/api/matches/cron",
+      "destination": "/api/matches?action=cron"
+    },
+    {
+      "source": "/api/matches/events",
+      "destination": "/api/matches?action=events"
+    },
+    {
+      "source": "/api/matches/sync",
+      "destination": "/api/matches?action=sync"
+    },
+    {
+      "source": "/api/rss/providers",
+      "destination": "/api/rss?action=providers"
+    },
+    {
+      "source": "/api/rss/sync",
+      "destination": "/api/rss?action=sync"
     },
     {
       "source": "/api/:path*",
@@ -48,7 +88,7 @@
     },
     {
       "source": "/((?!api/|sitemap|robots\\.txt|manifest\\.json|ads\\.txt|.*\\.).*)",
-      "destination": "/api/seo-render"
+      "destination": "/api/seo?action=render"
     }
   ],
   "headers": [

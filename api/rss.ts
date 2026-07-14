@@ -1,7 +1,15 @@
 import { Request, Response } from 'express';
-import { firestore } from '../../server/firestore/collections';
+import { firestore } from '../server/firestore/collections';
 
 export default async function handler(req: Request, res: Response) {
+  const action = req.query.action as string;
+
+  // --- 1. SYNC ROUTE ---
+  if (action === 'sync') {
+    return res.json({ message: 'RSS Sync' });
+  }
+
+  // --- 2. PROVIDERS ROUTE (DEFAULT OR ACTION providers) ---
   if (req.method === 'GET') {
     try {
       const snapshot = await firestore.collection("rss_sources").get();

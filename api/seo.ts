@@ -1,14 +1,97 @@
 import { Request, Response } from "express";
 import path from "path";
 import fs from "fs";
-import { firestore } from "../server/firestore/collections";
-import { getIdFromSlug } from "../src/utils/slugify";
+import { collections, firestore } from "../server/firestore/collections";
+import { 
+  generateSitemapIndexXml, 
+  generateSitemapXml, 
+  generateNewsSitemapXml, 
+  generateImageSitemapXml 
+} from "../server/utils/seoHelpers";
+import { 
+  normalizeMatch, 
+  normalizeLeague, 
+  normalizeTeam, 
+  normalizeNews 
+} from "../server/utils/normalizer";
+import { createSlugPath, getIdFromSlug } from "../src/utils/slugify";
 
-// In-memory cache for warm serverless instances
+// --- CACHING & CONFIGURATION ---
+const getBaseUrl = (req: Request) => "https://korea90.xyz";
+
+const CACHE_SHORT = 300 * 1000;    // 5 minutes
+const CACHE_MEDIUM = 3600 * 1000;  // 1 hour
+const CACHE_LONG = 86400 * 1000;   // 24 hours
+
+// Warm instance in-memory caches
 let cachedIndexHtml: string | null = null;
 const matchSsoCache: Record<string, { data: any; expiry: number }> = {};
 const newsSsoCache: Record<string, { data: any; expiry: number }> = {};
+const sitemapCache: Record<string, { xml: string; expiry: number }> = {};
 
+const safeToDate = (val: any): Date => {
+  if (!val) return new Date();
+  
+  if (typeof val.toDate === "function") {
+    try {
+      return val.toDate();
+    } catch (e) {
+      // ignore
+    }
+  }
+  
+  if (typeof val.seconds === "number" || typeof val._seconds === "number") {
+    const s = val.seconds ?? val._seconds;
+    const ns = val.nanoseconds ?? val._nanoseconds ?? 0;
+    return new Date(s * 1000 + ns / 1000000);
+  }
+  
+  if (val instanceof Date) {
+    return isNaN(val.getTime()) ? new Date() : val;
+  }
+  
+  if (typeof val === "string" || typeof val === "number") {
+    const d = new Date(val);
+    return isNaN(d.getTime()) ? new Date() : d;
+  }
+  
+  return new Date();
+};
+
+const encodeUrlPath = (host: string, pathSegment: string): string => {
+  const sanitizedPath = pathSegment.split("/").map(segment => encodeURIComponent(segment)).join("/");
+  return `${host}/${sanitizedPath}`;
+};
+
+const encodeFullUrl = (urlStr: string): string => {
+  try {
+    const url = new URL(urlStr);
+    const encodedPath = url.pathname.split("/").map(segment => encodeURIComponent(segment)).join("/");
+    return `${url.protocol}//${url.host}${encodedPath}${url.search}${url.hash}`;
+  } catch (e) {
+    return urlStr;
+  }
+};
+
+const getCachedOrGenerate = async (
+  key: string, 
+  duration: number, 
+  generator: () => Promise<string>
+): Promise<string> => {
+  const now = Date.now();
+  if (sitemapCache[key] && sitemapCache[key].expiry > now) {
+    return sitemapCache[key].xml;
+  }
+
+  const xml = await generator();
+  sitemapCache[key] = {
+    xml,
+    expiry: now + duration
+  };
+  return xml;
+};
+
+// --- SEO INDEX PAGE LOADING ---
 const getIndexHtml = () => {
   if (cachedIndexHtml && process.env.NODE_ENV === "production") return cachedIndexHtml;
   
@@ -18,7 +101,6 @@ const getIndexHtml = () => {
     return cachedIndexHtml;
   } catch (e) {
     try {
-      // Try root index.html as a fallback
       cachedIndexHtml = fs.readFileSync(path.join(process.cwd(), "index.html"), "utf-8");
       return cachedIndexHtml;
     } catch (err) {
@@ -87,7 +169,6 @@ const injectSeo = (html: string, options: {
   
   let result = html;
   
-  // Remove existing title, description, and meta tags to avoid duplication
   result = result.replace(/<title>.*?<\/title>/gi, "");
   result = result.replace(/<meta name="description" content=".*?" \/>/gi, "");
   result = result.replace(/<meta property="og:title" content=".*?" \/>/gi, "");
@@ -102,12 +183,10 @@ const injectSeo = (html: string, options: {
   
   let headTags = "";
   
-  // Basic Meta
   headTags += `  <title>${fullTitle}</title>\n`;
   headTags += `  <meta name="description" content="${fullDescription}" />\n`;
   headTags += `  <link rel="canonical" href="${url}" />\n`;
   
-  // OpenGraph Meta
   headTags += `  <meta property="og:title" content="${fullTitle}" />\n`;
   headTags += `  <meta property="og:description" content="${fullDescription}" />\n`;
   headTags += `  <meta property="og:url" content="${url}" />\n`;
@@ -116,13 +195,11 @@ const injectSeo = (html: string, options: {
   headTags += `  <meta property="og:locale" content="ar_AR" />\n`;
   headTags += `  <meta property="og:site_name" content="صافرة 90" />\n`;
   
-  // Twitter Cards
   headTags += `  <meta name="twitter:card" content="summary_large_image" />\n`;
   headTags += `  <meta name="twitter:title" content="${fullTitle}" />\n`;
   headTags += `  <meta name="twitter:description" content="${fullDescription}" />\n`;
   headTags += `  <meta name="twitter:image" content="${image}" />\n`;
   
-  // Organization JSON-LD
   const organizationSchema = {
     "@context": "https://schema.org",
     "@type": "Organization",
@@ -137,16 +214,13 @@ const injectSeo = (html: string, options: {
   };
   headTags += `  <script type="application/ld+json">\n${JSON.stringify(organizationSchema, null, 2)}\n  </script>\n`;
   
-  // BreadcrumbList JSON-LD
   const breadcrumbsSchema = generateBreadcrumbs(pathname, title);
   headTags += `  <script type="application/ld+json">\n${JSON.stringify(breadcrumbsSchema, null, 2)}\n  </script>\n`;
   
-  // Custom Page Structured Data
   if (structuredData) {
     headTags += `  <script type="application/ld+json">\n${JSON.stringify(structuredData, null, 2)}\n  </script>\n`;
   }
   
-  // Inject right after <head> or at the beginning of head
   if (result.includes("<head>")) {
     result = result.replace("<head>", `<head>\n${headTags}`);
   } else if (result.includes("</head>")) {
@@ -156,8 +230,233 @@ const injectSeo = (html: string, options: {
   return result;
 };
 
+// --- CORE UNIFIED HANDLER ---
 export default async function handler(req: Request, res: Response) {
-  // Parse original url from Vercel's request url or headers
+  const action = req.query.action as string;
+
+  // 1. --- ROBOTS.TXT ROUTE ---
+  if (action === "robots") {
+    res.setHeader("Content-Type", "text/plain");
+    return res.status(200).send(`User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+Disallow: /vip
+Disallow: /premium-services
+Disallow: /*?*
+
+Sitemap: https://korea90.xyz/sitemap.xml`);
+  }
+
+  // 2. --- SITEMAP XML ROUTE ---
+  if (action === "sitemap") {
+    const type = req.query.type as string;
+    const host = getBaseUrl(req);
+
+    res.setHeader("Content-Type", "application/xml; charset=utf-8");
+
+    try {
+      if (!type || type === "index") {
+        const sitemapsList = [
+          `${host}/sitemap-main.xml`,
+          `${host}/sitemap-matches.xml`,
+          `${host}/sitemap-leagues.xml`,
+          `${host}/sitemap-teams.xml`,
+          `${host}/sitemap-players.xml`,
+          `${host}/sitemap-news.xml`,
+          `${host}/sitemap-images.xml`
+        ];
+        res.setHeader("Cache-Control", "public, max-age=3600");
+        return res.status(200).send(generateSitemapIndexXml(sitemapsList));
+      }
+
+      if (type === "main") {
+        const xml = await getCachedOrGenerate("main", CACHE_LONG, async () => {
+          const urls = [
+            { loc: `${host}/`, changefreq: "daily", priority: "1.0" },
+            { loc: `${host}/world-cup-2026`, changefreq: "weekly", priority: "0.9" },
+            { loc: `${host}/standings`, changefreq: "daily", priority: "0.8" },
+            { loc: `${host}/schedule`, changefreq: "always", priority: "0.9" },
+            { loc: `${host}/news`, changefreq: "always", priority: "0.9" },
+          ];
+          return generateSitemapXml(urls);
+        });
+        res.setHeader("Cache-Control", "public, max-age=86400, s-maxage=86400");
+        return res.status(200).send(xml);
+      }
+
+      if (type === "matches") {
+        const xml = await getCachedOrGenerate("matches", CACHE_SHORT, async () => {
+          const urls: any[] = [];
+          const snap = await collections.matches().orderBy("startTime", "desc").limit(1000).get();
+          
+          snap.forEach((doc: any) => {
+            try {
+              const data = doc.data();
+              if (!data) return;
+              const match = normalizeMatch({ ...data, id: doc.id });
+              if (!match || match.isHidden) return;
+
+              const isPlaceholder = (name: string) => {
+                if (!name) return true;
+                const lower = name.toLowerCase();
+                return lower.includes("unknown") || lower.includes("tbd") || lower === "team" || name === "قيد التحديد";
+              };
+
+              if (isPlaceholder(match.homeName) && isPlaceholder(match.awayName)) return;
+              if (!match.slug || match.slug === "undefined" || match.slug.includes("[object Object]")) return;
+              
+              const rawLastMod = data.updatedAt || data.startTime;
+              const lastModDate = safeToDate(rawLastMod);
+
+              urls.push({
+                loc: encodeUrlPath(host, `match/${match.slug}`),
+                changefreq: "daily",
+                priority: "0.8",
+                lastmod: lastModDate.toISOString()
+              });
+            } catch (docErr) {
+              console.error(`[SEO WARNING] Error processing match doc ${doc.id}:`, docErr);
+            }
+          });
+          return generateSitemapXml(urls);
+        });
+        res.setHeader("Cache-Control", "public, max-age=300, s-maxage=300");
+        return res.status(200).send(xml);
+      }
+
+      if (type === "news") {
+        const xml = await getCachedOrGenerate("news", CACHE_SHORT, async () => {
+          const urls: any[] = [];
+          const snap = await collections.news().orderBy("publishDate", "desc").limit(500).get();
+          
+          snap.forEach((doc: any) => {
+            try {
+              const data = doc.data();
+              if (!data) return;
+              const news = normalizeNews({ ...data, id: doc.id });
+              if (!news || !news.slug || news.slug === "undefined" || news.slug.includes("[object Object]")) return;
+              
+              const pubDate = safeToDate(data.publishDate).toISOString();
+              
+              urls.push({
+                loc: encodeUrlPath(host, `news/${news.slug}`),
+                title: news.title || "خبر جديد",
+                publicationDate: pubDate,
+                name: "سفراء 90",
+                language: "ar"
+              });
+            } catch (docErr) {
+              console.error(`[SEO WARNING] Error processing news doc ${doc.id}:`, docErr);
+            }
+          });
+          return generateNewsSitemapXml(urls);
+        });
+        res.setHeader("Cache-Control", "public, max-age=300, s-maxage=300");
+        return res.status(200).send(xml);
+      }
+
+      if (type === "images") {
+        const xml = await getCachedOrGenerate("images", CACHE_MEDIUM, async () => {
+          const urls: any[] = [];
+          const newsSnap = await collections.news().orderBy("publishDate", "desc").limit(100).get();
+          newsSnap.forEach((doc: any) => {
+            try {
+              const data = doc.data();
+              if (!data) return;
+              const news = normalizeNews({ ...data, id: doc.id });
+              if (!news || !news.slug || news.slug === "undefined" || news.slug.includes("[object Object]")) return;
+              
+              const imageField = data.image || data.featuredImage?.url;
+              if (imageField) {
+                const imgUrl = imageField.startsWith("http") ? imageField : `${host}${imageField.startsWith("/") ? "" : "/"}${imageField}`;
+                urls.push({
+                  loc: encodeUrlPath(host, `news/${news.slug}`),
+                  images: [{ loc: encodeFullUrl(imgUrl), title: news.title || "صورة الخبر" }]
+                });
+              }
+            } catch (docErr) {
+              console.error(`[SEO WARNING] Error processing image for news doc ${doc.id}:`, docErr);
+            }
+          });
+          return generateImageSitemapXml(urls);
+        });
+        res.setHeader("Cache-Control", "public, max-age=3600, s-maxage=3600");
+        return res.status(200).send(xml);
+      }
+
+      if (type === "leagues") {
+        const xml = await getCachedOrGenerate("leagues", CACHE_LONG, async () => {
+          const urls: any[] = [];
+          const snap = await collections.leagues().limit(100).get();
+          snap.forEach((doc: any) => {
+            try {
+              const data = doc.data();
+              if (!data) return;
+              const league = normalizeLeague({ ...data, id: doc.id });
+              if (!league || !league.slug || league.slug === "undefined" || league.slug.includes("[object Object]")) return;
+              urls.push({ loc: encodeUrlPath(host, `league/${league.slug}`), changefreq: "daily", priority: "0.8" });
+            } catch (docErr) {
+              console.error(`[SEO WARNING] Error processing league doc ${doc.id}:`, docErr);
+            }
+          });
+          return generateSitemapXml(urls);
+        });
+        res.setHeader("Cache-Control", "public, max-age=86400, s-maxage=86400");
+        return res.status(200).send(xml);
+      }
+
+      if (type === "teams") {
+        const xml = await getCachedOrGenerate("teams", CACHE_LONG, async () => {
+          const urls: any[] = [];
+          const snap = await collections.teams().limit(500).get();
+          snap.forEach((doc: any) => {
+            try {
+              const data = doc.data();
+              if (!data) return;
+              const team = normalizeTeam({ ...data, id: doc.id });
+              if (!team || !team.slug || team.slug === "undefined" || team.slug.includes("[object Object]")) return;
+              urls.push({ loc: encodeUrlPath(host, `team/${team.slug}`), changefreq: "weekly", priority: "0.7" });
+            } catch (docErr) {
+              console.error(`[SEO WARNING] Error processing team doc ${doc.id}:`, docErr);
+            }
+          });
+          return generateSitemapXml(urls);
+        });
+        res.setHeader("Cache-Control", "public, max-age=86400, s-maxage=86400");
+        return res.status(200).send(xml);
+      }
+
+      if (type === "players") {
+        const xml = await getCachedOrGenerate("players", CACHE_LONG, async () => {
+          const urls: any[] = [];
+          const snap = await collections.players().limit(500).get();
+          snap.forEach((doc: any) => {
+            try {
+              const data = doc.data();
+              if (!data) return;
+              const slug = createSlugPath(data.name || "player", doc.id);
+              if (!slug || slug === "undefined" || slug.includes("[object Object]")) return;
+              urls.push({ loc: encodeUrlPath(host, `player/${slug}`), changefreq: "weekly", priority: "0.6" });
+            } catch (docErr) {
+              console.error(`[SEO WARNING] Error processing player doc ${doc.id}:`, docErr);
+            }
+          });
+          return generateSitemapXml(urls);
+        });
+        res.setHeader("Cache-Control", "public, max-age=86400, s-maxage=86400");
+        return res.status(200).send(xml);
+      }
+
+      res.setHeader("Cache-Control", "public, max-age=3600");
+      return res.status(200).send(generateSitemapXml([]));
+    } catch (err: any) {
+      console.error("[SEO ERROR] Sitemap handler failed:", err);
+      return res.status(200).send(generateSitemapXml([]));
+    }
+  }
+
+  // 3. --- GENERAL HTML RENDER ROUTE ---
   const reqUrl = req.url || "/";
   const parsedUrl = new URL(reqUrl, "https://korea90.xyz");
   const pathname = parsedUrl.pathname;
@@ -168,7 +467,6 @@ export default async function handler(req: Request, res: Response) {
   res.setHeader("Cache-Control", "public, max-age=60, s-maxage=60, stale-while-revalidate=600");
 
   try {
-    // --- MATCH PAGE ROUTE ---
     if (pathname.startsWith("/match/")) {
       const slug = pathname.split("/")[2] || "";
       const matchId = getIdFromSlug(slug);
@@ -186,7 +484,7 @@ export default async function handler(req: Request, res: Response) {
         const doc = await firestore.collection("matches").doc(matchId).get();
         if (doc.exists) {
           matchDoc = { id: doc.id, ...doc.data(), exists: true };
-          matchSsoCache[matchId] = { data: matchDoc, expiry: nowMs + 5 * 60 * 1000 }; // 5 min cache
+          matchSsoCache[matchId] = { data: matchDoc, expiry: nowMs + 5 * 60 * 1000 };
         } else {
           matchDoc = { exists: false };
           matchSsoCache[matchId] = { data: matchDoc, expiry: nowMs + 2 * 60 * 1000 };
@@ -232,7 +530,6 @@ export default async function handler(req: Request, res: Response) {
       return res.status(200).send(html);
     }
 
-    // --- NEWS PAGE ROUTE ---
     if (pathname.startsWith("/news/")) {
       const slug = pathname.split("/")[2] || "";
       const newsId = getIdFromSlug(slug);
@@ -250,7 +547,7 @@ export default async function handler(req: Request, res: Response) {
         const doc = await firestore.collection("news").doc(newsId).get();
         if (doc.exists) {
           newsDoc = { id: doc.id, ...doc.data(), exists: true };
-          newsSsoCache[newsId] = { data: newsDoc, expiry: nowMs + 10 * 60 * 1000 }; // 10 min cache
+          newsSsoCache[newsId] = { data: newsDoc, expiry: nowMs + 10 * 60 * 1000 };
         } else {
           newsDoc = { exists: false };
           newsSsoCache[newsId] = { data: newsDoc, expiry: nowMs + 2 * 60 * 1000 };
@@ -289,7 +586,6 @@ export default async function handler(req: Request, res: Response) {
       return res.status(200).send(html);
     }
 
-    // --- TEAM PAGE ROUTE ---
     if (pathname.startsWith("/team/")) {
       const slug = pathname.split("/")[2] || "";
       const teamId = getIdFromSlug(slug);
@@ -332,7 +628,6 @@ export default async function handler(req: Request, res: Response) {
       return res.status(200).send(html);
     }
 
-    // --- LEAGUE PAGE ROUTE ---
     if (pathname.startsWith("/league/")) {
       const slug = pathname.split("/")[2] || "";
       const leagueId = getIdFromSlug(slug);
@@ -375,7 +670,6 @@ export default async function handler(req: Request, res: Response) {
       return res.status(200).send(html);
     }
 
-    // --- GENERAL PAGE SEO FALLBACKS ---
     if (pathname === "/") {
       const homeSeo = injectSeo(html, {
         title: "الرئيسية - أهم أخبار ونتائج مباريات كرة القدم",
@@ -397,7 +691,6 @@ export default async function handler(req: Request, res: Response) {
       return res.status(200).send(homeSeo);
     }
 
-    // Other simple fallback pages
     let pageTitle = "";
     let pageDesc = "";
 

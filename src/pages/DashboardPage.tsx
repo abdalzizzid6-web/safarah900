@@ -139,7 +139,10 @@ export default function DashboardPage() {
 
   useEffect(() => {
     // Connect to Socket.IO Enterprise
-    const socket = io();
+    const socket = io({
+      reconnectionAttempts: 3,
+      timeout: 5000,
+    });
     socket.on('dashboard-stats-update', (data) => {
         setSystemData((prev: any) => ({ 
             ...prev, 

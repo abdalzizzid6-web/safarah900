@@ -3,16 +3,52 @@
   "trailingSlash": false,
   "rewrites": [
     {
+      "source": "/sitemap.xml",
+      "destination": "/api/sitemap?type=index"
+    },
+    {
+      "source": "/sitemap-main.xml",
+      "destination": "/api/sitemap?type=main"
+    },
+    {
+      "source": "/sitemap-matches.xml",
+      "destination": "/api/sitemap?type=matches"
+    },
+    {
+      "source": "/sitemap-news.xml",
+      "destination": "/api/sitemap?type=news"
+    },
+    {
+      "source": "/sitemap-images.xml",
+      "destination": "/api/sitemap?type=images"
+    },
+    {
+      "source": "/sitemap-leagues.xml",
+      "destination": "/api/sitemap?type=leagues"
+    },
+    {
+      "source": "/sitemap-teams.xml",
+      "destination": "/api/sitemap?type=teams"
+    },
+    {
+      "source": "/sitemap-players.xml",
+      "destination": "/api/sitemap?type=players"
+    },
+    {
+      "source": "/robots.txt",
+      "destination": "/api/robots"
+    },
+    {
+      "source": "/api/imagekit/files/:fileId",
+      "destination": "/api/imagekit/files?fileId=:fileId"
+    },
+    {
       "source": "/api/:path*",
       "destination": "/api/:path*"
     },
     {
-      "source": "/(sitemap.*\\.xml|robots\\.txt|manifest\\.json|ads\\.txt)",
-      "destination": "/server.ts"
-    },
-    {
-      "source": "/((?!api/|sitemap|robots\\.txt|manifest\\.json|.*\\.).*)",
-      "destination": "/index.html"
+      "source": "/((?!api/|sitemap|robots\\.txt|manifest\\.json|ads\\.txt|.*\\.).*)",
+      "destination": "/api/seo-render"
     }
   ],
   "headers": [

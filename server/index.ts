@@ -18,6 +18,7 @@ import rssRoutes from "./routes/rss";
 import knowledgeRoutes from "./routes/knowledge";
 import mediaRoutes from "./routes/media";
 import newsRoutes from "./routes/news";
+import imagekitRoutes from "./routes/imagekit";
 import { socialRouter } from "./routes/social";
 
 import { startNotificationJob } from "./jobs/syncNotifications";
@@ -356,6 +357,7 @@ app.use("/api/rss", rssRoutes);
 app.use("/api/knowledge", knowledgeRoutes);
 app.use("/api/media", mediaRoutes);
 app.use("/api/news", newsRoutes);
+app.use("/api/imagekit", imagekitRoutes);
 app.use("/api", worldCupRoutes); // Exposes /api/sync/worldcup
 
 // FCM Topic Subscription Endpoints
@@ -850,8 +852,10 @@ app.use('/data', express.static(path.join(process.cwd(), 'public', 'data')));
 export async function bootstrap() {
   
   // Background Tasks
-  // startNotificationJob();
-  // startRssJobs();
+  if (!process.env.VERCEL) {
+    // startNotificationJob();
+    // startRssJobs();
+  }
 
   // Async Initialization
   const cacheFile = path.join(process.cwd(), 'public', 'data', 'matches.json');
@@ -1048,8 +1052,19 @@ export async function bootstrap() {
     });
   }
 
-  app.listen(PORT, "0.0.0.0", () => {
+  const server = app.listen(PORT, "0.0.0.0", () => {
+    console.log(`[Server] Listening on http://0.0.0.0:${PORT}`);
   });
+
+  if (!process.env.VERCEL) {
+    try {
+      const { initSocket } = await import("./socket.js");
+      initSocket(server);
+      console.log("[WebSocket] Socket.io initialized successfully.");
+    } catch (err) {
+      console.error("[WebSocket] Failed to initialize Socket.io:", err);
+    }
+  }
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {

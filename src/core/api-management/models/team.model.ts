@@ -20,4 +20,5 @@ export interface ITeam {
   order: number;
   syncDisabled: boolean;
   updatedAt: number;
+  stadium?: string;
 }

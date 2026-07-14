@@ -7,10 +7,13 @@ export function useMatchForm(leagues: any[]) {
   const [modalMatchId, setModalMatchId] = useState('');
   
   const [formData, setFormData] = useState({
+    homeTeamId: 'custom',
     homeTeamName: '',
     homeTeamLogo: '',
+    awayTeamId: 'custom',
     awayTeamName: '',
     awayTeamLogo: '',
+    leagueId: 'custom',
     leagueName: '',
     leagueLogo: '',
     startTime: '',
@@ -19,6 +22,8 @@ export function useMatchForm(leagues: any[]) {
     status: 'UPCOMING',
     homeScore: 0,
     awayScore: 0,
+    stadium: '',
+    referee: '',
     streamUrl: '',
     streamLabel: 'سيرفر مجاني 1',
     youtubeLink: '',
@@ -40,10 +45,13 @@ export function useMatchForm(leagues: any[]) {
     const nextWeek = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16);
     
     setFormData({
+      homeTeamId: 'custom',
       homeTeamName: '',
       homeTeamLogo: '',
+      awayTeamId: 'custom',
       awayTeamName: '',
       awayTeamLogo: '',
+      leagueId: 'custom',
       leagueName: leagues[0]?.name || 'الدوري الإنجليزي الممتاز',
       leagueLogo: leagues[0]?.logo || 'https://media.api-sports.io/football/leagues/39.png',
       startTime: today,
@@ -52,6 +60,8 @@ export function useMatchForm(leagues: any[]) {
       status: 'UPCOMING',
       homeScore: 0,
       awayScore: 0,
+      stadium: '',
+      referee: '',
       streamUrl: '',
       streamLabel: 'سيرفر مجاني 1',
       youtubeLink: '',
@@ -99,10 +109,13 @@ export function useMatchForm(leagues: any[]) {
     };
 
     setFormData({
+      homeTeamId: (m.homeTeamDetails?.id) || (typeof m.homeTeam === 'object' ? (m.homeTeam as any)?.id : null) || 'custom',
       homeTeamName: typeof m.homeTeam === 'object' ? m.homeTeam?.name : m.homeTeam || '',
       homeTeamLogo: m.homeLogo || (typeof m.homeTeam === 'object' ? m.homeTeam?.logo : '') || '',
+      awayTeamId: (m.awayTeamDetails?.id) || (typeof m.awayTeam === 'object' ? (m.awayTeam as any)?.id : null) || 'custom',
       awayTeamName: typeof m.awayTeam === 'object' ? m.awayTeam?.name : m.awayTeam || '',
       awayTeamLogo: m.awayLogo || (typeof m.awayTeam === 'object' ? m.awayTeam?.logo : '') || '',
+      leagueId: (typeof m.league === 'object' ? (m.league as any)?.id : null) || 'custom',
       leagueName: typeof m.league === 'object' ? m.league?.name : m.league || 'الدوري الإنجليزي الممتاز',
       leagueLogo: m.leagueLogo || (typeof m.league === 'object' ? m.league?.logo : '') || 'https://media.api-sports.io/football/leagues/39.png',
       startTime: formattedTime,
@@ -111,6 +124,8 @@ export function useMatchForm(leagues: any[]) {
       status: typeof m.status === 'object' ? ((m.status as any)?.short || 'NS') : m.status || 'UPCOMING',
       homeScore: m.homeScore ?? m.score?.home ?? 0,
       awayScore: m.awayScore ?? m.score?.away ?? 0,
+      stadium: m.stadium || '',
+      referee: m.referee || '',
       streamUrl: existingUrl,
       streamLabel: existingLabel,
       youtubeLink: m.youtubeLink || '',

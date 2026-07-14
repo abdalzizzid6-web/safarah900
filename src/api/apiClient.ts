@@ -94,6 +94,9 @@ const apiClient = axios.create({
 apiClient.interceptors.request.use((config) => {
   const currentKey = getActiveApiKey();
   
+  console.log(`[apiClient Request] URL: ${config.baseURL || ''}${config.url}`);
+  console.log(`[apiClient Request] Using API Key (length: ${currentKey?.length || 0})`);
+  
   // Set accurate API authorization headers
   config.headers['x-rapidapi-key'] = currentKey;
   config.headers['x-apisports-key'] = currentKey;
@@ -369,6 +372,7 @@ apiClient.get = async function<T = any>(url: string, config?: any): Promise<any>
 
 apiClient.interceptors.response.use(
   (response) => {
+    console.log(`[apiClient Response] URL: ${response.config?.url} | Status: ${response.status}`);
     const logId = (response.config as any)._logId;
     const { data } = response;
 

@@ -1259,6 +1259,8 @@ async function runSchedulerCycle() {
 }
 
 // Bootstrapped professional background execution loop (runs every 10 seconds securely)
-setInterval(runSchedulerCycle, 10000);
+if (!process.env.VERCEL) {
+  setInterval(runSchedulerCycle, 10000);
+}
 
 export const socialRouter = router;

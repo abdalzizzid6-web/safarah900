@@ -210,6 +210,45 @@ export default React.memo(function MatchCard({ match }: MatchCardProps) {
   } = useNotifications();
   const { showToast, showError } = useError();
 
+  const getCountdownString = (): string => {
+    if (!match.startTime) return '';
+    const start = new Date(match.startTime);
+    const now = new Date();
+    const diff = start.getTime() - now.getTime();
+
+    if (diff <= 0) {
+      return 'تبدأ الآن';
+    }
+
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+    const totalHours = days * 24 + hours;
+    if (totalHours > 0) {
+      return `بعد ${totalHours}س ${minutes}د`;
+    } else {
+      return `بعد ${minutes}د ${seconds}ث`;
+    }
+  };
+
+  const [timeLeft, setTimeLeft] = useState<string>(getCountdownString);
+
+  useEffect(() => {
+    if (match.status === 'LIVE' || match.status === 'FINISHED') {
+      return;
+    }
+
+    const updateCountdown = () => {
+      setTimeLeft(getCountdownString());
+    };
+
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 1000);
+    return () => clearInterval(interval);
+  }, [match.startTime, match.status]);
+
   const isFav = favoriteLeagues.includes(match.league);
   const isNotified = notifiedMatches.includes(match.id);
 
@@ -351,21 +390,10 @@ export default React.memo(function MatchCard({ match }: MatchCardProps) {
             ) : match.status === 'FINISHED' ? (
               <span className="text-[10px] font-bold text-gray-500 bg-gray-500/10 px-2 py-0.5 rounded-full border border-gray-500/10">منتهية</span>
             ) : (
-              <div className="flex items-center gap-1 text-gray-400 bg-gray-400/10 px-2 py-0.5 rounded-full border border-gray-400/10">
-                <Timer size={10} />
-                <span className="text-[10px] font-bold">
-                  {(() => {
-                    if (!match.startTime) return formatTime(match.startTime);
-                    const start = new Date(match.startTime);
-                    const now = new Date();
-                    const diff = start.getTime() - now.getTime();
-                    if (diff > 0 && diff < 24 * 60 * 60 * 1000) {
-                      const hours = Math.floor(diff / (1000 * 60 * 60));
-                      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-                      return hours > 0 ? `بعد ${hours}س ${minutes}د` : `بعد ${minutes}د`;
-                    }
-                    return formatTime(match.startTime);
-                  })()}
+              <div className="flex items-center gap-1 text-primary bg-primary/10 px-2 py-0.5 rounded-full border border-primary/20 animate-pulse">
+                <Timer size={10} className="text-primary" />
+                <span className="text-[10px] font-bold tabular-nums">
+                  {timeLeft || formatTime(match.startTime)}
                 </span>
               </div>
             )}

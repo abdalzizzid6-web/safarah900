@@ -1,7 +1,12 @@
 import { DashboardStats, ApiProvider, ApiRouting } from '../types/api';
 
-const getHeaders = () => {
-  const token = localStorage.getItem('user_token') || '';
+import { auth } from '../../../firebase';
+
+const getHeaders = async () => {
+  let token = localStorage.getItem('user_token') || '';
+  if (auth.currentUser) {
+    token = await auth.currentUser.getIdToken() || token;
+  }
   return {
     'Content-Type': 'application/json',
     'Authorization': `Bearer ${token}`
@@ -12,7 +17,7 @@ export const apiManagementService = {
   async getStats(): Promise<DashboardStats> {
     const res = await fetch('/api/admin/api-management/stats', {
       headers: {
-        'Authorization': getHeaders()['Authorization']
+        'Authorization': (await getHeaders())['Authorization']
       }
     });
     if (!res.ok) {
@@ -24,7 +29,7 @@ export const apiManagementService = {
   async saveProvider(provider: Partial<ApiProvider>): Promise<void> {
     const res = await fetch('/api/admin/api-management/providers', {
       method: 'POST',
-      headers: getHeaders(),
+      headers: await getHeaders(),
       body: JSON.stringify(provider)
     });
     if (!res.ok) {
@@ -36,7 +41,7 @@ export const apiManagementService = {
     const res = await fetch(`/api/admin/api-management/providers/${id}`, {
       method: 'DELETE',
       headers: {
-        'Authorization': getHeaders()['Authorization']
+        'Authorization': (await getHeaders())['Authorization']
       }
     });
     if (!res.ok) {
@@ -47,7 +52,7 @@ export const apiManagementService = {
   async testKey(provider: string, key: string): Promise<{ success: boolean; latency?: number; message?: string }> {
     const res = await fetch('/api/admin/api-management/test-key', {
       method: 'POST',
-      headers: getHeaders(),
+      headers: await getHeaders(),
       body: JSON.stringify({ provider, key })
     });
     if (!res.ok) {
@@ -59,7 +64,7 @@ export const apiManagementService = {
   async saveRouting(routing: ApiRouting): Promise<void> {
     const res = await fetch('/api/admin/api-management/routing', {
       method: 'POST',
-      headers: getHeaders(),
+      headers: await getHeaders(),
       body: JSON.stringify(routing)
     });
     if (!res.ok) {
@@ -71,7 +76,7 @@ export const apiManagementService = {
     const res = await fetch('/api/admin/api-management/reset', {
       method: 'POST',
       headers: {
-        'Authorization': getHeaders()['Authorization']
+        'Authorization': (await getHeaders())['Authorization']
       }
     });
     if (!res.ok) {

@@ -80,6 +80,11 @@ class ApiManagerService implements IApiConfigProvider {
   }
 
   private startFlushInterval() {
+    const isVercel = process.env.VERCEL === '1' || !!process.env.NOW_REGION || (process.env.NODE_ENV === 'production' && !process.env.PORT);
+    if (isVercel) {
+      console.log('[ApiManager] Vercel environment detected. Background flush timer will NOT be started.');
+      return;
+    }
     if (this.flushInterval) clearInterval(this.flushInterval);
     this.flushInterval = setInterval(() => this.flushDataToFirestore(), 5 * 60 * 1000); // Flush every 5 minutes
   }
@@ -428,6 +433,12 @@ class ApiManagerService implements IApiConfigProvider {
     this.pendingIncrements[selected.id].today += 1;
     this.pendingIncrements[selected.id].month += 1;
 
+    const isVercel = process.env.VERCEL === '1' || !!process.env.NOW_REGION || (process.env.NODE_ENV === 'production' && !process.env.PORT);
+    if (isVercel) {
+      // Flush increments to Firestore immediately on Vercel to preserve usage tracking across stateless executions
+      this.flushDataToFirestore().catch(err => console.error('[ApiManager] Failed to flush in-memory increments on Vercel request:', err));
+    }
+
     return {
       key: selected.key,
       providerDoc: selected,
@@ -470,7 +481,8 @@ class ApiManagerService implements IApiConfigProvider {
     // Buffer logs for batching instead of writing immediately
     this.pendingLogs.push(fullLog);
     // Limit buffer size to prevent memory issues
-    if (this.pendingLogs.length > 100) {
+    const isVercel = process.env.VERCEL === '1' || !!process.env.NOW_REGION || (process.env.NODE_ENV === 'production' && !process.env.PORT);
+    if (isVercel || this.pendingLogs.length > 100) {
       this.flushDataToFirestore();
     }
 

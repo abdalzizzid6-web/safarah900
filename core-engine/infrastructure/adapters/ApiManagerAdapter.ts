@@ -80,18 +80,18 @@ export class ApiManagerAdapter implements IProvider {
         headers['x-apisports-key'] = key;
     }
 
-    console.log(`[ApiManagerAdapter] Fetching: ${targetUrl}`);
-    const response = await fetch(targetUrl, { headers });
-    const text = await response.text();
-    
     try {
+        console.log(`[ApiManagerAdapter] Fetching: ${targetUrl}`);
+        const response = await fetch(targetUrl, { headers });
+        const text = await response.text();
+        
         const data = JSON.parse(text);
         if (selected.provider === 'TheSportsDB') {
             return { data: { response: data.events || data.results || [] }, targetProviderName: selected.provider };
         }
         return { data, targetProviderName: selected.provider };
-    } catch (e) {
-        console.error(`[ApiManagerAdapter] JSON Parse Error. Start of response: ${text.substring(0, 100)}`);
+    } catch (e: any) {
+        console.error(`[ApiManagerAdapter] Fetch or Parse Error:`, e.message || e);
         // Instead of throwing, let's gracefully return empty to not crash shadow validation
         return { data: { response: [] }, targetProviderName: selected.provider };
     }

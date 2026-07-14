@@ -27,19 +27,67 @@ const getIndexHtml = () => {
   }
 };
 
+const generateBreadcrumbs = (pathname: string, pageTitle?: string) => {
+  const items = [
+    { name: "الرئيسية", url: "https://korea90.xyz/" }
+  ];
+
+  if (pathname.startsWith("/match/")) {
+    items.push({ name: "جدول المباريات", url: "https://korea90.xyz/schedule" });
+    if (pageTitle) {
+      items.push({ name: pageTitle.replace(" | صافرة 90", ""), url: `https://korea90.xyz${pathname}` });
+    }
+  } else if (pathname.startsWith("/news/")) {
+    items.push({ name: "الأخبار الرياضية", url: "https://korea90.xyz/news" });
+    if (pageTitle) {
+      items.push({ name: pageTitle.replace(" | صافرة 90", ""), url: `https://korea90.xyz${pathname}` });
+    }
+  } else if (pathname.includes("/standings")) {
+    items.push({ name: "جدول الترتيب", url: "https://korea90.xyz/standings" });
+  } else if (pathname.includes("/schedule")) {
+    items.push({ name: "جدول المباريات", url: "https://korea90.xyz/schedule" });
+  } else if (pathname.includes("/world-cup-2026")) {
+    items.push({ name: "كأس العالم 2026", url: "https://korea90.xyz/world-cup-2026" });
+  } else if (pathname.includes("/leagues")) {
+    items.push({ name: "البطولات", url: "https://korea90.xyz/leagues" });
+  } else if (pathname.includes("/team/")) {
+    items.push({ name: "الأندية والفرق", url: "https://korea90.xyz/standings" });
+    if (pageTitle) {
+      items.push({ name: pageTitle.replace(" | صافرة 90", ""), url: `https://korea90.xyz${pathname}` });
+    }
+  } else if (pathname.includes("/player/")) {
+    items.push({ name: "اللاعبين", url: "https://korea90.xyz/standings" });
+    if (pageTitle) {
+      items.push({ name: pageTitle.replace(" | صافرة 90", ""), url: `https://korea90.xyz${pathname}` });
+    }
+  }
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": items.map((item, index) => ({
+      "@type": "ListItem",
+      "position": index + 1,
+      "name": item.name,
+      "item": item.url
+    }))
+  };
+};
+
 const injectSeo = (html: string, options: { 
   title?: string; 
   description?: string; 
-  url?: string; 
+  url: string; 
   image?: string;
   type?: string;
   structuredData?: any; 
+  pathname: string;
 }) => {
-  const { title, description, url, image = "https://korea90.xyz/logo-master.png", type = "website", structuredData } = options;
+  const { title, description, url, image = "https://korea90.xyz/logo-master.png", type = "website", structuredData, pathname } = options;
   
   let result = html;
   
-  // Remove existing title and meta tags if they exist to avoid duplicates
+  // Remove existing title, description, and meta tags to avoid duplication
   result = result.replace(/<title>.*?<\/title>/gi, "");
   result = result.replace(/<meta name="description" content=".*?" \/>/gi, "");
   result = result.replace(/<meta property="og:title" content=".*?" \/>/gi, "");
@@ -49,45 +97,55 @@ const injectSeo = (html: string, options: {
   result = result.replace(/<meta property="og:type" content=".*?" \/>/gi, "");
   result = result.replace(/<link rel="canonical" href=".*?" \/>/gi, "");
   
-  // Generate and insert new meta tags in <head>
+  const fullTitle = title ? `${title} | صافرة 90` : "صافرة 90 | أهم أخبار ونتائج مباريات كرة القدم";
+  const fullDescription = description || "صافرة 90 هي منصتك الأولى لمتابعة نتائج مباريات كرة القدم، البث المباشر، وأحدث الأخبار الرياضية العالمية والعربية لحظة بلحظة.";
+  
   let headTags = "";
   
-  if (title) {
-    const fullTitle = `${title} | صافرة 90`;
-    headTags += `  <title>${fullTitle}</title>\n`;
-    headTags += `  <meta property="og:title" content="${fullTitle}" />\n`;
-    headTags += `  <meta name="twitter:title" content="${fullTitle}" />\n`;
-  } else {
-    headTags += "  <title>صافرة 90 | أهم أخبار ونتائج مباريات كرة القدم</title>\n";
-  }
+  // Basic Meta
+  headTags += `  <title>${fullTitle}</title>\n`;
+  headTags += `  <meta name="description" content="${fullDescription}" />\n`;
+  headTags += `  <link rel="canonical" href="${url}" />\n`;
   
-  if (description) {
-    headTags += `  <meta name="description" content="${description}" />\n`;
-    headTags += `  <meta property="og:description" content="${description}" />\n`;
-    headTags += `  <meta name="twitter:description" content="${description}" />\n`;
-  }
+  // OpenGraph Meta
+  headTags += `  <meta property="og:title" content="${fullTitle}" />\n`;
+  headTags += `  <meta property="og:description" content="${fullDescription}" />\n`;
+  headTags += `  <meta property="og:url" content="${url}" />\n`;
+  headTags += `  <meta property="og:image" content="${image}" />\n`;
+  headTags += `  <meta property="og:type" content="${type}" />\n`;
+  headTags += `  <meta property="og:locale" content="ar_AR" />\n`;
+  headTags += `  <meta property="og:site_name" content="صافرة 90" />\n`;
   
-  if (url) {
-    headTags += `  <meta property="og:url" content="${url}" />\n`;
-    headTags += `  <link rel="canonical" href="${url}" />\n`;
-  }
-  
-  if (image) {
-    headTags += `  <meta property="og:image" content="${image}" />\n`;
-    headTags += `  <meta name="twitter:image" content="${image}" />\n`;
-  }
-  
-  if (type) {
-    headTags += `  <meta property="og:type" content="${type}" />\n`;
-  }
-  
-  // Twitter Card Type
+  // Twitter Cards
   headTags += `  <meta name="twitter:card" content="summary_large_image" />\n`;
+  headTags += `  <meta name="twitter:title" content="${fullTitle}" />\n`;
+  headTags += `  <meta name="twitter:description" content="${fullDescription}" />\n`;
+  headTags += `  <meta name="twitter:image" content="${image}" />\n`;
   
+  // Organization JSON-LD
+  const organizationSchema = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "@id": "https://korea90.xyz/#organization",
+    "name": "صافرة 90",
+    "url": "https://korea90.xyz/",
+    "logo": "https://korea90.xyz/logo-master.png",
+    "sameAs": [
+      "https://twitter.com/safara90",
+      "https://facebook.com/safara90"
+    ]
+  };
+  headTags += `  <script type="application/ld+json">\n${JSON.stringify(organizationSchema, null, 2)}\n  </script>\n`;
+  
+  // BreadcrumbList JSON-LD
+  const breadcrumbsSchema = generateBreadcrumbs(pathname, title);
+  headTags += `  <script type="application/ld+json">\n${JSON.stringify(breadcrumbsSchema, null, 2)}\n  </script>\n`;
+  
+  // Custom Page Structured Data
   if (structuredData) {
     headTags += `  <script type="application/ld+json">\n${JSON.stringify(structuredData, null, 2)}\n  </script>\n`;
   }
-
+  
   // Inject right after <head> or at the beginning of head
   if (result.includes("<head>")) {
     result = result.replace("<head>", `<head>\n${headTags}`);
@@ -167,7 +225,8 @@ export default async function handler(req: Request, res: Response) {
           description,
           url: `https://korea90.xyz/match/${slug}`,
           type: "article",
-          structuredData
+          structuredData,
+          pathname
         });
       }
       return res.status(200).send(html);
@@ -224,7 +283,94 @@ export default async function handler(req: Request, res: Response) {
         url: `https://korea90.xyz/news/${slug}`,
         image,
         type: "article",
-        structuredData
+        structuredData,
+        pathname
+      });
+      return res.status(200).send(html);
+    }
+
+    // --- TEAM PAGE ROUTE ---
+    if (pathname.startsWith("/team/")) {
+      const slug = pathname.split("/")[2] || "";
+      const teamId = getIdFromSlug(slug);
+
+      if (!teamId) {
+        return res.status(200).send(html);
+      }
+
+      let teamDoc: any = null;
+      try {
+        const doc = await firestore.collection("teams").doc(teamId).get();
+        if (doc.exists) {
+          teamDoc = doc.data();
+        }
+      } catch (err) {
+        console.warn(`[SEO Team Page] Failed to fetch team doc:`, err);
+      }
+
+      const teamName = teamDoc?.name || "نادي رياضي";
+      const title = `نادي ${teamName} - مواعيد المباريات والنتائج والترتيب`;
+      const description = `تابع آخر أخبار نادي ${teamName}، مبارياته القادمة، نتائجه الحالية، جدول الترتيب، وإحصائيات اللاعبين والتشكيلة على صافرة 90.`;
+      
+      const structuredData = {
+        "@context": "https://schema.org",
+        "@type": "SportsTeam",
+        "name": teamName,
+        "url": `https://korea90.xyz/team/${slug}`,
+        "logo": teamDoc?.logo || "https://korea90.xyz/logo-master.png"
+      };
+
+      html = injectSeo(html, {
+        title,
+        description,
+        url: `https://korea90.xyz/team/${slug}`,
+        image: teamDoc?.logo || "https://korea90.xyz/logo-master.png",
+        type: "article",
+        structuredData,
+        pathname
+      });
+      return res.status(200).send(html);
+    }
+
+    // --- LEAGUE PAGE ROUTE ---
+    if (pathname.startsWith("/league/")) {
+      const slug = pathname.split("/")[2] || "";
+      const leagueId = getIdFromSlug(slug);
+
+      if (!leagueId) {
+        return res.status(200).send(html);
+      }
+
+      let leagueDoc: any = null;
+      try {
+        const doc = await firestore.collection("leagues").doc(leagueId).get();
+        if (doc.exists) {
+          leagueDoc = doc.data();
+        }
+      } catch (err) {
+        console.warn(`[SEO League Page] Failed to fetch league doc:`, err);
+      }
+
+      const leagueName = leagueDoc?.name || "البطولة";
+      const title = `دوري ${leagueName} - جدول الترتيب، المباريات والنتائج`;
+      const description = `تابع نتائج مباريات دوري ${leagueName}، جدول الترتيب المحدث لحظة بلحظة، قائمة الهدافين وأخبار البطولة على صافرة 90.`;
+
+      const structuredData = {
+        "@context": "https://schema.org",
+        "@type": "SportsOrganization",
+        "name": leagueName,
+        "url": `https://korea90.xyz/league/${slug}`,
+        "logo": leagueDoc?.logo || "https://korea90.xyz/logo-master.png"
+      };
+
+      html = injectSeo(html, {
+        title,
+        description,
+        url: `https://korea90.xyz/league/${slug}`,
+        image: leagueDoc?.logo || "https://korea90.xyz/logo-master.png",
+        type: "article",
+        structuredData,
+        pathname
       });
       return res.status(200).send(html);
     }
@@ -245,7 +391,8 @@ export default async function handler(req: Request, res: Response) {
             "target": "https://korea90.xyz/search?q={search_term_string}",
             "query-input": "required name=search_term_string"
           }
-        }
+        },
+        pathname
       });
       return res.status(200).send(homeSeo);
     }
@@ -272,7 +419,8 @@ export default async function handler(req: Request, res: Response) {
       html = injectSeo(html, {
         title: pageTitle,
         description: pageDesc,
-        url: `https://korea90.xyz${pathname}`
+        url: `https://korea90.xyz${pathname}`,
+        pathname
       });
     }
 

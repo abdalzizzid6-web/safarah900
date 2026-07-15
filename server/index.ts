@@ -58,6 +58,15 @@ app.use((req, res, next) => {
 
 // Cache for index.html template and sitemaps
 let cachedIndexHtml: string | null = null;
+
+app.get("/api/test-fetch", async (req, res) => {
+    try {
+      const response = await fetch("https://google.com");
+      res.json({ status: response.status, ok: response.ok });
+    } catch (e: any) {
+      res.json({ error: e.message, stack: e.stack });
+    }
+});
 const matchSsoCache: Record<string, { data: any, expiry: number }> = {};
 const newsSsoCache: Record<string, { data: any, expiry: number }> = {};
 

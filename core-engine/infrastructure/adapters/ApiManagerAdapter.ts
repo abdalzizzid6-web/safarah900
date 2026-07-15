@@ -18,7 +18,10 @@ export class ApiManagerAdapter implements IProvider {
     console.log(`[ApiManagerAdapter] Using provider: ${selected.provider} (${selected.id})`);
 
     let targetUrl = '';
-    const headers: Record<string, string> = { 'Accept': 'application/json' };
+    const headers: Record<string, string> = { 
+        'Accept': 'application/json',
+        'User-Agent': 'Mozilla/5.0 (compatible; Safara90-App/1.0)'
+    };
     const key = selected.key;
     const isApiSports = key.length === 32;
     const isRapidApiFootball = key.length === 50;
@@ -71,10 +74,19 @@ export class ApiManagerAdapter implements IProvider {
         targetUrl = `https://api.sportmonks.com/v3/football/${cleanPath}`;
         headers['Authorization'] = key;
     } else if (selected.provider === 'Custom') {
-        // For custom providers, we assume the 'key' field might actually contain the base URL or it's configured elsewhere.
-        // For now, treat 'key' as the base URL if it starts with http, else prepend https://
-        const baseUrl = key.startsWith('http') ? key : `https://${key}`;
-        targetUrl = `${baseUrl}/${cleanPath}`;
+        // For custom providers, we assume the 'key' field might actually contain the base URL
+        if (key.startsWith('http') || key.includes('.')) {
+            const baseUrl = key.startsWith('http') ? key : `https://${key}`;
+            targetUrl = `${baseUrl}/${cleanPath}`;
+        } else {
+            // Fallback for known custom providers
+            if (selected.name === 'football-data.org') {
+                targetUrl = `https://api.football-data.org/v4/${cleanPath}`;
+                headers['X-Auth-Token'] = key; // football-data uses X-Auth-Token
+            } else {
+                throw new Error(`[ApiManagerAdapter] Invalid Custom provider key: "${key}". Must be a valid URL base.`);
+            }
+        }
     } else {
         targetUrl = `https://v3.football.api-sports.io/${cleanPath}`;
         headers['x-apisports-key'] = key;
@@ -82,7 +94,9 @@ export class ApiManagerAdapter implements IProvider {
 
     try {
         console.log(`[ApiManagerAdapter] Fetching: ${targetUrl}`);
+        console.log(`[ApiManagerAdapter] Headers:`, JSON.stringify(headers));
         const response = await fetch(targetUrl, { headers });
+        console.log(`[ApiManagerAdapter] Response status: ${response.status}`);
         const text = await response.text();
         
         const data = JSON.parse(text);
@@ -91,7 +105,12 @@ export class ApiManagerAdapter implements IProvider {
         }
         return { data, targetProviderName: selected.provider };
     } catch (e: any) {
-        console.error(`[ApiManagerAdapter] Fetch or Parse Error:`, e.message || e);
+        console.error(`[ApiManagerAdapter] Fetch or Parse Error details:`, {
+            message: e.message,
+            stack: e.stack,
+            url: targetUrl,
+            cause: e.cause
+        });
         // Instead of throwing, let's gracefully return empty to not crash shadow validation
         return { data: { response: [] }, targetProviderName: selected.provider };
     }

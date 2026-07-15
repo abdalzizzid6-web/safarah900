@@ -1,5 +1,5 @@
 import express from "express";
-import { firestore, isFirestoreQuotaExceeded, setFirestoreQuotaExceeded, isFirebaseQuotaError } from "../firestore/collections";
+import { firestore, isFirestoreQuotaExceeded, setFirestoreQuotaExceeded, isFirebaseQuotaError, handleFirestoreError } from "../firestore/collections";
 import { authMiddleware } from "../middleware/auth";
 import { serverCache } from "../utils/cache";
 import {
@@ -20,6 +20,9 @@ router.get("/providers", authMiddleware('editor'), async (req, res) => {
     const providers = snapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
     res.json(providers);
   } catch (err: any) {
+    if (handleFirestoreError(err)) {
+        return res.status(503).json({ error: "Service temporarily unavailable" });
+    }
     res.status(500).json({ error: err.message });
   }
 });

@@ -1,13 +1,19 @@
 
-import { firestore, auth, messaging, isFirebaseAdminReady, FieldValue } from '../../src/lib/firebase-admin';
-
-export { firestore, auth, messaging, isFirebaseAdminReady, FieldValue };
+import { firestore as rawFirestore, auth, messaging, isFirebaseAdminReady, FieldValue } from '../../src/lib/firebase-admin';
 
 export let isFirestoreQuotaExceeded = false;
 export function setFirestoreQuotaExceeded(val: boolean) {
   isFirestoreQuotaExceeded = val;
   if (val) {
     console.warn('[Firestore Quota Protection] Global isFirestoreQuotaExceeded flag set to true. Server-side will run in localized cache-only mode.');
+  }
+}
+
+export function checkFirestoreQuota() {
+  if (isFirestoreQuotaExceeded) {
+    const e = new Error('Quota exceeded - Firestore blocked');
+    (e as any).code = 'RESOURCE_EXHAUSTED';
+    throw e;
   }
 }
 
@@ -23,6 +29,21 @@ export function isFirebaseQuotaError(err: any): boolean {
     err.code === 'resource-exhausted'
   );
 }
+
+// Proxy Firestore to block calls when quota is exceeded
+// Proxy Firestore to block calls when quota is exceeded
+const firestore = new Proxy(rawFirestore, {
+  get(target, prop, receiver) {
+    if (isFirestoreQuotaExceeded && (prop === 'collection' || prop === 'doc')) {
+        const e = new Error('Quota exceeded - Firestore blocked');
+        (e as any).code = 'RESOURCE_EXHAUSTED';
+        throw e;
+    }
+    return Reflect.get(target, prop, receiver);
+  }
+});
+
+export { firestore, auth, messaging, isFirebaseAdminReady, FieldValue };
 
 // Helper to access common collections with type safety or labels if needed
 export const collections = {

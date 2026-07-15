@@ -26,7 +26,7 @@ import { startRssJobs } from "./jobs/rssPolling";
 import { generateAndWriteCacheFiles } from "./firestore/cache";
 
 import { authMiddleware } from "./middleware/auth";
-import { firestore, isFirestoreQuotaExceeded, messaging } from "./firestore/collections";
+import { firestore, isFirestoreQuotaExceeded, messaging, setFirestoreQuotaExceeded, isFirebaseQuotaError } from "./firestore/collections";
 import { generateContentWithRetry } from "./services/aiService";
 import { Type } from "@google/genai";
 import { apiManager } from "./services/apiManager";
@@ -908,15 +908,22 @@ export async function bootstrap() {
         
         if (matchSsoCache[matchId] && matchSsoCache[matchId].expiry > nowMs) {
           matchDoc = matchSsoCache[matchId].data;
-        } else {
-          const doc = await firestore.collection('matches').doc(matchId).get();
-          if (doc.exists) {
-            matchDoc = { id: doc.id, ...doc.data(), exists: true };
-            matchSsoCache[matchId] = { data: matchDoc, expiry: nowMs + 30 * 60 * 1000 };
-          } else {
+        } else if (!isFirestoreQuotaExceeded) {
+          try {
+            const doc = await firestore.collection('matches').doc(matchId).get();
+            if (doc.exists) {
+              matchDoc = { id: doc.id, ...doc.data(), exists: true };
+              matchSsoCache[matchId] = { data: matchDoc, expiry: nowMs + 30 * 60 * 1000 };
+            } else {
+              matchDoc = { exists: false };
+              matchSsoCache[matchId] = { data: matchDoc, expiry: nowMs + 10 * 60 * 1000 };
+            }
+          } catch (e) {
+            if (isFirebaseQuotaError(e)) setFirestoreQuotaExceeded(true);
             matchDoc = { exists: false };
-            matchSsoCache[matchId] = { data: matchDoc, expiry: nowMs + 10 * 60 * 1000 };
           }
+        } else {
+            matchDoc = { exists: false };
         }
 
         const exists = matchDoc.exists;
@@ -978,15 +985,22 @@ export async function bootstrap() {
 
         if (newsSsoCache[newsId] && newsSsoCache[newsId].expiry > nowMs) {
           newsDoc = newsSsoCache[newsId].data;
-        } else {
-          const doc = await firestore.collection('news').doc(newsId).get();
-          if (doc.exists) {
-            newsDoc = { id: doc.id, ...doc.data(), exists: true };
-            newsSsoCache[newsId] = { data: newsDoc, expiry: nowMs + 30 * 60 * 1000 };
-          } else {
+        } else if (!isFirestoreQuotaExceeded) {
+          try {
+            const doc = await firestore.collection('news').doc(newsId).get();
+            if (doc.exists) {
+              newsDoc = { id: doc.id, ...doc.data(), exists: true };
+              newsSsoCache[newsId] = { data: newsDoc, expiry: nowMs + 30 * 60 * 1000 };
+            } else {
+              newsDoc = { exists: false };
+              newsSsoCache[newsId] = { data: newsDoc, expiry: nowMs + 10 * 60 * 1000 };
+            }
+          } catch (e) {
+            if (isFirebaseQuotaError(e)) setFirestoreQuotaExceeded(true);
             newsDoc = { exists: false };
-            newsSsoCache[newsId] = { data: newsDoc, expiry: nowMs + 10 * 60 * 1000 };
           }
+        } else {
+            newsDoc = { exists: false };
         }
 
         if (!newsDoc.exists) {

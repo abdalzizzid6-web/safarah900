@@ -41,11 +41,24 @@ export const getUserProfile = async (uid: string): Promise<UserProfile | null> =
   const cacheKey = STORAGE_PREFIX + uid;
   const now = Date.now();
   
-  // 1. Check in-memory cache first (TTL of 5 minutes to reduce reads dramatically as per Rule 3, 20)
+  // 1. Check in-memory cache first
   if (userProfileCache[uid] && (now - userProfileCache[uid].timestamp < 5 * 60 * 1000)) {
     return userProfileCache[uid].profile;
   }
 
+  // 2. Check localStorage cache
+  try {
+    const cachedData = localStorage.getItem(cacheKey);
+    if (cachedData) {
+      const parsed = JSON.parse(cachedData);
+      userProfileCache[uid] = parsed;
+      return parsed.profile;
+    }
+  } catch (e) {
+    console.error('[userRepository] Failed to read from local storage cache:', e);
+  }
+
+  // 3. Fallback to Firestore
   try {
     const docRef = doc(db, 'users', uid);
     const snapshot = await getDoc(docRef);
@@ -61,19 +74,7 @@ export const getUserProfile = async (uid: string): Promise<UserProfile | null> =
     return null;
   } catch (error) {
     console.error('[userRepository] Error getting user profile:', error);
-    
-    // 2. Fallback to localStorage cache on quota exhaustion / failure
-    try {
-      const cachedData = localStorage.getItem(cacheKey);
-      if (cachedData) {
-        const parsed = JSON.parse(cachedData);
-        console.warn('[userRepository] Quota limit exceeded or connection error. Recovered user profile from local storage fallback.');
-        return parsed.profile;
-      }
-    } catch (e) {
-      console.error('[userRepository] Failed to read from fallback cache:', e);
-    }
-    return null;
+    throw error;
   }
 };
 

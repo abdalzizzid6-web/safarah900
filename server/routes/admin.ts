@@ -1,6 +1,6 @@
 
 import express from "express";
-import { firestore, isFirestoreQuotaExceeded } from "../firestore/collections";
+import { firestore, isFirestoreQuotaExceeded, setFirestoreQuotaExceeded, isFirebaseQuotaError } from "../firestore/collections";
 import { authMiddleware } from "../middleware/auth";
 import { getSecurityEvents } from "../middleware/auth";
 import { generateContentWithRetry } from "../services/aiService";
@@ -402,8 +402,7 @@ router.get("/api-management/stats", authMiddleware('editor'), async (req, res) =
         });
 
         // 2. Fetch Routing Configuration
-        const routingDoc = await firestore.collection('settings').doc('api_routing').get();
-        const routing = routingDoc.exists ? routingDoc.data() : {
+        let routing = {
             worldCup: 'API-Football',
             premierLeague: 'API-Football',
             arabMatches: 'TheSportsDB',
@@ -413,17 +412,33 @@ router.get("/api-management/stats", authMiddleware('editor'), async (req, res) =
             stats: 'SportMonks',
             streaming: 'Custom'
         };
+        try {
+            if (!isFirestoreQuotaExceeded) {
+                const routingDoc = await firestore.collection('settings').doc('api_routing').get();
+                if (routingDoc.exists) routing = routingDoc.data() as any;
+            }
+        } catch (e) {
+            if (isFirebaseQuotaError(e)) setFirestoreQuotaExceeded(true);
+            console.warn('[Admin API] Could not fetch routing config:', e);
+        }
 
         // 3. Fetch Recent logs
-        const logsSnap = await firestore.collection('api_logs_v2')
-            .orderBy('timestamp', 'desc')
-            .limit(100)
-            .get();
-            
-        const recentLogs: any[] = [];
-        logsSnap.forEach((doc: any) => {
-            recentLogs.push(doc.data());
-        });
+        let recentLogs: any[] = [];
+        try {
+            if (!isFirestoreQuotaExceeded) {
+                const logsSnap = await firestore.collection('api_logs_v2')
+                    .orderBy('timestamp', 'desc')
+                    .limit(100)
+                    .get();
+                    
+                logsSnap.forEach((doc: any) => {
+                    recentLogs.push(doc.data());
+                });
+            }
+        } catch (e) {
+            if (isFirebaseQuotaError(e)) setFirestoreQuotaExceeded(true);
+            console.warn('[Admin API] Could not fetch logs:', e);
+        }
 
         // 4. Calculate Aggregate Statistics
         let totalRequests = 0;

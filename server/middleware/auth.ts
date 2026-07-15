@@ -26,10 +26,13 @@ export async function logSecurityAudit(event: any) {
   };
   securityEvents = [auditEvent, ...securityEvents].slice(0, 100);
 
-  if (isFirebaseAdminReady) {
+  if (isFirebaseAdminReady && !isFirestoreQuotaExceeded) {
     try {
       await firestore.collection('security_audits').add(auditEvent);
     } catch (e) {
+      if (isFirebaseQuotaError(e)) {
+        setFirestoreQuotaExceeded(true);
+      }
       console.warn('[Security Log] Could not persist audit to Firestore:', e);
     }
   }

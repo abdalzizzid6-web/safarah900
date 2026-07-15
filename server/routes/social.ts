@@ -1,6 +1,6 @@
 import express from 'express';
 import crypto from 'crypto';
-import { firestore } from '../firestore/collections';
+import { firestore, isFirestoreQuotaExceeded, isFirebaseQuotaError, setFirestoreQuotaExceeded } from '../firestore/collections';
 import { encrypt, decrypt } from '../utils/crypto';
 
 const router = express.Router();
@@ -1203,6 +1203,7 @@ async function refreshOAuthTokens() {
 
 // --- 19. Professional Lock-Based Scheduler Cycle ---
 async function runSchedulerCycle() {
+  if (isFirestoreQuotaExceeded) return;
   const lockRef = firestore.collection('social_locks').doc('scheduler');
   const instanceId = `instance_${process.pid}_${crypto.randomBytes(4).toString('hex')}`;
   const lockDurationMs = 60 * 1000; // 60 seconds lease
@@ -1254,6 +1255,9 @@ async function runSchedulerCycle() {
     });
     
   } catch (err) {
+    if (isFirebaseQuotaError(err)) {
+      setFirestoreQuotaExceeded(true);
+    }
     console.error('Error in lock-based scheduler cycle:', err);
   }
 }

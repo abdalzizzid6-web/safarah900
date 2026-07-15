@@ -34,7 +34,7 @@
   --color-surface-hover: #1a1a1a;
   --color-border: rgba(255, 255, 255, 0.05);
   --color-text: #FFFFFF;
-  --color-text-secondary: #A0A0A0;
+  --color-text-secondary: #C0C0C0;
   --color-success: #FFFFFF;
   --color-warning: #FFD700;
   --color-error: #FF3B30;
@@ -117,9 +117,9 @@ body {
 .markdown-body h1 { @apply text-3xl font-black mb-4 text-[color:var(--color-text)]; }
 .markdown-body h2 { @apply text-2xl font-bold mb-3 text-[color:var(--color-text)]; }
 .markdown-body h3 { @apply text-xl font-bold mb-2 text-[color:var(--color-text)]; }
-.markdown-body p { @apply text-[color:var(--color-text)]/80 leading-relaxed mb-4 text-sm md:text-base; }
-.markdown-body ul { @apply list-disc list-inside space-y-2 mb-4 text-[color:var(--color-text)]/80 text-sm md:text-base; }
-.markdown-body ol { @apply list-decimal list-inside space-y-2 mb-4 text-[color:var(--color-text)]/80 text-sm md:text-base; }
+.markdown-body p { @apply text-[color:var(--color-text)]/90 leading-relaxed mb-4 text-sm md:text-base; }
+.markdown-body ul { @apply list-disc list-inside space-y-2 mb-4 text-[color:var(--color-text)]/90 text-sm md:text-base; }
+.markdown-body ol { @apply list-decimal list-inside space-y-2 mb-4 text-[color:var(--color-text)]/90 text-sm md:text-base; }
 .markdown-body strong { @apply text-[color:var(--color-text)] font-extrabold; }
 .markdown-body a { @apply text-primary hover:underline font-bold; }
 .markdown-body blockquote { @apply border-r-4 border-primary px-5 py-3.5 italic bg-surface border border-border rounded-xl; }

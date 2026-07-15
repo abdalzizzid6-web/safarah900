@@ -16,19 +16,38 @@ async function getEnabledLeaguesCached(): Promise<Record<string, any>> {
   const cached = serverCache.get<Record<string, any>>(cacheKey);
   if (cached) return cached;
 
-  try {
-    const snap = await firestore.collection('cms_leagues').get();
+  // Try static file cache first (written by server/firestore/cache.ts)
+  const staticLeagues = serverCache.readStaticFile<any[]>('channels.json');
+  if (staticLeagues) {
     const map: Record<string, any> = {};
-    snap.docs.forEach((doc: any) => {
-      const data = doc.data();
-      map[doc.id] = data;
+    staticLeagues.forEach((doc: any) => {
+      map[doc.id] = doc;
     });
-    serverCache.set(cacheKey, map, 15 * 60 * 1000); // 15 mins cache TTL to reduce document reads
+    serverCache.set(cacheKey, map, 60 * 60 * 1000); // 1 hour cache
     return map;
-  } catch (err) {
-    console.warn("[Matches API] Failed to fetch cms_leagues for filtering, using empty fallback:", err);
-    return {};
   }
+
+  // Fallback to Firestore if static file is missing, but check quota
+  if (!isFirestoreQuotaExceeded) {
+    try {
+      const snap = await firestore.collection('cms_leagues').get();
+      const map: Record<string, any> = {};
+      snap.docs.forEach((doc: any) => {
+        const data = doc.data();
+        map[doc.id] = data;
+      });
+      serverCache.set(cacheKey, map, 15 * 60 * 1000); // 15 mins
+      return map;
+    } catch (err) {
+      if (isFirebaseQuotaError(err)) {
+        setFirestoreQuotaExceeded(true);
+      }
+      console.warn("[Matches API] Failed to fetch cms_leagues from Firestore, using empty fallback:", err);
+      return {};
+    }
+  }
+  
+  return {};
 }
 
 async function filterMatchesByEnabledLeagues(normalizedMatches: any[]): Promise<any[]> {

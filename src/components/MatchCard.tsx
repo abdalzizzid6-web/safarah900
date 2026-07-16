@@ -284,20 +284,20 @@ export default React.memo(function MatchCard({ match }: MatchCardProps) {
     }
   };
 
-  const getTeamName = (team: any) => {
-    if (!team) return '';
+  const getTeamName = (team: any, isHome: boolean) => {
+    if (!team) return isHome ? (match.homeName || '') : (match.awayName || '');
     if (typeof team === 'string') return team;
-    return team.name || '';
+    return team.name || (isHome ? (match.homeName || '') : (match.awayName || ''));
   };
 
   const getLeagueName = (league: any) => {
     if (!league) return '';
     if (typeof league === 'string') return league;
-    return league.name || '';
+    return league.name || (match.leagueDetails?.name || '');
   };
 
-  const homeTeamName = getTeamName(match.homeTeam);
-  const awayTeamName = getTeamName(match.awayTeam);
+  const homeTeamName = getTeamName(match.homeTeam, true);
+  const awayTeamName = getTeamName(match.awayTeam, false);
   const leagueName = getLeagueName(match.league);
 
   return (
@@ -412,9 +412,9 @@ export default React.memo(function MatchCard({ match }: MatchCardProps) {
             className="flex flex-col items-center gap-2 flex-1 cursor-pointer group/team text-center hover:scale-105 transition-all duration-300 relative z-25"
           >
             <TeamLogoWithGlow 
-              logoUrl={getTeamLogoUrl(match.homeLogo, homeTeamName, typeof match.homeTeam === 'object' ? match.homeTeam.tla : undefined)} 
+              logoUrl={getTeamLogoUrl(match.homeLogo || (match.homeTeam && typeof match.homeTeam === 'object' ? (match.homeTeam as any).logo : undefined) || match.homeTeamDetails?.logo, homeTeamName, typeof match.homeTeam === 'object' ? (match.homeTeam as any).tla : undefined)} 
               teamName={homeTeamName} 
-              tla={typeof match.homeTeam === 'object' ? match.homeTeam.tla : undefined}
+              tla={typeof match.homeTeam === 'object' ? (match.homeTeam as any).tla : undefined}
               isLive={isLive}
             />
             <span className="text-xs md:text-sm font-bold text-center leading-tight group-hover/team:text-primary transition-colors flex flex-col items-center gap-1">
@@ -445,9 +445,9 @@ export default React.memo(function MatchCard({ match }: MatchCardProps) {
             className="flex flex-col items-center gap-2 flex-1 cursor-pointer group/team text-center hover:scale-105 transition-all duration-300 relative z-25"
           >
             <TeamLogoWithGlow 
-              logoUrl={getTeamLogoUrl(match.awayLogo, awayTeamName, typeof match.awayTeam === 'object' ? match.awayTeam.tla : undefined)} 
+              logoUrl={getTeamLogoUrl(match.awayLogo || (match.awayTeam && typeof match.awayTeam === 'object' ? (match.awayTeam as any).logo : undefined) || match.awayTeamDetails?.logo, awayTeamName, typeof match.awayTeam === 'object' ? (match.awayTeam as any).tla : undefined)} 
               teamName={awayTeamName} 
-              tla={typeof match.awayTeam === 'object' ? match.awayTeam.tla : undefined}
+              tla={typeof match.awayTeam === 'object' ? (match.awayTeam as any).tla : undefined}
               isLive={isLive}
             />
             <span className="text-xs md:text-sm font-bold text-center leading-tight group-hover/team:text-primary transition-colors flex flex-col items-center gap-1">

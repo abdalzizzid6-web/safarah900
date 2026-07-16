@@ -38,13 +38,9 @@ export function getTeamLogoUrl(logoUrl: string | undefined | null, teamName: str
 }
 
 export function getFallbackImageUrl(name: string): string {
-  const isAdmin = typeof window !== 'undefined' && window.location.pathname.startsWith('/admin');
-  if (isAdmin) {
-    const seed = name || 'T';
-    return `https://ui-avatars.com/api/?name=${encodeURIComponent(seed)}&background=random&color=fff&size=128`;
-  }
-  // Transparent pixel for production
-  return 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+  // Always show something, even in production
+  const seed = name || 'T';
+  return `https://ui-avatars.com/api/?name=${encodeURIComponent(seed)}&background=random&color=fff&size=128`;
 }
 
 export function handleImageError(e: React.SyntheticEvent<HTMLImageElement, Event>, fallbackUrl: string) {

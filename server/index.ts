@@ -93,13 +93,15 @@ const injectSeo = (html: string, options: {
   let result = html;
   if (title) {
     const fullTitle = `${title} | صافرة 90`;
-    result = result.replace(/<title>.*?<\/title>/, `<title>${fullTitle}</title>`);
-    result = result.replace(/<meta property="og:title" content=".*?" \/>/, `<meta property="og:title" content="${fullTitle}" />`);
+    result = result.replace(/<title[^>]*>.*?<\/title>/i, `<title>${fullTitle}</title>`);
+    result = result.replace(/<meta\s+property=["']og:title["']\s+content=["'].*?["']\s*\/?>/i, `<meta property="og:title" content="${fullTitle}" />`);
+    console.log(`[SEO DEBUG] Injected title: ${fullTitle}`);
   }
   
   if (description) {
     result = result.replace(/<meta name="description" content=".*?" \/>/, `<meta name="description" content="${description}" />`);
     result = result.replace(/<meta property="og:description" content=".*?" \/>/, `<meta property="og:description" content="${description}" />`);
+    console.log(`[SEO DEBUG] Injected description`);
   }
 
   if (url) {

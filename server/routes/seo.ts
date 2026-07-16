@@ -109,7 +109,7 @@ router.get("/sitemap.xml", (req, res) => {
   } catch (err: any) {
     console.error("[SEO ERROR] Sitemap index generation failed:", err);
     res.header('Content-Type', 'application/xml; charset=utf-8');
-    res.status(200).send(generateSitemapIndexXml([]));
+    res.status(500).send(`<!-- Error: ${err.message} -->`);
   }
 });
 
@@ -146,50 +146,55 @@ router.get("/sitemap-main.xml", async (req, res) => {
     });
     res.header('Content-Type', 'application/xml; charset=utf-8');
     res.send(xml);
-  } catch (err) {
+  } catch (err: any) {
     console.error("[SEO ERROR] sitemap-main.xml generation failed:", err);
     res.header('Content-Type', 'application/xml; charset=utf-8');
-    res.send(generateSitemapXml([]));
+    res.status(500).send(`<!-- Error: ${err.message} -->`);
   }
 });
 
 router.get("/sitemap-matches.xml", async (req, res) => {
   try {
     const xml = await getCachedOrGenerate('matches', CACHE_SHORT, async () => {
-      const host = getBaseUrl(req);
-      const urls: any[] = [];
-      const snap = await collections.matches().orderBy('startTime', 'desc').limit(1000).get();
-      
-      snap.forEach((doc: any) => {
-        try {
-          const data = doc.data();
-          if (!data) return;
-          const match = normalizeMatch({ ...data, id: doc.id });
-          if (!match || match.isHidden) return;
+      try {
+        const host = getBaseUrl(req);
+        const urls: any[] = [];
+        const snap = await collections.matches().orderBy('startTime', 'desc').limit(1000).get();
+        
+        snap.forEach((doc: any) => {
+          try {
+            const data = doc.data();
+            if (!data) return;
+            const match = normalizeMatch({ ...data, id: doc.id });
+            if (!match || match.isHidden) return;
 
-          const isPlaceholder = (name: string) => {
-            if (!name) return true;
-            const lower = name.toLowerCase();
-            return lower.includes('unknown') || lower.includes('tbd') || lower === 'team' || name === 'قيد التحديد';
-          };
+            const isPlaceholder = (name: string) => {
+              if (!name) return true;
+              const lower = name.toLowerCase();
+              return lower.includes('unknown') || lower.includes('tbd') || lower === 'team' || name === 'قيد التحديد';
+            };
 
-          if (isPlaceholder(match.homeName) && isPlaceholder(match.awayName)) return;
-          if (!match.slug || match.slug === 'undefined' || match.slug.includes('[object Object]')) return;
-          
-          const rawLastMod = data.updatedAt || data.startTime;
-          const lastModDate = safeToDate(rawLastMod);
+            if (isPlaceholder(match.homeName) && isPlaceholder(match.awayName)) return;
+            if (!match.slug || match.slug === 'undefined' || match.slug.includes('[object Object]')) return;
+            
+            const rawLastMod = data.updatedAt || data.startTime;
+            const lastModDate = safeToDate(rawLastMod);
 
-          urls.push({
-            loc: encodeUrlPath(host, `match/${match.slug}`),
-            changefreq: 'daily',
-            priority: '0.8',
-            lastmod: lastModDate.toISOString()
-          });
-        } catch (docErr) {
-          console.error(`[SEO WARNING] Error processing match doc ${doc.id}:`, docErr);
-        }
-      });
-      return generateSitemapXml(urls);
+            urls.push({
+              loc: encodeUrlPath(host, `match/${match.slug}`),
+              changefreq: 'daily',
+              priority: '0.8',
+              lastmod: lastModDate.toISOString()
+            });
+          } catch (docErr) {
+            console.error(`[SEO WARNING] Error processing match doc ${doc.id}:`, docErr);
+          }
+        });
+        return generateSitemapXml(urls);
+      } catch (e: any) {
+        console.error("[SEO ERROR] Sitemap generation failed (matches), returning empty.", e);
+        return generateSitemapXml([]);
+      }
     });
     res.header('Content-Type', 'application/xml; charset=utf-8');
     res.send(xml);
@@ -203,38 +208,43 @@ router.get("/sitemap-matches.xml", async (req, res) => {
 router.get("/sitemap-news.xml", async (req, res) => {
   try {
     const xml = await getCachedOrGenerate('news', CACHE_SHORT, async () => {
-      const host = getBaseUrl(req);
-      const urls: any[] = [];
-      const snap = await collections.news().orderBy('publishDate', 'desc').limit(500).get();
-      
-      snap.forEach((doc: any) => {
-        try {
-          const data = doc.data();
-          if (!data) return;
-          const news = normalizeNews({ ...data, id: doc.id });
-          if (!news || !news.slug || news.slug === 'undefined' || news.slug.includes('[object Object]')) return;
-          
-          const pubDate = safeToDate(data.publishDate).toISOString();
-          
-          urls.push({
-            loc: encodeUrlPath(host, `news/${news.slug}`),
-            title: news.title || "خبر جديد",
-            publicationDate: pubDate,
-            name: "سفراء 90",
-            language: "ar"
-          });
-        } catch (docErr) {
-          console.error(`[SEO WARNING] Error processing news doc ${doc.id}:`, docErr);
-        }
-      });
-      return generateNewsSitemapXml(urls);
+      try {
+        const host = getBaseUrl(req);
+        const urls: any[] = [];
+        const snap = await collections.news().orderBy('publishDate', 'desc').limit(500).get();
+        
+        snap.forEach((doc: any) => {
+          try {
+            const data = doc.data();
+            if (!data) return;
+            const news = normalizeNews({ ...data, id: doc.id });
+            if (!news || !news.slug || news.slug === 'undefined' || news.slug.includes('[object Object]')) return;
+            
+            const pubDate = safeToDate(data.publishDate).toISOString();
+            
+            urls.push({
+              loc: encodeUrlPath(host, `news/${news.slug}`),
+              title: news.title || "خبر جديد",
+              publicationDate: pubDate,
+              name: "سفراء 90",
+              language: "ar"
+            });
+          } catch (docErr) {
+            console.error(`[SEO WARNING] Error processing news doc ${doc.id}:`, docErr);
+          }
+        });
+        return generateNewsSitemapXml(urls);
+      } catch (e: any) {
+        console.error("[SEO ERROR] Sitemap generation failed (news), returning empty.", e);
+        return generateNewsSitemapXml([]);
+      }
     });
     res.header('Content-Type', 'application/xml; charset=utf-8');
     res.send(xml);
-  } catch (err) {
+  } catch (err: any) {
     console.error("[SEO ERROR] sitemap-news.xml generation failed:", err);
     res.header('Content-Type', 'application/xml; charset=utf-8');
-    res.send(generateNewsSitemapXml([]));
+    res.status(500).send(`<!-- Error: ${err.message} -->`);
   }
 });
 
@@ -279,21 +289,26 @@ router.get("/sitemap-images.xml", async (req, res) => {
 router.get("/sitemap-leagues.xml", async (req, res) => {
   try {
     const xml = await getCachedOrGenerate('leagues', CACHE_LONG, async () => {
-      const host = getBaseUrl(req);
-      const urls: any[] = [];
-      const snap = await collections.leagues().limit(100).get();
-      snap.forEach((doc: any) => {
-        try {
-          const data = doc.data();
-          if (!data) return;
-          const league = normalizeLeague({ ...data, id: doc.id });
-          if (!league || !league.slug || league.slug === 'undefined' || league.slug.includes('[object Object]')) return;
-          urls.push({ loc: encodeUrlPath(host, `league/${league.slug}`), changefreq: 'daily', priority: '0.8' });
-        } catch (docErr) {
-          console.error(`[SEO WARNING] Error processing league doc ${doc.id}:`, docErr);
-        }
-      });
-      return generateSitemapXml(urls);
+      try {
+        const host = getBaseUrl(req);
+        const urls: any[] = [];
+        const snap = await collections.leagues().limit(100).get();
+        snap.forEach((doc: any) => {
+          try {
+            const data = doc.data();
+            if (!data) return;
+            const league = normalizeLeague({ ...data, id: doc.id });
+            if (!league || !league.slug || league.slug === 'undefined' || league.slug.includes('[object Object]')) return;
+            urls.push({ loc: encodeUrlPath(host, `league/${league.slug}`), changefreq: 'daily', priority: '0.8' });
+          } catch (docErr) {
+            console.error(`[SEO WARNING] Error processing league doc ${doc.id}:`, docErr);
+          }
+        });
+        return generateSitemapXml(urls);
+      } catch (e: any) {
+        console.error("[SEO ERROR] Sitemap generation failed (leagues), returning empty.", e);
+        return generateSitemapXml([]);
+      }
     });
     res.header('Content-Type', 'application/xml; charset=utf-8');
     res.send(xml);
@@ -307,21 +322,26 @@ router.get("/sitemap-leagues.xml", async (req, res) => {
 router.get("/sitemap-teams.xml", async (req, res) => {
   try {
     const xml = await getCachedOrGenerate('teams', CACHE_LONG, async () => {
-      const host = getBaseUrl(req);
-      const urls: any[] = [];
-      const snap = await collections.teams().limit(500).get();
-      snap.forEach((doc: any) => {
-        try {
-          const data = doc.data();
-          if (!data) return;
-          const team = normalizeTeam({ ...data, id: doc.id });
-          if (!team || !team.slug || team.slug === 'undefined' || team.slug.includes('[object Object]')) return;
-          urls.push({ loc: encodeUrlPath(host, `team/${team.slug}`), changefreq: 'weekly', priority: '0.7' });
-        } catch (docErr) {
-          console.error(`[SEO WARNING] Error processing team doc ${doc.id}:`, docErr);
-        }
-      });
-      return generateSitemapXml(urls);
+      try {
+        const host = getBaseUrl(req);
+        const urls: any[] = [];
+        const snap = await collections.teams().limit(500).get();
+        snap.forEach((doc: any) => {
+          try {
+            const data = doc.data();
+            if (!data) return;
+            const team = normalizeTeam({ ...data, id: doc.id });
+            if (!team || !team.slug || team.slug === 'undefined' || team.slug.includes('[object Object]')) return;
+            urls.push({ loc: encodeUrlPath(host, `team/${team.slug}`), changefreq: 'weekly', priority: '0.7' });
+          } catch (docErr) {
+            console.error(`[SEO WARNING] Error processing team doc ${doc.id}:`, docErr);
+          }
+        });
+        return generateSitemapXml(urls);
+      } catch (e: any) {
+        console.error("[SEO ERROR] Sitemap generation failed (teams), returning empty.", e);
+        return generateSitemapXml([]);
+      }
     });
     res.header('Content-Type', 'application/xml; charset=utf-8');
     res.send(xml);

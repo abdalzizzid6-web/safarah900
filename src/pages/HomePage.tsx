@@ -4,6 +4,7 @@ import SEO from '../components/SEO';
 import InstallFloatingWidget from '../components/InstallFloatingWidget';
 import PullToRefresh from '../components/ui/PullToRefresh';
 import PremiumHomePage from '../premium/screens/PremiumHomePage';
+import MatchSchedule from '../components/MatchSchedule';
 
 export default function HomePage() {
   const queryClient = useQueryClient();
@@ -31,6 +32,7 @@ export default function HomePage() {
       <InstallFloatingWidget />
       <PullToRefresh onRefresh={handlePullToRefresh}>
         <PremiumHomePage />
+        <MatchSchedule />
       </PullToRefresh>
     </div>
   );

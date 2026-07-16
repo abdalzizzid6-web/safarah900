@@ -47,7 +47,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     const allowedKeys: (keyof AppSettings)[] = [
       'appName', 'primaryColor', 'adsEnabled', 'adPublisherId', 'admobAppId',
       'worldCupModule', 'navigation', 'installWidgetEnabled', 'installWidgetText',
-      'installWidgetPosition', 'installWidgetDismissDelayHours', 'logoUrl', 'iconUrl', 'liveScoreWidgetEnabled'
+      'installWidgetPosition', 'installWidgetDismissDelayHours', 'logoUrl', 'iconUrl', 'liveScoreWidgetEnabled', 'favoriteLeagues'
     ];
 
     allowedKeys.forEach(key => {

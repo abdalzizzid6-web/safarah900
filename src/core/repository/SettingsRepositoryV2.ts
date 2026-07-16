@@ -28,6 +28,7 @@ export interface AppSettings {
   installWidgetPosition?: string;
   installWidgetDismissDelayHours?: number;
   liveScoreWidgetEnabled?: boolean;
+  favoriteLeagues?: string[];
 }
 
 export class SettingsRepositoryV2 extends BaseRepository<AppSettings> {

@@ -1,8 +1,9 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { Settings as SettingsIcon, Bell, Shield, Paintbrush, Globe, Zap, Clock } from 'lucide-react';
+import { Settings as SettingsIcon, Bell, Shield, Paintbrush, Globe, Zap, Clock, Trophy } from 'lucide-react';
 import { useSettings } from '../context/SettingsContext';
 import { useNotifications, SubscriptionSettings } from '../context/NotificationContext';
+import { useLeagues } from '../hooks/useLeagues';
 
 const SettingGroup = ({ title, icon: Icon, children }: { title: string, icon: any, children: React.ReactNode }) => (
   <div className="bg-white/5 border border-white/5 rounded-[2.5rem] p-8 space-y-6">
@@ -27,13 +28,13 @@ const SettingItem = ({
 }: { 
   label: string, 
   desc: string, 
-  type?: 'toggle' | 'select',
+  type?: 'toggle' | 'select' | 'checkbox',
   value?: boolean,
   onChange?: () => void
 }) => (
   <div 
-    className="flex items-center justify-between p-4 rounded-2xl hover:bg-white/5 transition-all group cursor-pointer"
-    onClick={onChange}
+    className={`flex items-center justify-between p-4 rounded-2xl hover:bg-white/5 transition-all group ${type !== 'checkbox' ? 'cursor-pointer' : ''}`}
+    onClick={type !== 'checkbox' ? onChange : undefined}
   >
     <div className="text-right">
       <div className="text-sm font-bold text-white group-hover:text-primary transition-colors">{label}</div>
@@ -48,12 +49,24 @@ const SettingItem = ({
         />
       </div>
     )}
+    {type === 'checkbox' && (
+      <input type="checkbox" checked={value} onChange={onChange} className="w-5 h-5 accent-primary cursor-pointer" />
+    )}
   </div>
 );
 
 export default function SettingsPage() {
   const { settings, updateSettings } = useSettings();
   const { subscriptions, toggleSubscription } = useNotifications();
+  const { data: leagues = [] } = useLeagues();
+
+  const toggleLeague = (leagueId: string) => {
+    const current = settings.favoriteLeagues || [];
+    const updated = current.includes(leagueId) 
+      ? current.filter(id => id !== leagueId)
+      : [...current, leagueId];
+    updateSettings({ favoriteLeagues: updated });
+  };
 
   return (
     <div className="space-y-12 py-8">
@@ -66,6 +79,19 @@ export default function SettingsPage() {
       </div>
 
       <div className="max-w-4xl mx-auto grid gap-6">
+        <SettingGroup title="الدوريات المفضلة" icon={Trophy}>
+           {leagues.map((league: any) => (
+             <SettingItem
+               key={league.id}
+               label={league.name}
+               desc="إضافة هذا الدوري لقسم مباريات دورياتي في الصفحة الرئيسية"
+               type="checkbox"
+               value={settings.favoriteLeagues?.includes(String(league.id))}
+               onChange={() => toggleLeague(String(league.id))}
+             />
+           ))}
+        </SettingGroup>
+
         <SettingGroup title="التنبيهات الذكية" icon={Zap}>
           <SettingItem 
             label="تنبيهات الدوريات الذكية" 

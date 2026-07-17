@@ -88,20 +88,49 @@ const injectSeo = (html: string, options: {
   type?: string,
   structuredData?: any 
 }) => {
+  console.log(`[SEO DEBUG] Generating SEO tags for: ${options.title || 'Unknown Title'}, URL: ${options.url || 'Unknown'}`);
+  console.log(`[SEO DEBUG] Metadata options: ${JSON.stringify(options, null, 2)}`);
+  
   const { title, description, url, image = 'https://korea90.xyz/logo-master.png', type = 'website', structuredData } = options;
   
   let result = html;
   if (title) {
     const fullTitle = `${title} | صافرة 90`;
-    result = result.replace(/<title[^>]*>.*?<\/title>/i, `<title>${fullTitle}</title>`);
-    result = result.replace(/<meta\s+property=["']og:title["']\s+content=["'].*?["']\s*\/?>/i, `<meta property="og:title" content="${fullTitle}" />`);
-    console.log(`[SEO DEBUG] Injected title: ${fullTitle}`);
+    const titleRegex = /<title[^>]*>.*?<\/title>/i;
+    const ogTitleRegex = /<meta\s+property=["']og:title["']\s+content=["'].*?["']\s*\/?>/i;
+    
+    if (titleRegex.test(result)) {
+        result = result.replace(titleRegex, `<title>${fullTitle}</title>`);
+        console.log(`[SEO DEBUG] Title replaced successfully.`);
+    } else {
+        console.log(`[SEO DEBUG] Title tag not found for replacement.`);
+    }
+    
+    if (ogTitleRegex.test(result)) {
+        result = result.replace(ogTitleRegex, `<meta property="og:title" content="${fullTitle}" />`);
+        console.log(`[SEO DEBUG] OG:title replaced successfully.`);
+    } else {
+        console.log(`[SEO DEBUG] OG:title meta tag not found for replacement.`);
+    }
   }
   
   if (description) {
-    result = result.replace(/<meta name="description" content=".*?" \/>/, `<meta name="description" content="${description}" />`);
-    result = result.replace(/<meta property="og:description" content=".*?" \/>/, `<meta property="og:description" content="${description}" />`);
-    console.log(`[SEO DEBUG] Injected description`);
+    const descRegex = /<meta name="description" content=".*?" \/>/;
+    const ogDescRegex = /<meta property="og:description" content=".*?" \/>/;
+    
+    if (descRegex.test(result)) {
+        result = result.replace(descRegex, `<meta name="description" content="${description}" />`);
+        console.log(`[SEO DEBUG] Description replaced successfully.`);
+    } else {
+        console.log(`[SEO DEBUG] Description meta tag not found for replacement.`);
+    }
+    
+    if (ogDescRegex.test(result)) {
+        result = result.replace(ogDescRegex, `<meta property="og:description" content="${description}" />`);
+        console.log(`[SEO DEBUG] OG:description replaced successfully.`);
+    } else {
+        console.log(`[SEO DEBUG] OG:description meta tag not found for replacement.`);
+    }
   }
 
   if (url) {

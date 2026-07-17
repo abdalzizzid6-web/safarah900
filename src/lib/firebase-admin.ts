@@ -6,6 +6,8 @@ import firebaseConfig from '../../firebase-applet-config.json';
 import dotenv from 'dotenv';
 dotenv.config();
 
+console.log(`[DIAGNOSTIC-LOG] [Module Loading] [firebase-admin.ts] Loading module. FIREBASE_SERVICE_ACCOUNT_KEY exists: ${!!process.env.FIREBASE_SERVICE_ACCOUNT_KEY}`);
+
 let adminApp: any;
 export let firestore: any;
 export let messaging: any;
@@ -16,7 +18,9 @@ export { FieldValue };
 const initFirebaseAdmin = () => {
     try {
         const serviceAccountKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+        console.log(`[DIAGNOSTIC-LOG] [firebase-admin.ts] Initializing Firebase Admin...`);
         if (serviceAccountKey) {
+            console.log(`[DIAGNOSTIC-LOG] [firebase-admin.ts] serviceAccountKey found. Parsing and initializing with cert...`);
             const serviceAccount = JSON.parse(serviceAccountKey);
             if (serviceAccount.private_key) {
                 serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
@@ -26,24 +30,27 @@ const initFirebaseAdmin = () => {
                 projectId: firebaseConfig.projectId
             }) : getApps()[0];
             const databaseId = firebaseConfig.firestoreDatabaseId || '(default)';
+            console.log(`[DIAGNOSTIC-LOG] [firebase-admin.ts] App initialized. Fetching Firestore databaseId: ${databaseId}`);
             firestore = getAdminFirestore(adminApp, databaseId);
             firestore.settings({ ignoreUndefinedProperties: true });
             messaging = getMessaging(adminApp);
             auth = getAuth(adminApp);
             isFirebaseAdminReady = true;
-            console.log(`[SUCCESS] Firebase Admin (Backend) Initialized with Service Account Key.`);
+            console.log(`[DIAGNOSTIC-LOG] [firebase-admin.ts] [SUCCESS] Firebase Admin initialized with service account.`);
         } else {
-            console.warn(`[WARNING] FIREBASE_SERVICE_ACCOUNT_KEY is missing. Falling back to ambient credentials.`);
+            console.warn(`[DIAGNOSTIC-LOG] [firebase-admin.ts] [WARNING] FIREBASE_SERVICE_ACCOUNT_KEY is missing. Falling back to ambient credentials.`);
             adminApp = getApps().length === 0 ? initializeAdminApp({ projectId: firebaseConfig.projectId }) : getApps()[0];
             const databaseId = firebaseConfig.firestoreDatabaseId || '(default)';
+            console.log(`[DIAGNOSTIC-LOG] [firebase-admin.ts] Fetching Firestore databaseId: ${databaseId}`);
             firestore = getAdminFirestore(adminApp, databaseId);
             firestore.settings({ ignoreUndefinedProperties: true });
             messaging = getMessaging(adminApp);
             auth = getAuth(adminApp);
             isFirebaseAdminReady = true;
+            console.log(`[DIAGNOSTIC-LOG] [firebase-admin.ts] [SUCCESS] Firebase Admin initialized with ambient fallback.`);
         }
-    } catch (e) {
-        console.error("Failed to initialize Firebase Admin", e);
+    } catch (e: any) {
+        console.error(`[DIAGNOSTIC-LOG] [firebase-admin.ts] [CRITICAL-ERROR] Failed to initialize Firebase Admin during module loading:`, e.stack || e);
         isFirebaseAdminReady = false;
     }
 };

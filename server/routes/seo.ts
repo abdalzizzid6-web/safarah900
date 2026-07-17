@@ -109,7 +109,7 @@ router.get("/sitemap.xml", (req, res) => {
   } catch (err: any) {
     console.error("[SEO ERROR] Sitemap index generation failed:", err);
     res.header('Content-Type', 'application/xml; charset=utf-8');
-    res.status(500).send(`<!-- Error: ${err.message} -->`);
+    res.status(200).send(generateSitemapIndexXml([]));
   }
 });
 
@@ -149,7 +149,7 @@ router.get("/sitemap-main.xml", async (req, res) => {
   } catch (err: any) {
     console.error("[SEO ERROR] sitemap-main.xml generation failed:", err);
     res.header('Content-Type', 'application/xml; charset=utf-8');
-    res.status(500).send(`<!-- Error: ${err.message} -->`);
+    res.status(200).send(generateSitemapXml([]));
   }
 });
 
@@ -244,7 +244,7 @@ router.get("/sitemap-news.xml", async (req, res) => {
   } catch (err: any) {
     console.error("[SEO ERROR] sitemap-news.xml generation failed:", err);
     res.header('Content-Type', 'application/xml; charset=utf-8');
-    res.status(500).send(`<!-- Error: ${err.message} -->`);
+    res.status(200).send(generateNewsSitemapXml([]));
   }
 });
 

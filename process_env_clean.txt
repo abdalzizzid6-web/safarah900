@@ -1,0 +1,40 @@
+./src/utils/googleIndexing.ts:10:    const rawKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+./src/lib/firebase-admin.ts:18:        const serviceAccountKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+./src/lib/crypto.ts:5:    let k = process.env.ENCRYPTION_KEY;
+./src/features/analytics/repositories/analyticsRepository.ts:43:    if (process.env.NODE_ENV !== 'production') {
+./api/seo.ts:96:  if (cachedIndexHtml && process.env.NODE_ENV === "production") return cachedIndexHtml;
+./api/imagekit.ts:8:    const publicKey = process.env.IMAGEKIT_PUBLIC || process.env.VITE_IMAGEKIT_PUBLIC || "";
+./api/imagekit.ts:9:    const privateKey = process.env.IMAGEKIT_PRIVATE || "";
+./api/imagekit.ts:10:    const urlEndpoint = process.env.IMAGEKIT_URL_ENDPOINT || process.env.VITE_IMAGEKIT_URL_ENDPOINT || "";
+./api/test-firebase.ts:7:      FIREBASE_SERVICE_ACCOUNT_KEY_exists: !!process.env.FIREBASE_SERVICE_ACCOUNT_KEY,
+./api/test-firebase.ts:8:      NODE_ENV: process.env.NODE_ENV,
+./api/test-firebase.ts:28:    const serviceAccountKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+./server/routes/imagekit.ts:11:    const publicKey = process.env.IMAGEKIT_PUBLIC || process.env.VITE_IMAGEKIT_PUBLIC || "";
+./server/routes/imagekit.ts:12:    const privateKey = process.env.IMAGEKIT_PRIVATE || "";
+./server/routes/imagekit.ts:13:    const urlEndpoint = process.env.IMAGEKIT_URL_ENDPOINT || process.env.VITE_IMAGEKIT_URL_ENDPOINT || "";
+./server/routes/admin.ts:732:        if (!process.env.GEMINI_API_KEY) {
+./server/routes/proxies.ts:5:const FOOTBALL_DATA_KEY = process.env.VITE_FOOTBALL_DATA_KEY || process.env.FOOTBALL_DATA_KEY;
+./server/routes/social.ts:190:    let origin = clientOrigin || process.env.APP_URL;
+./server/routes/social.ts:348:    let origin = process.env.APP_URL;
+./server/routes/social.ts:1266:if (!process.env.VERCEL) {
+./server/routes/media.ts:18:    if (process.env.GEMINI_API_KEY) {
+./server/services/rssClassifier.ts:179:  if (!process.env.GEMINI_API_KEY) {
+./server/services/apiManager.ts:83:    const isVercel = process.env.VERCEL === '1' || !!process.env.NOW_REGION || (process.env.NODE_ENV === 'production' && !process.env.PORT);
+./server/services/apiManager.ts:109:        key: process.env.VITE_API_KEY || '6ca2df456728038b3401fbba80a13344',
+./server/services/apiManager.ts:232:        key: process.env.VITE_API_KEY || '6ca2df456728038b3401fbba80a13344',
+./server/services/apiManager.ts:436:    const isVercel = process.env.VERCEL === '1' || !!process.env.NOW_REGION || (process.env.NODE_ENV === 'production' && !process.env.PORT);
+./server/services/apiManager.ts:484:    const isVercel = process.env.VERCEL === '1' || !!process.env.NOW_REGION || (process.env.NODE_ENV === 'production' && !process.env.PORT);
+./server/services/aiService.ts:7:    if (!process.env.GEMINI_API_KEY) {
+./server/services/aiService.ts:11:      apiKey: process.env.GEMINI_API_KEY,
+./server/utils/crypto.ts:8:// Get encryption key from env, or derive a stable key from process.env.GEMINI_API_KEY / applet ID
+./server/utils/crypto.ts:10:  const keySource = process.env.SOCIAL_ENCRYPTION_KEY || process.env.GEMINI_API_KEY || 'safara-90-secret-fallback-key-32b';
+./server/index.ts:46:  if (process.env.NODE_ENV === 'production') {
+./server/index.ts:74:  if (cachedIndexHtml && process.env.NODE_ENV === 'production') return cachedIndexHtml;
+./server/index.ts:262:    if (process.env.GEMINI_API_KEY) {
+./server/index.ts:439:  let targetBase = (process.env.VITE_FOOTBALL_DATA_BASE || "https://api.football-data.org/v4").trim();
+./server/index.ts:450:  let apiKey = (process.env.VITE_FOOTBALL_DATA_KEY || "b52fe40577134e59a5796404b7ebc73c").trim();
+./server/index.ts:895:  if (!process.env.VERCEL) {
+./server/index.ts:925:  if (process.env.NODE_ENV !== "production") {
+./server/index.ts:1113:  if (!process.env.VERCEL) {
+./server/socket.js:13:  if (process.env.REDIS_URL) {
+./server/socket.js:14:    const pubClient = new Redis(process.env.REDIS_URL);

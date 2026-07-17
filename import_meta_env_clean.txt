@@ -1,0 +1,11 @@
+./src/admin/shared/MediaManager.tsx:35:            config: !!import.meta.env.VITE_IMAGEKIT_PUBLIC && !!import.meta.env.VITE_IMAGEKIT_URL_ENDPOINT,
+./src/admin/shared/MediaManager.tsx:36:            endpoint: import.meta.env.VITE_IMAGEKIT_URL_ENDPOINT,
+./src/lib/imageUtils.ts:10:  const endpoint = import.meta.env.VITE_IMAGEKIT_URL_ENDPOINT;
+./src/lib/imageUtils.ts:26:  const endpoint = import.meta.env.VITE_IMAGEKIT_URL_ENDPOINT;
+./src/pages/DashboardPage.tsx:143:                     import.meta.env.VITE_VERCEL === 'true';
+./src/services/notificationService.ts:13:      const vapidKey = (import.meta.env.VITE_FCM_VAPID_KEY as string);
+./src/firebase.ts:229:  const vapidKey = (import.meta.env.VITE_FCM_VAPID_KEY as string) || 'BPHr1zPz1...';
+./src/App.tsx:135:      const viteApiKey = import.meta.env.VITE_API_KEY || '';
+./src/api/apiClient.ts:5:const ENV_API_KEY = (import.meta.env.VITE_API_KEY || '').trim();
+./src/api/apiClient.ts:17:  return (import.meta.env.VITE_API_KEY || '').trim();
+./src/main.tsx:84:  if (import.meta.env.PROD && !isPreviewUrl) {

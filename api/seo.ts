@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import path from "path";
 import fs from "fs";
-import { collections, firestore } from "../server/firestore/collections";
+import { collections, firestore, isFirebaseAdminReady } from "../server/firestore/collections";
 import { 
   generateSitemapIndexXml, 
   generateSitemapXml, 
@@ -230,13 +230,28 @@ const injectSeo = (html: string, options: {
   return result;
 };
 
+import { wrapSeoHandler } from "./seo-render";
+
 // --- CORE UNIFIED HANDLER ---
-export default async function handler(req: Request, res: Response) {
+async function handler(req: Request, res: Response) {
   const action = req.query.action as string;
+  const requestId = Math.random().toString(36).substring(7);
+
+  console.log(`[FORENSIC-AUDIT] [${requestId}] ---> REQUEST ENTRY <---`);
+  console.log(`[FORENSIC-AUDIT] [${requestId}] FIREBASE_SERVICE_ACCOUNT_KEY exists in env: ${!!process.env.FIREBASE_SERVICE_ACCOUNT_KEY}`);
+  console.log(`[FORENSIC-AUDIT] [${requestId}] isFirebaseAdminReady: ${isFirebaseAdminReady}`);
+  console.log(`[FORENSIC-AUDIT] [${requestId}] Method: ${req.method}`);
+  console.log(`[FORENSIC-AUDIT] [${requestId}] Original URL: ${req.originalUrl || req.url}`);
+  console.log(`[FORENSIC-AUDIT] [${requestId}] Action parameter: ${action}`);
+  console.log(`[FORENSIC-AUDIT] [${requestId}] Query string: ${JSON.stringify(req.query)}`);
+  console.log(`[FORENSIC-AUDIT] [${requestId}] User-Agent: ${req.get("user-agent")}`);
+  console.log(`[FORENSIC-AUDIT] [${requestId}] Host header: ${req.get("host")}`);
 
   // 1. --- ROBOTS.TXT ROUTE ---
   if (action === "robots") {
+    console.log(`[FORENSIC-AUDIT] [${requestId}] Handling robots.txt request`);
     res.setHeader("Content-Type", "text/plain");
+    console.log(`[FORENSIC-AUDIT] [${requestId}] Sending robots.txt response`);
     return res.status(200).send(`User-agent: *
 Allow: /
 Disallow: /admin/
@@ -252,6 +267,7 @@ Sitemap: https://korea90.xyz/sitemap.xml`);
   if (action === "sitemap") {
     const type = req.query.type as string;
     const host = getBaseUrl(req);
+    console.log(`[FORENSIC-AUDIT] [${requestId}] Sitemap Route Entered. Type: ${type || "index"}, Host: ${host}`);
 
     res.setHeader("Content-Type", "application/xml; charset=utf-8");
 
@@ -286,9 +302,12 @@ Sitemap: https://korea90.xyz/sitemap.xml`);
       }
 
       if (type === "matches") {
+        console.log(`[FORENSIC-AUDIT] [${requestId}] Handling matches sitemap`);
         const xml = await getCachedOrGenerate("matches", CACHE_SHORT, async () => {
           const urls: any[] = [];
+          console.log(`[FORENSIC-AUDIT] [${requestId}] [Firestore Query] Querying collections.matches()...`);
           const snap = await collections.matches().orderBy("startTime", "desc").limit(1000).get();
+          console.log(`[FORENSIC-AUDIT] [${requestId}] [Firestore Query] Query completed. Docs count: ${snap.size}`);
           
           snap.forEach((doc: any) => {
             try {
@@ -316,19 +335,24 @@ Sitemap: https://korea90.xyz/sitemap.xml`);
                 lastmod: lastModDate.toISOString()
               });
             } catch (docErr) {
-              console.error(`[SEO WARNING] Error processing match doc ${doc.id}:`, docErr);
+              console.error(`[FORENSIC-AUDIT] [${requestId}] [SEO WARNING] Error processing match doc ${doc.id}:`, docErr);
             }
           });
+          console.log(`[FORENSIC-AUDIT] [${requestId}] [XML Generation] Generating Matches XML. URL Count: ${urls.length}`);
           return generateSitemapXml(urls);
         });
         res.setHeader("Cache-Control", "public, max-age=300, s-maxage=300");
+        console.log(`[FORENSIC-AUDIT] [${requestId}] [Response Send] Sending matches sitemap XML`);
         return res.status(200).send(xml);
       }
 
       if (type === "news") {
+        console.log(`[FORENSIC-AUDIT] [${requestId}] Handling news sitemap`);
         const xml = await getCachedOrGenerate("news", CACHE_SHORT, async () => {
           const urls: any[] = [];
+          console.log(`[FORENSIC-AUDIT] [${requestId}] [Firestore Query] Querying collections.news()...`);
           const snap = await collections.news().orderBy("publishDate", "desc").limit(500).get();
+          console.log(`[FORENSIC-AUDIT] [${requestId}] [Firestore Query] Query completed. Docs count: ${snap.size}`);
           
           snap.forEach((doc: any) => {
             try {
@@ -347,19 +371,24 @@ Sitemap: https://korea90.xyz/sitemap.xml`);
                 language: "ar"
               });
             } catch (docErr) {
-              console.error(`[SEO WARNING] Error processing news doc ${doc.id}:`, docErr);
+              console.error(`[FORENSIC-AUDIT] [${requestId}] [SEO WARNING] Error processing news doc ${doc.id}:`, docErr);
             }
           });
+          console.log(`[FORENSIC-AUDIT] [${requestId}] [XML Generation] Generating News XML. URL Count: ${urls.length}`);
           return generateNewsSitemapXml(urls);
         });
         res.setHeader("Cache-Control", "public, max-age=300, s-maxage=300");
+        console.log(`[FORENSIC-AUDIT] [${requestId}] [Response Send] Sending news sitemap XML`);
         return res.status(200).send(xml);
       }
 
       if (type === "images") {
+        console.log(`[FORENSIC-AUDIT] [${requestId}] Handling images sitemap`);
         const xml = await getCachedOrGenerate("images", CACHE_MEDIUM, async () => {
           const urls: any[] = [];
+          console.log(`[FORENSIC-AUDIT] [${requestId}] [Firestore Query] Querying collections.news() for images...`);
           const newsSnap = await collections.news().orderBy("publishDate", "desc").limit(100).get();
+          console.log(`[FORENSIC-AUDIT] [${requestId}] [Firestore Query] Query completed. Docs count: ${newsSnap.size}`);
           newsSnap.forEach((doc: any) => {
             try {
               const data = doc.data();
@@ -376,19 +405,24 @@ Sitemap: https://korea90.xyz/sitemap.xml`);
                 });
               }
             } catch (docErr) {
-              console.error(`[SEO WARNING] Error processing image for news doc ${doc.id}:`, docErr);
+              console.error(`[FORENSIC-AUDIT] [${requestId}] [SEO WARNING] Error processing image for news doc ${doc.id}:`, docErr);
             }
           });
+          console.log(`[FORENSIC-AUDIT] [${requestId}] [XML Generation] Generating Images XML. URL Count: ${urls.length}`);
           return generateImageSitemapXml(urls);
         });
         res.setHeader("Cache-Control", "public, max-age=3600, s-maxage=3600");
+        console.log(`[FORENSIC-AUDIT] [${requestId}] [Response Send] Sending images sitemap XML`);
         return res.status(200).send(xml);
       }
 
       if (type === "leagues") {
+        console.log(`[FORENSIC-AUDIT] [${requestId}] Handling leagues sitemap`);
         const xml = await getCachedOrGenerate("leagues", CACHE_LONG, async () => {
           const urls: any[] = [];
+          console.log(`[FORENSIC-AUDIT] [${requestId}] [Firestore Query] Querying collections.leagues()...`);
           const snap = await collections.leagues().limit(100).get();
+          console.log(`[FORENSIC-AUDIT] [${requestId}] [Firestore Query] Query completed. Docs count: ${snap.size}`);
           snap.forEach((doc: any) => {
             try {
               const data = doc.data();
@@ -397,19 +431,24 @@ Sitemap: https://korea90.xyz/sitemap.xml`);
               if (!league || !league.slug || league.slug === "undefined" || league.slug.includes("[object Object]")) return;
               urls.push({ loc: encodeUrlPath(host, `league/${league.slug}`), changefreq: "daily", priority: "0.8" });
             } catch (docErr) {
-              console.error(`[SEO WARNING] Error processing league doc ${doc.id}:`, docErr);
+              console.error(`[FORENSIC-AUDIT] [${requestId}] [SEO WARNING] Error processing league doc ${doc.id}:`, docErr);
             }
           });
+          console.log(`[FORENSIC-AUDIT] [${requestId}] [XML Generation] Generating Leagues XML. URL Count: ${urls.length}`);
           return generateSitemapXml(urls);
         });
         res.setHeader("Cache-Control", "public, max-age=86400, s-maxage=86400");
+        console.log(`[FORENSIC-AUDIT] [${requestId}] [Response Send] Sending leagues sitemap XML`);
         return res.status(200).send(xml);
       }
 
       if (type === "teams") {
+        console.log(`[FORENSIC-AUDIT] [${requestId}] Handling teams sitemap`);
         const xml = await getCachedOrGenerate("teams", CACHE_LONG, async () => {
           const urls: any[] = [];
+          console.log(`[FORENSIC-AUDIT] [${requestId}] [Firestore Query] Querying collections.teams()...`);
           const snap = await collections.teams().limit(500).get();
+          console.log(`[FORENSIC-AUDIT] [${requestId}] [Firestore Query] Query completed. Docs count: ${snap.size}`);
           snap.forEach((doc: any) => {
             try {
               const data = doc.data();
@@ -418,19 +457,24 @@ Sitemap: https://korea90.xyz/sitemap.xml`);
               if (!team || !team.slug || team.slug === "undefined" || team.slug.includes("[object Object]")) return;
               urls.push({ loc: encodeUrlPath(host, `team/${team.slug}`), changefreq: "weekly", priority: "0.7" });
             } catch (docErr) {
-              console.error(`[SEO WARNING] Error processing team doc ${doc.id}:`, docErr);
+              console.error(`[FORENSIC-AUDIT] [${requestId}] [SEO WARNING] Error processing team doc ${doc.id}:`, docErr);
             }
           });
+          console.log(`[FORENSIC-AUDIT] [${requestId}] [XML Generation] Generating Teams XML. URL Count: ${urls.length}`);
           return generateSitemapXml(urls);
         });
         res.setHeader("Cache-Control", "public, max-age=86400, s-maxage=86400");
+        console.log(`[FORENSIC-AUDIT] [${requestId}] [Response Send] Sending teams sitemap XML`);
         return res.status(200).send(xml);
       }
 
       if (type === "players") {
+        console.log(`[FORENSIC-AUDIT] [${requestId}] Handling players sitemap`);
         const xml = await getCachedOrGenerate("players", CACHE_LONG, async () => {
           const urls: any[] = [];
+          console.log(`[FORENSIC-AUDIT] [${requestId}] [Firestore Query] Querying collections.players()...`);
           const snap = await collections.players().limit(500).get();
+          console.log(`[FORENSIC-AUDIT] [${requestId}] [Firestore Query] Query completed. Docs count: ${snap.size}`);
           snap.forEach((doc: any) => {
             try {
               const data = doc.data();
@@ -439,20 +483,31 @@ Sitemap: https://korea90.xyz/sitemap.xml`);
               if (!slug || slug === "undefined" || slug.includes("[object Object]")) return;
               urls.push({ loc: encodeUrlPath(host, `player/${slug}`), changefreq: "weekly", priority: "0.6" });
             } catch (docErr) {
-              console.error(`[SEO WARNING] Error processing player doc ${doc.id}:`, docErr);
+              console.error(`[FORENSIC-AUDIT] [${requestId}] [SEO WARNING] Error processing player doc ${doc.id}:`, docErr);
             }
           });
+          console.log(`[FORENSIC-AUDIT] [${requestId}] [XML Generation] Generating Players XML. URL Count: ${urls.length}`);
           return generateSitemapXml(urls);
         });
         res.setHeader("Cache-Control", "public, max-age=86400, s-maxage=86400");
+        console.log(`[FORENSIC-AUDIT] [${requestId}] [Response Send] Sending players sitemap XML`);
         return res.status(200).send(xml);
       }
 
       res.setHeader("Cache-Control", "public, max-age=3600");
+      console.log(`[FORENSIC-AUDIT] [${requestId}] [Response Send] Sending fallback empty sitemap`);
       return res.status(200).send(generateSitemapXml([]));
     } catch (err: any) {
-      console.error("[SEO ERROR] Sitemap handler failed:", err);
-      return res.status(200).send(generateSitemapXml([]));
+      console.error(`[FORENSIC-AUDIT] [${requestId}] [CATCH EXCEPTION] Sitemap handler failed! Stack Trace:`, err.stack || err);
+      if (!type || type === "index") {
+        return res.status(200).send(generateSitemapIndexXml([]));
+      } else if (type === "news") {
+        return res.status(200).send(generateNewsSitemapXml([]));
+      } else if (type === "images") {
+        return res.status(200).send(generateImageSitemapXml([]));
+      } else {
+        return res.status(200).send(generateSitemapXml([]));
+      }
     }
   }
 
@@ -723,3 +778,5 @@ Sitemap: https://korea90.xyz/sitemap.xml`);
     return res.status(200).send(html);
   }
 }
+
+export default wrapSeoHandler(handler);

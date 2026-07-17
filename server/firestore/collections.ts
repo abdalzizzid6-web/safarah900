@@ -41,21 +41,34 @@ export function isFirebaseQuotaError(err: any): boolean {
   );
 }
 
-// Proxy Firestore to block calls when quota is exceeded
-const firestore = new Proxy(rawFirestore, {
+// Proxy Firestore to block calls when quota is exceeded, with a fallback target to prevent TypeError if rawFirestore is undefined during module load
+console.log(`[DIAGNOSTIC-LOG] [Module Loading] [collections.ts] Module loading started. rawFirestore exists: ${!!rawFirestore}, isFirebaseAdminReady: ${isFirebaseAdminReady}`);
+
+const firestore = new Proxy({} as any, {
   get(target, prop, receiver) {
-    const value = Reflect.get(target, prop, receiver);
+    console.log(`[DIAGNOSTIC-LOG] [collections.ts Proxy] Property accessed on firestore: "${String(prop)}". rawFirestore exists: ${!!rawFirestore}`);
+    if (!rawFirestore) {
+      if (prop === 'collection' || prop === 'doc' || prop === 'batch' || prop === 'runTransaction') {
+        const err = new Error('[Firestore Error] Firestore raw client is not initialized or credentials are missing.');
+        console.error(`[DIAGNOSTIC-LOG] [collections.ts Proxy] [CRITICAL-ERROR] Property "${String(prop)}" accessed but rawFirestore is undefined. Throwing error.`);
+        throw err;
+      }
+      return undefined;
+    }
+
+    const value = Reflect.get(rawFirestore, prop, receiver);
 
     // Only intercept top-level methods that interact with Firestore collections/docs
     if (isFirestoreQuotaExceeded && (prop === 'collection' || prop === 'doc' || prop === 'batch' || prop === 'runTransaction')) {
       const e = new Error('Quota exceeded - Firestore blocked');
       (e as any).code = 'RESOURCE_EXHAUSTED';
+      console.warn(`[DIAGNOSTIC-LOG] [collections.ts Proxy] Firestore blocked due to exceeded quota during property: "${String(prop)}"`);
       throw e;
     }
     
-    // Bind functions to the target to ensure 'this' is correct
+    // Bind functions to rawFirestore to ensure 'this' is correct
     if (typeof value === 'function') {
-        return value.bind(target);
+        return value.bind(rawFirestore);
     }
     return value;
   }

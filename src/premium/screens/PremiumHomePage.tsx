@@ -14,6 +14,7 @@ import { featureFlags } from '../../core/config/featureFlags';
 import { useMatches as useMatchesV2 } from '../../hooks/useMatchesV2';
 import { HomePageRenderer } from '../../core/cms/HomePageRenderer';
 import LiveMatchesCarousel from '../../components/match/LiveMatchesCarousel';
+import MatchCarousel from '../../components/match/MatchCarousel';
 
 // Centralized Component Map
 const ComponentMap: Record<string, React.FC<any>> = {
@@ -87,8 +88,9 @@ export default function PremiumHomePage() {
         animate={{ opacity: 1 }}
         className="min-h-screen bg-[#080808] text-white"
     >
-      <div className="max-w-7xl mx-auto px-4 pt-6">
+      <div className="max-w-7xl mx-auto px-4 pt-6 space-y-6">
         <LiveMatchesCarousel />
+        <MatchCarousel />
       </div>
       
       {featureFlags.useHomepageCMS ? (

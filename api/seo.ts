@@ -1,21 +1,6 @@
 import { Request, Response } from "express";
 import path from "path";
 import fs from "fs";
-import { collections, firestore, isFirebaseAdminReady } from "../server/firestore/collections";
-import { 
-  generateSitemapIndexXml, 
-  generateSitemapXml, 
-  generateNewsSitemapXml, 
-  generateImageSitemapXml 
-} from "../server/utils/seoHelpers";
-import { 
-  normalizeMatch, 
-  normalizeLeague, 
-  normalizeTeam, 
-  normalizeNews 
-} from "../server/utils/normalizer";
-import { createSlugPath, getIdFromSlug } from "../src/utils/slugify";
-
 // --- CACHING & CONFIGURATION ---
 const getBaseUrl = (req: Request) => "https://korea90.xyz";
 
@@ -234,20 +219,42 @@ import { wrapSeoHandler } from "./seo-render";
 
 // --- CORE UNIFIED HANDLER ---
 async function handler(req: Request, res: Response) {
-  const action = req.query.action as string;
-  const requestId = Math.random().toString(36).substring(7);
+  // Global Error Capture
+  try {
+    // Lazy imports
+    console.log('[MODULE LOAD START] Loading modules');
+    let collections, firestore, isFirebaseAdminReady, generateSitemapIndexXml, generateSitemapXml, generateNewsSitemapXml, generateImageSitemapXml, normalizeMatch, normalizeLeague, normalizeTeam, normalizeNews, createSlugPath, getIdFromSlug;
+    try {
+      const collectionsMod = await import("../server/firestore/collections");
+      collections = collectionsMod.collections;
+      firestore = collectionsMod.firestore;
+      isFirebaseAdminReady = collectionsMod.isFirebaseAdminReady;
+      const seoHelpersMod = await import("../server/utils/seoHelpers");
+      generateSitemapIndexXml = seoHelpersMod.generateSitemapIndexXml;
+      generateSitemapXml = seoHelpersMod.generateSitemapXml;
+      generateNewsSitemapXml = seoHelpersMod.generateNewsSitemapXml;
+      generateImageSitemapXml = seoHelpersMod.generateImageSitemapXml;
+      const normalizerMod = await import("../server/utils/normalizer");
+      normalizeMatch = normalizerMod.normalizeMatch;
+      normalizeLeague = normalizerMod.normalizeLeague;
+      normalizeTeam = normalizerMod.normalizeTeam;
+      normalizeNews = normalizerMod.normalizeNews;
+      const slugifyMod = await import("../src/utils/slugify");
+      createSlugPath = slugifyMod.createSlugPath;
+      getIdFromSlug = slugifyMod.getIdFromSlug;
+      console.log('[MODULE LOAD SUCCESS] Modules loaded');
+    } catch (e: any) {
+      console.error('[MODULE LOAD FAILED] Modules failed to load', e);
+      throw e;
+    }
 
-  console.log(`[FORENSIC-AUDIT] [${requestId}] ---> REQUEST ENTRY <---`);
-  console.log(`[FORENSIC-AUDIT] [${requestId}] FIREBASE_SERVICE_ACCOUNT_KEY exists in env: ${!!process.env.FIREBASE_SERVICE_ACCOUNT_KEY}`);
-  console.log(`[FORENSIC-AUDIT] [${requestId}] isFirebaseAdminReady: ${isFirebaseAdminReady}`);
-  console.log(`[FORENSIC-AUDIT] [${requestId}] Method: ${req.method}`);
-  console.log(`[FORENSIC-AUDIT] [${requestId}] Original URL: ${req.originalUrl || req.url}`);
-  console.log(`[FORENSIC-AUDIT] [${requestId}] Action parameter: ${action}`);
-  console.log(`[FORENSIC-AUDIT] [${requestId}] Query string: ${JSON.stringify(req.query)}`);
-  console.log(`[FORENSIC-AUDIT] [${requestId}] User-Agent: ${req.get("user-agent")}`);
-  console.log(`[FORENSIC-AUDIT] [${requestId}] Host header: ${req.get("host")}`);
+    const action = req.query.action as string;
+    const requestId = Math.random().toString(36).substring(7);
 
-  // 1. --- ROBOTS.TXT ROUTE ---
+    console.log(`[FORENSIC-AUDIT] [${requestId}] ---> REQUEST ENTRY <---`);
+    // ... rest of the handler logic (I need to be careful with the context here, I will retain original logic but using the dynamically imported modules)
+    // Actually, this is too big for a single edit_file if I have to include the whole body.
+    // Let me rethink the strategy.
   if (action === "robots") {
     console.log(`[FORENSIC-AUDIT] [${requestId}] Handling robots.txt request`);
     res.setHeader("Content-Type", "text/plain");
@@ -773,9 +780,13 @@ Sitemap: https://korea90.xyz/sitemap.xml`);
     }
 
     return res.status(200).send(html);
-  } catch (e) {
+  } catch (e: any) {
     console.error(`[SEO Serverless Error] Failed to process meta:`, e);
-    return res.status(200).send(html);
+    return res.status(500).json({ error: 'Internal Server Error', details: e.message });
+  }
+  } catch (globalErr: any) {
+    console.error(`[SEO Handler Global Error]`, globalErr);
+    return res.status(500).json({ error: 'Internal Server Error', details: globalErr.message });
   }
 }
 

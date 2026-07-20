@@ -10,6 +10,7 @@ import { getIdFromSlug } from "../src/utils/slugify";
 import { monitoringMiddleware, metrics } from "./middleware/monitoring";
 import matchRoutes from "./routes/matches";
 import seoRoutes from "./routes/seo";
+import seoHandler from "./routes/seo-handler";
 import adminRoutes from "./routes/admin";
 import proxyRoutes from "./routes/proxies";
 import worldCupRoutes from "./routes/worldcup";
@@ -34,6 +35,9 @@ import { apiManager } from "./services/apiManager";
 const app = express();
 app.use(express.json());
 const PORT = 3000;
+
+// Explicitly register SEO handler to bypass middleware
+app.use("/", seoHandler);
 
 // Domain Unification & HTTPS Redirection (SEO-01)
 app.use((req, res, next) => {

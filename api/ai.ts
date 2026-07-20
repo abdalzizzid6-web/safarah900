@@ -1,6 +1,4 @@
 import { Request, Response } from 'express';
-import { firestore } from '../server/firestore/collections';
-import { generateMatchContent } from '../server/services/aiContentService';
 
 const TIME_7_DAYS = 7 * 24 * 60 * 60 * 1000;
 const TIME_30_DAYS = 30 * 24 * 60 * 60 * 1000;
@@ -15,6 +13,19 @@ function isCacheExpired(contentData: any): boolean {
 }
 
 export default async function handler(req: Request, res: Response) {
+  console.log('[MODULE LOAD START] Loading modules for ai.ts');
+  let firestore, generateMatchContent;
+  try {
+    const collectionsMod = await import('../server/firestore/collections');
+    firestore = collectionsMod.firestore;
+    const aiContentServiceMod = await import('../server/services/aiContentService');
+    generateMatchContent = aiContentServiceMod.generateMatchContent;
+    console.log('[MODULE LOAD SUCCESS] Modules loaded for ai.ts');
+  } catch (e) {
+    console.error('[MODULE LOAD FAILED] Modules failed to load for ai.ts', e);
+    throw e;
+  }
+  
   const action = req.query.action as string;
 
   // --- 1. MATCH ANALYSIS ROUTE ---

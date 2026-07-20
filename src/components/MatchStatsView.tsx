@@ -4,7 +4,6 @@ import {
   BarChart3, 
   Target, 
   ShieldAlert, 
-  Dribbble, 
   Zap, 
   Award, 
   Activity,

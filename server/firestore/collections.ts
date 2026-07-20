@@ -60,10 +60,20 @@ const firestore = new Proxy({} as any, {
 
     // Only intercept top-level methods that interact with Firestore collections/docs
     if (isFirestoreQuotaExceeded && (prop === 'collection' || prop === 'doc' || prop === 'batch' || prop === 'runTransaction')) {
-      const e = new Error('Quota exceeded - Firestore blocked');
-      (e as any).code = 'RESOURCE_EXHAUSTED';
-      console.warn(`[DIAGNOSTIC-LOG] [collections.ts Proxy] Firestore blocked due to exceeded quota during property: "${String(prop)}"`);
-      throw e;
+      console.warn(`[DIAGNOSTIC-LOG] [collections.ts Proxy] Firestore blocked due to exceeded quota during property: "${String(prop)}". Returning mock.`);
+      // Return a mock object/function that simulates Firestore to prevent crashes
+      const mockOp = (...args: any[]): any => ({
+          where: () => ({ get: () => Promise.resolve({ docs: [], forEach: (cb: any) => {}, size: 0 }) }),
+          get: () => Promise.resolve({ docs: [], forEach: (cb: any) => {}, size: 0, exists: false, data: () => ({}) }),
+          set: () => Promise.resolve(),
+          update: () => Promise.resolve(),
+          doc: () => ({
+              get: () => Promise.resolve({ exists: false, data: () => ({}) }),
+              set: () => Promise.resolve(),
+              update: () => Promise.resolve(),
+          })
+      });
+      return mockOp;
     }
     
     // Bind functions to rawFirestore to ensure 'this' is correct

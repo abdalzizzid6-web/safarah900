@@ -1,6 +1,6 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
-import { Trophy, Heart, Newspaper, User } from 'lucide-react-native';
+import { Trophy, Heart, Newspaper, User, Radio } from 'lucide-react-native';
 import { View, StyleSheet, Platform } from 'react-native';
 
 export default function TabLayout() {
@@ -25,6 +25,16 @@ export default function TabLayout() {
           headerTitle: 'صافرة 90 - بث حي مباشر ⚽',
           tabBarIcon: ({ color, size }) => (
             <Trophy color={color} size={size - 2} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="live"
+        options={{
+          title: 'بث مباشر',
+          headerTitle: 'المباريات المباشرة الآن 🔴',
+          tabBarIcon: ({ color, size }) => (
+            <Radio color={color} size={size - 2} />
           ),
         }}
       />

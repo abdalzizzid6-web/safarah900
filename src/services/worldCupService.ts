@@ -487,6 +487,8 @@ export const worldCupService = {
         if (matches && matches.length > 0) {
           console.log(`[worldCupService] Successfully fetched ${matches.length} matches from ${provider.name}`);
           return await this.mergeUniversalOverrides(matches);
+        } else {
+          console.log(`[worldCupService] Provider ${provider.name} returned empty matches list`);
         }
       } catch (err: any) {
         console.warn(`[worldCupService] Failed to fetch matches from ${provider.name} for ${targetYear}:`, err.message);

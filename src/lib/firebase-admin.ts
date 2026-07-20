@@ -50,7 +50,12 @@ const initFirebaseAdmin = () => {
             console.log(`[DIAGNOSTIC-LOG] [firebase-admin.ts] [SUCCESS] Firebase Admin initialized with ambient fallback.`);
         }
     } catch (e: any) {
-        console.error(`[DIAGNOSTIC-LOG] [firebase-admin.ts] [CRITICAL-ERROR] Failed to initialize Firebase Admin during module loading:`, e.stack || e);
+        console.error(`[DIAGNOSTIC-LOG] [firebase-admin.ts] [CRITICAL-ERROR] Failed to initialize Firebase Admin during module loading. Details:`, {
+            error: e.message,
+            stack: e.stack,
+            projectId: firebaseConfig.projectId,
+            hasServiceAccount: !!process.env.FIREBASE_SERVICE_ACCOUNT_KEY
+        });
         isFirebaseAdminReady = false;
     }
 };

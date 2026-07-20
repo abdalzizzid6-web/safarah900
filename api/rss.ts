@@ -1,7 +1,17 @@
 import { Request, Response } from 'express';
-import { firestore } from '../server/firestore/collections';
 
 export default async function handler(req: Request, res: Response) {
+  console.log('[MODULE LOAD START] Loading modules for rss.ts');
+  let firestore;
+  try {
+    const collectionsMod = await import('../server/firestore/collections');
+    firestore = collectionsMod.firestore;
+    console.log('[MODULE LOAD SUCCESS] Modules loaded for rss.ts');
+  } catch (e) {
+    console.error('[MODULE LOAD FAILED] Modules failed to load for rss.ts', e);
+    throw e;
+  }
+  
   const action = req.query.action as string;
 
   // --- 1. SYNC ROUTE ---

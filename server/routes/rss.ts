@@ -14,10 +14,16 @@ const router = express.Router();
 
 // Get list of all RSS Providers
 router.get("/providers", authMiddleware('editor'), async (req, res) => {
+  const cacheKey = "rss_providers_list";
+  const cached = serverCache.get(cacheKey);
+  if (cached) return res.json(cached);
+
   try {
     if (!firestore) return res.status(500).json({ error: "Firestore not initialized" });
     const snapshot = await firestore.collection("rss_sources").get();
     const providers = snapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
+    
+    serverCache.set(cacheKey, providers, 5 * 60 * 1000); // 5 mins cache
     res.json(providers);
   } catch (err: any) {
     if (handleFirestoreError(err)) {

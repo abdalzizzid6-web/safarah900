@@ -6,7 +6,9 @@ import { bootstrap } from "./server/index";
  * This is now just an entry point that bootstraps the modular server
  * logic found in the /server directory.
  */
-bootstrap().catch(err => {
+bootstrap().then(() => {
+  console.log("[SUCCESS] Server bootstrap completed.");
+}).catch(err => {
   console.error("[CRITICAL] Failed to bootstrap modular server:", err);
   process.exit(1);
 });

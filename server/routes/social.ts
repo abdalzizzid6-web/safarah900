@@ -1264,7 +1264,15 @@ async function runSchedulerCycle() {
 
 // Bootstrapped professional background execution loop (runs every 10 seconds securely)
 if (!process.env.VERCEL) {
-  setInterval(runSchedulerCycle, 10000);
+  let schedulerInterval: NodeJS.Timeout | null = setInterval(async () => {
+    if (isFirestoreQuotaExceeded) {
+        console.warn("[Social Scheduler] Firestore quota exceeded. Stopping scheduler.");
+        if (schedulerInterval) clearInterval(schedulerInterval);
+        schedulerInterval = null;
+        return;
+    }
+    await runSchedulerCycle();
+  }, 10000);
 }
 
 export const socialRouter = router;

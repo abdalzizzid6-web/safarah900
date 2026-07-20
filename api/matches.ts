@@ -1,9 +1,22 @@
 import { Request, Response } from 'express';
-import { firestore, FieldValue } from '../server/firestore/collections';
-import { syncMatchesForNotifications } from '../server/services/matchService';
-import { syncFromSource } from '../server/services/syncService';
 
 export default async function handler(req: Request, res: Response) {
+  console.log('[MODULE LOAD START] Loading modules for matches.ts');
+  let firestore, FieldValue, syncMatchesForNotifications, syncFromSource;
+  try {
+    const collectionsMod = await import('../server/firestore/collections');
+    firestore = collectionsMod.firestore;
+    FieldValue = collectionsMod.FieldValue;
+    const matchServiceMod = await import('../server/services/matchService');
+    syncMatchesForNotifications = matchServiceMod.syncMatchesForNotifications;
+    const syncServiceMod = await import('../server/services/syncService');
+    syncFromSource = syncServiceMod.syncFromSource;
+    console.log('[MODULE LOAD SUCCESS] Modules loaded for matches.ts');
+  } catch (e) {
+    console.error('[MODULE LOAD FAILED] Modules failed to load for matches.ts', e);
+    throw e;
+  }
+  
   const action = req.query.action as string;
 
   // --- 1. CRON ROUTE ---

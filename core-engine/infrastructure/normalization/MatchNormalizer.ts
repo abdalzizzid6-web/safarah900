@@ -71,6 +71,8 @@ export class MatchNormalizer {
         logo: rawAway.logo ?? data.awayLogo ?? ''
       };
 
+      console.log(`[Forensic] Match ${idStr} - Home: ${homeTeam.name}, Logo: ${homeTeam.logo}. Away: ${awayTeam.name}, Logo: ${awayTeam.logo}`);
+
       // Goals and Score Mapping
       const homeScoreNum = Number(goals.home ?? data.homeScore ?? score.home ?? 0);
       const awayScoreNum = Number(goals.away ?? data.awayScore ?? score.away ?? 0);

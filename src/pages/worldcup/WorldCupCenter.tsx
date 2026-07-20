@@ -20,6 +20,7 @@ import {
 import { UserRole } from '../../types';
 
 // Child Overlays
+import WorldCupMatches from '../../components/WorldCupMatches';
 import WCMatchDetail from './WCMatchDetail';
 import WCTeamDetail from './WCTeamDetail';
 import WCPlayerDetail from './WCPlayerDetail';
@@ -83,6 +84,7 @@ export default function WorldCupCenter() {
       ]);
 
       setMatches(Array.isArray(matchesRes) ? matchesRes : []);
+      console.log("Matches loaded:", matchesRes);
       setStandings(Array.isArray(standingsRes) ? standingsRes : []);
       setTeams(Array.isArray(teamsRes) ? teamsRes : []);
       setScorers(Array.isArray(scorersRes) ? scorersRes : []);
@@ -199,36 +201,7 @@ export default function WorldCupCenter() {
   };
 
   // Filter matches based on search & category
-  const filteredMatches = useMemo(() => {
-    return matches.filter(m => {
-      if (!m.homeTeam?.name || !m.awayTeam?.name) return false;
-      
-      const arabicHome = worldCupService.translateTeam(m.homeTeam.name);
-      const arabicAway = worldCupService.translateTeam(m.awayTeam.name);
-      const matchesSearch = arabicHome.includes(matchSearchQuery) || 
-                            arabicAway.includes(matchSearchQuery) || 
-                            (m.homeTeam.name || '').toLowerCase().includes(matchSearchQuery.toLowerCase()) ||
-                            (m.awayTeam.name || '').toLowerCase().includes(matchSearchQuery.toLowerCase());
-      
-      if (!matchesSearch) return false;
-
-      if (matchFilter === 'all') return true;
-      if (matchFilter === 'today') {
-        const todayStr = new Date().toISOString().split('T')[0];
-        return m.utcDate.startsWith(todayStr);
-      }
-      if (matchFilter === 'live') {
-        return ['LIVE', 'IN_PLAY', 'PAUSED'].includes(m.status);
-      }
-      if (matchFilter === 'upcoming') {
-        return ['SCHEDULED', 'TIMED'].includes(m.status);
-      }
-      if (matchFilter === 'finished') {
-        return ['FINISHED', 'FT'].includes(m.status);
-      }
-      return true;
-    });
-  }, [matches, matchFilter, matchSearchQuery]);
+  const filteredMatches = matches;
 
   // Filter teams based on search query
   const filteredTeamsList = useMemo(() => {

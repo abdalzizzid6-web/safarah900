@@ -1,33 +1,35 @@
 import { Request, Response } from "express";
-import ImageKit from "imagekit";
-
-let imagekitInstance: ImageKit | null = null;
-
-function getImageKit(): ImageKit {
-  if (!imagekitInstance) {
-    const publicKey = process.env.IMAGEKIT_PUBLIC || process.env.VITE_IMAGEKIT_PUBLIC || "";
-    const privateKey = process.env.IMAGEKIT_PRIVATE || "";
-    const urlEndpoint = process.env.IMAGEKIT_URL_ENDPOINT || process.env.VITE_IMAGEKIT_URL_ENDPOINT || "";
-
-    if (!privateKey) {
-      throw new Error("IMAGEKIT_PRIVATE key is missing in environment variables.");
-    }
-
-    imagekitInstance = new ImageKit({
-      publicKey,
-      privateKey,
-      urlEndpoint
-    });
-  }
-  return imagekitInstance;
-}
 
 export default async function handler(req: Request, res: Response) {
   const method = req.method;
   const action = req.query.action as string;
 
   try {
+    const { default: ImageKit } = await import("imagekit");
+    
+    let imagekitInstance: any = null;
+
+    function getImageKit(): any {
+      if (!imagekitInstance) {
+        const publicKey = process.env.IMAGEKIT_PUBLIC || process.env.VITE_IMAGEKIT_PUBLIC || "";
+        const privateKey = process.env.IMAGEKIT_PRIVATE || "";
+        const urlEndpoint = process.env.IMAGEKIT_URL_ENDPOINT || process.env.VITE_IMAGEKIT_URL_ENDPOINT || "";
+
+        if (!privateKey) {
+          throw new Error("IMAGEKIT_PRIVATE key is missing in environment variables.");
+        }
+
+        imagekitInstance = new ImageKit({
+          publicKey,
+          privateKey,
+          urlEndpoint
+        });
+      }
+      return imagekitInstance;
+    }
+
     const ik = getImageKit();
+    // ... rest of the handler
 
     // --- 1. UPLOAD IMAGE (POST /api/imagekit?action=upload) ---
     if (action === "upload" || (method === "POST" && !action)) {

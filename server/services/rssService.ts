@@ -460,10 +460,13 @@ export async function syncRssProvider(providerId: string): Promise<{ success: bo
 }
 
 // Sync all active RSS providers
+let isSyncingAll = false;
 export async function syncAllRssProviders(): Promise<{ totalImported: number; totalDuplicates: number; results: any[] }> {
-  if (!firestore) return { totalImported: 0, totalDuplicates: 0, results: [] };
+  if (!firestore || isSyncingAll) return { totalImported: 0, totalDuplicates: 0, results: [] };
+  isSyncingAll = true;
   
   if (isFirestoreQuotaExceeded) {
+    isSyncingAll = false;
     console.warn("[syncAllRssProviders] Bypassing syncAllRssProviders due to Firestore Quota limit exceeded.");
     return {
       totalImported: 0,
@@ -531,6 +534,8 @@ export async function syncAllRssProviders(): Promise<{ totalImported: number; to
         }
       ]
     };
+  } finally {
+    isSyncingAll = false;
   }
 }
 

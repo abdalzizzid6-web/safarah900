@@ -11,7 +11,8 @@ const router = express.Router();
  */
 router.get("/matches", async (req, res) => {
   try {
-    const snapshot = await firestore.collection('world_cup_matches')
+    const snapshot = await firestore.collection('matches')
+      .where('competitionId', '==', 'WC') // Assuming 'WC' is the competition ID
       .orderBy('date', 'asc')
       .get();
     

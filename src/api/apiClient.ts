@@ -28,7 +28,7 @@ function formatBaseUrl(url: string | undefined): string | undefined {
 }
 
 // Route all client-side requests through our local secure server-side proxy to prevent CORS issues
-const baseURL = '/api/football-api';
+const baseURL = typeof window !== 'undefined' ? `${window.location.origin}/api/football-api` : '/api/football-api';
 
 export interface ApiLog {
   id: string;
@@ -135,12 +135,13 @@ apiClient.interceptors.request.use((config) => {
   }
 
   // Keep using local secure server-side proxy to prevent CORS network errors for football API calls
+  const origin = typeof window !== 'undefined' ? window.location.origin : '';
   if (config.url && config.url.startsWith('/api/football-api')) {
-    config.baseURL = ''; // Already contains full relative path
+    config.baseURL = origin; // Already contains full relative path
   } else if (config.url && config.url.startsWith('/api/')) {
-    config.baseURL = ''; // Direct API call for local endpoints
+    config.baseURL = origin; // Direct API call for local endpoints
   } else {
-    config.baseURL = '/api/football-api'; // Default football proxy
+    config.baseURL = origin ? `${origin}/api/football-api` : '/api/football-api'; // Default football proxy
   }
   
   const rawUrl = config.url || '';

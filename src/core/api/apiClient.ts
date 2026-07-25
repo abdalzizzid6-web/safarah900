@@ -1,8 +1,15 @@
 import axios from 'axios';
 import { registerMatchDiagnostics } from '../utils/matchDiagnostics';
 
+const getBaseURL = () => {
+  if (typeof window !== 'undefined') {
+    return `${window.location.origin}/api`;
+  }
+  return '/api';
+};
+
 const apiClient = axios.create({
-  baseURL: '/api', // Proxy
+  baseURL: getBaseURL(),
   timeout: 20000,
 });
 
@@ -11,7 +18,11 @@ registerMatchDiagnostics(apiClient);
 
 apiClient.interceptors.request.use((config) => {
   if (config.url && config.url.startsWith('/api/')) {
-    config.baseURL = '';
+    if (typeof window !== 'undefined') {
+      config.baseURL = window.location.origin;
+    } else {
+      config.baseURL = '';
+    }
   }
   return config;
 });

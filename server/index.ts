@@ -404,16 +404,6 @@ app.use("/api/news", newsRoutes);
 app.use("/api/imagekit", imagekitRoutes);
 app.use("/api", worldCupRoutes); // Exposes /api/sync/worldcup
 
-// Temporary Diagnostics Route
-app.all("/api/runtime-diagnostics", async (req, res) => {
-  try {
-    const handlerMod = await import("../api/runtime-diagnostics");
-    return handlerMod.default(req, res);
-  } catch (err: any) {
-    res.status(500).json({ success: false, error: err.message, stack: err.stack });
-  }
-});
-
 // FCM Topic Subscription Endpoints
 app.post("/api/notifications/subscribe", async (req, res) => {
   const { token, topic } = req.body;

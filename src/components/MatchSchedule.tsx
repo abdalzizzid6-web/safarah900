@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useFixtures } from '../hooks/useMatchesV2';
 import { useLeagues } from '../hooks/useLeagues';
 import { useSettings } from '../context/SettingsContext';
@@ -8,6 +9,7 @@ import MatchBadge from './ui/MatchBadge';
 import { getLocalDateString } from '../utils/dateUtils';
 
 export default function MatchSchedule() {
+  const navigate = useNavigate();
   const [selectedLeague, setSelectedLeague] = useState<string>('ALL');
   const { data: fixtures = [], isLoading } = useFixtures({ date: getLocalDateString() });
   const { data: leagues = [] } = useLeagues();
@@ -37,7 +39,15 @@ export default function MatchSchedule() {
 
   return (
     <div className="space-y-6 p-4">
-      <h2 className="text-2xl font-black text-white">جدول مباريات الأسبوع القادم</h2>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/5 pb-3">
+        <h2 className="text-xl sm:text-2xl font-black text-white">جدول مباريات الأسبوع القادم</h2>
+        <button
+          onClick={() => navigate('/schedule?tab=CALENDAR')}
+          className="text-xs font-black text-primary hover:underline flex items-center gap-1.5 bg-primary/10 border border-primary/20 hover:bg-primary/20 px-3 py-2 rounded-xl cursor-pointer transition-all self-start sm:self-center"
+        >
+          <span>التقويم الأسبوعي التفاعلي 📅</span>
+        </button>
+      </div>
       
       {/* League Filter */}
       <div className="flex gap-2 overflow-x-auto pb-2">

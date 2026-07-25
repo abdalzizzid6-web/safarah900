@@ -64,8 +64,13 @@ async function filterMatchesByEnabledLeagues(normalizedMatches: any[]): Promise<
         return setting.enabled !== false;
       }
       
-      // Default to true for core defaults, false for others
-      return CORE_DEFAULT_LEAGUE_IDS.includes(leagueId);
+      // Default to true for empty or unconfigured leagues to prevent hiding legitimate matches
+      if (!leagueId) {
+        return true;
+      }
+      
+      // Allow by default unless it's explicitly disabled in CMS
+      return true;
     });
   } catch (err) {
     console.error("[FilterMatches] Error during filtering:", err);

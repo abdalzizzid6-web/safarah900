@@ -36,6 +36,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Match } from '../types';
 import MatchCard from './MatchCard';
+import WeekMatchesCalendar from './WeekMatchesCalendar';
 import AdBanner from './AdBanner';
 import { filterMatchesByCustomLeagues } from '../utils/leagueFilter';
 import { getLocalDateString } from '../utils/dateUtils';
@@ -117,7 +118,7 @@ const MAJOR_LEAGUES_CONFIG = [
   }
 ];
 
-type TabType = 'LIVE' | 'TODAY' | 'UPCOMING' | 'FINISHED';
+type TabType = 'LIVE' | 'TODAY' | 'UPCOMING' | 'FINISHED' | 'CALENDAR';
 type ViewMode = 'COMPACT' | 'CARDS';
 
 const Schedule = React.memo(function Schedule() {
@@ -396,11 +397,11 @@ const Schedule = React.memo(function Schedule() {
 
       {/* 2. TAB CONTROLLER */}
       <div className="bg-surface p-1 rounded-2xl border border-white/5 flex items-center w-full shadow-inner shadow-black/40">
-        {(['TODAY', 'LIVE', 'UPCOMING', 'FINISHED'] as const).map(tab => (
+        {(['TODAY', 'LIVE', 'CALENDAR', 'UPCOMING', 'FINISHED'] as const).map(tab => (
           <button
             key={tab}
             onClick={() => handleTabChange(tab)}
-            className={`flex-1 text-center py-2.5 rounded-xl text-xs sm:text-sm font-black transition-all duration-300 relative cursor-pointer ${
+            className={`flex-1 text-center py-2.5 rounded-xl text-[10px] sm:text-xs md:text-sm font-black transition-all duration-300 relative cursor-pointer ${
               activeTab === tab 
                 ? 'text-black bg-primary shadow-md font-black scale-[1.01]' 
                 : 'text-gray-400 hover:text-white hover:bg-white/5'
@@ -414,6 +415,7 @@ const Schedule = React.memo(function Schedule() {
                 <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
               </span>
             )}
+            {tab === 'CALENDAR' && 'تقويم الأسبوع'}
             {tab === 'UPCOMING' && 'القادمة'}
             {tab === 'FINISHED' && 'المنتهية'}
           </button>
@@ -421,7 +423,7 @@ const Schedule = React.memo(function Schedule() {
       </div>
 
       {/* 3. INTERACTIVE HORIZONTAL DATE SLIDER (FOTMOB DESIGN) */}
-      {activeTab !== 'LIVE' && (
+      {activeTab !== 'LIVE' && activeTab !== 'CALENDAR' && (
         <div className="bg-surface p-3 rounded-2xl border border-white/5 space-y-3 shadow-md" id="date-slider-container">
           <div className="flex items-center justify-between text-xs font-bold text-gray-300">
             <span className="flex items-center gap-1">
@@ -480,159 +482,163 @@ const Schedule = React.memo(function Schedule() {
       )}
 
       {/* MAJOR LEAGUES FEATURED FILTER CAROUSEL (FOTMOB STYLE) */}
-      <motion.div 
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="bg-surface p-4 rounded-2xl border border-white/5 space-y-3.5 shadow-md relative overflow-hidden" 
-        id="major-leagues-filter-container"
-      >
-        <div className="flex items-center justify-between text-xs font-black text-gray-300">
-          <span className="flex items-center gap-1.5">
-            <Trophy size={14} className="text-yellow-400 animate-pulse" />
-            <span>فلترة سريعة حسب الدوريات الكبرى:</span>
-          </span>
-          {selectedLeague !== 'ALL' && (
-            <button
-              onClick={() => setSelectedLeague('ALL')}
-              className="text-[10px] text-primary hover:underline font-bold cursor-pointer transition-all"
-            >
-              عرض الكل (إلغاء الفلتر)
-            </button>
-          )}
-        </div>
-
-        <div className="overflow-x-auto scrollbar-none flex items-center gap-3 pb-1" style={{ scrollSnapType: 'x mandatory' }}>
-          {/* "ALL" option in the Carousel too for easy reset with icon */}
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => setSelectedLeague('ALL')}
-            className={`flex-shrink-0 min-w-[105px] p-3 rounded-xl border flex flex-col items-center justify-center gap-2 transition-all cursor-pointer snap-start relative ${
-              selectedLeague === 'ALL'
-                ? 'bg-primary border-primary text-black font-black shadow-lg shadow-primary/10'
-                : 'bg-white/5 border-white/5 hover:bg-white/10 text-gray-300'
-            }`}
-          >
-            <div className={`w-10 h-10 rounded-full flex items-center justify-center text-lg ${selectedLeague === 'ALL' ? 'bg-black/10 text-black' : 'bg-white/5 text-primary'}`}>
-              🏆
-            </div>
-            <span className="text-[10px] font-black">جميع البطولات</span>
-            <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold ${selectedLeague === 'ALL' ? 'bg-black/10 text-black' : 'bg-white/5 text-gray-400'}`}>
-              {dynamicLeagueCounts.total}
+      {activeTab !== 'CALENDAR' && (
+        <motion.div 
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-surface p-4 rounded-2xl border border-white/5 space-y-3.5 shadow-md relative overflow-hidden" 
+          id="major-leagues-filter-container"
+        >
+          <div className="flex items-center justify-between text-xs font-black text-gray-300">
+            <span className="flex items-center gap-1.5">
+              <Trophy size={14} className="text-yellow-400 animate-pulse" />
+              <span>فلترة سريعة حسب الدوريات الكبرى:</span>
             </span>
-          </motion.button>
-
-          {MAJOR_LEAGUES_CONFIG.map((ml) => {
-            const isActive = selectedLeague === ml.key;
-            const count = majorLeagueCounts[ml.key] || 0;
-            
-            return (
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                key={ml.key}
-                onClick={() => setSelectedLeague(isActive ? 'ALL' : ml.key)}
-                className={`flex-shrink-0 min-w-[115px] p-3 rounded-xl border flex flex-col items-center justify-center gap-2 transition-all cursor-pointer snap-start group relative overflow-hidden ${
-                  isActive
-                    ? `bg-gradient-to-br ${ml.color} border-transparent text-white font-black shadow-lg shadow-black/40`
-                    : 'bg-white/5 border-white/5 hover:bg-white/10 text-gray-300'
-                }`}
+            {selectedLeague !== 'ALL' && (
+              <button
+                onClick={() => setSelectedLeague('ALL')}
+                className="text-[10px] text-primary hover:underline font-bold cursor-pointer transition-all"
               >
-                {/* Glowing subtle background dot when active */}
-                {isActive && (
-                  <span className="absolute -top-6 -right-6 w-12 h-12 bg-white/10 rounded-full blur-xl" />
-                )}
+                عرض الكل (إلغاء الفلتر)
+              </button>
+            )}
+          </div>
 
-                <div className={`w-10 h-10 rounded-full bg-white/10 p-1 flex items-center justify-center transition-all group-hover:scale-105 ${isActive ? 'ring-2 ring-white/50' : 'group-hover:ring-1 group-hover:ring-white/20'}`}>
-                  <ImageResolver
-                    src={ml.logo}
-                    alt={ml.nameAr}
-                    fallbackType="league"
-                    className="w-8 h-8 object-contain rounded-full bg-white/5"
-                  />
-                </div>
+          <div className="overflow-x-auto scrollbar-none flex items-center gap-3 pb-1" style={{ scrollSnapType: 'x mandatory' }}>
+            {/* "ALL" option in the Carousel too for easy reset with icon */}
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => setSelectedLeague('ALL')}
+              className={`flex-shrink-0 min-w-[105px] p-3 rounded-xl border flex flex-col items-center justify-center gap-2 transition-all cursor-pointer snap-start relative ${
+                selectedLeague === 'ALL'
+                  ? 'bg-primary border-primary text-black font-black shadow-lg shadow-primary/10'
+                  : 'bg-white/5 border-white/5 hover:bg-white/10 text-gray-300'
+              }`}
+            >
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center text-lg ${selectedLeague === 'ALL' ? 'bg-black/10 text-black' : 'bg-white/5 text-primary'}`}>
+                🏆
+              </div>
+              <span className="text-[10px] font-black">جميع البطولات</span>
+              <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold ${selectedLeague === 'ALL' ? 'bg-black/10 text-black' : 'bg-white/5 text-gray-400'}`}>
+                {dynamicLeagueCounts.total}
+              </span>
+            </motion.button>
 
-                <span className="text-[10px] font-black text-center truncate w-full">
-                  {ml.nameAr}
-                </span>
+            {MAJOR_LEAGUES_CONFIG.map((ml) => {
+              const isActive = selectedLeague === ml.key;
+              const count = majorLeagueCounts[ml.key] || 0;
+              
+              return (
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  key={ml.key}
+                  onClick={() => setSelectedLeague(isActive ? 'ALL' : ml.key)}
+                  className={`flex-shrink-0 min-w-[115px] p-3 rounded-xl border flex flex-col items-center justify-center gap-2 transition-all cursor-pointer snap-start group relative overflow-hidden ${
+                    isActive
+                      ? `bg-gradient-to-br ${ml.color} border-transparent text-white font-black shadow-lg shadow-black/40`
+                      : 'bg-white/5 border-white/5 hover:bg-white/10 text-gray-300'
+                  }`}
+                >
+                  {/* Glowing subtle background dot when active */}
+                  {isActive && (
+                    <span className="absolute -top-6 -right-6 w-12 h-12 bg-white/10 rounded-full blur-xl" />
+                  )}
 
-                <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold transition-all ${
-                  isActive 
-                    ? 'bg-white/20 text-white' 
-                    : count > 0 
-                      ? 'bg-primary/20 text-primary animate-pulse' 
-                      : 'bg-white/5 text-gray-500'
-                }`}>
-                  {count > 0 ? `${count} ${count === 1 ? 'مباراة' : 'مباريات'}` : 'لا مباريات'}
-                </span>
-              </motion.button>
-            );
-          })}
-        </div>
-      </motion.div>
+                  <div className={`w-10 h-10 rounded-full bg-white/10 p-1 flex items-center justify-center transition-all group-hover:scale-105 ${isActive ? 'ring-2 ring-white/50' : 'group-hover:ring-1 group-hover:ring-white/20'}`}>
+                    <ImageResolver
+                      src={ml.logo}
+                      alt={ml.nameAr}
+                      fallbackType="league"
+                      className="w-8 h-8 object-contain rounded-full bg-white/5"
+                    />
+                  </div>
+
+                  <span className="text-[10px] font-black text-center truncate w-full">
+                    {ml.nameAr}
+                  </span>
+
+                  <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold transition-all ${
+                    isActive 
+                      ? 'bg-white/20 text-white' 
+                      : count > 0 
+                        ? 'bg-primary/20 text-primary animate-pulse' 
+                        : 'bg-white/5 text-gray-500'
+                  }`}>
+                    {count > 0 ? `${count} ${count === 1 ? 'مباراة' : 'مباريات'}` : 'لا مباريات'}
+                  </span>
+                </motion.button>
+              );
+            })}
+          </div>
+        </motion.div>
+      )}
 
       {/* 4. DYNAMIC QUICK LEAGUE PILLS & VIEW togglers */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-surface p-3 rounded-2xl border border-white/5" id="filters-panel-wrapper">
-        <div className="flex items-center gap-2 overflow-x-auto scrollbar-none py-1 flex-1">
-          <SlidersHorizontal size={14} className="text-gray-400 hidden sm:inline-block md:ml-1 shrink-0" />
-          
-          <button
-            onClick={() => setSelectedLeague('ALL')}
-            className={`px-3 py-1.5 rounded-full text-[11px] font-black whitespace-nowrap cursor-pointer transition-all ${
-              selectedLeague === 'ALL'
-                ? 'bg-primary text-black shadow-md shadow-primary/10'
-                : 'bg-white/5 border border-white/5 hover:bg-white/10 text-gray-300'
-            }`}
-          >
-            الكل ({dynamicLeagueCounts.total})
-          </button>
-          
-          {Object.entries(dynamicLeagueCounts.counts).map(([leagueName, count]) => (
+      {activeTab !== 'CALENDAR' && (
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-surface p-3 rounded-2xl border border-white/5" id="filters-panel-wrapper">
+          <div className="flex items-center gap-2 overflow-x-auto scrollbar-none py-1 flex-1">
+            <SlidersHorizontal size={14} className="text-gray-400 hidden sm:inline-block md:ml-1 shrink-0" />
+            
             <button
-              key={leagueName}
-              onClick={() => setSelectedLeague(leagueName)}
-              className={`px-3 py-1.5 rounded-full text-[11px] font-bold whitespace-nowrap cursor-pointer transition-all ${
-                selectedLeague === leagueName
-                  ? 'bg-primary text-black shadow-md'
+              onClick={() => setSelectedLeague('ALL')}
+              className={`px-3 py-1.5 rounded-full text-[11px] font-black whitespace-nowrap cursor-pointer transition-all ${
+                selectedLeague === 'ALL'
+                  ? 'bg-primary text-black shadow-md shadow-primary/10'
                   : 'bg-white/5 border border-white/5 hover:bg-white/10 text-gray-300'
               }`}
             >
-              {leagueName} ({count})
+              الكل ({dynamicLeagueCounts.total})
             </button>
-          ))}
-        </div>
-
-        {/* Text search + View Switches */}
-        <div className="flex items-center gap-2 shrink-0">
-          <div className="relative w-full sm:w-auto">
-            <Search size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500" />
-            <input
-              type="text"
-              placeholder="البحث باسم الفريق أو البطولة..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full sm:w-48 text-right bg-white/5 border border-white/5 p-2 pr-9 pl-3 rounded-xl text-xs font-bold text-gray-200 outline-none focus:border-primary transition-all"
-            />
+            
+            {Object.entries(dynamicLeagueCounts.counts).map(([leagueName, count]) => (
+              <button
+                key={leagueName}
+                onClick={() => setSelectedLeague(leagueName)}
+                className={`px-3 py-1.5 rounded-full text-[11px] font-bold whitespace-nowrap cursor-pointer transition-all ${
+                  selectedLeague === leagueName
+                    ? 'bg-primary text-black shadow-md'
+                    : 'bg-white/5 border border-white/5 hover:bg-white/10 text-gray-300'
+                }`}
+              >
+                {leagueName} ({count})
+              </button>
+            ))}
           </div>
 
-          <div className="bg-white/5 p-0.5 rounded-xl border border-white/5 flex items-center shrink-0">
-            <button
-              onClick={() => setViewMode('COMPACT')}
-              className={`p-1.5 rounded-lg transition-all cursor-pointer ${viewMode === 'COMPACT' ? 'bg-primary text-black' : 'text-gray-400 hover:text-white'}`}
-              title="عرض مدمج (نمط جدول الدوري)"
-            >
-              <List size={14} />
-            </button>
-            <button
-              onClick={() => setViewMode('CARDS')}
-              className={`p-1.5 rounded-lg transition-all cursor-pointer ${viewMode === 'CARDS' ? 'bg-primary text-black' : 'text-gray-400 hover:text-white'}`}
-              title="عرض مفصل (بطاقات)"
-            >
-              <LayoutGrid size={14} />
-            </button>
+          {/* Text search + View Switches */}
+          <div className="flex items-center gap-2 shrink-0">
+            <div className="relative w-full sm:w-auto">
+              <Search size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500" />
+              <input
+                type="text"
+                placeholder="البحث باسم الفريق أو البطولة..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full sm:w-48 text-right bg-white/5 border border-white/5 p-2 pr-9 pl-3 rounded-xl text-xs font-bold text-gray-200 outline-none focus:border-primary transition-all"
+              />
+            </div>
+
+            <div className="bg-white/5 p-0.5 rounded-xl border border-white/5 flex items-center shrink-0">
+              <button
+                onClick={() => setViewMode('COMPACT')}
+                className={`p-1.5 rounded-lg transition-all cursor-pointer ${viewMode === 'COMPACT' ? 'bg-primary text-black' : 'text-gray-400 hover:text-white'}`}
+                title="عرض مدمج (نمط جدول الدوري)"
+              >
+                <List size={14} />
+              </button>
+              <button
+                onClick={() => setViewMode('CARDS')}
+                className={`p-1.5 rounded-lg transition-all cursor-pointer ${viewMode === 'CARDS' ? 'bg-primary text-black' : 'text-gray-400 hover:text-white'}`}
+                title="عرض مفصل (بطاقات)"
+              >
+                <LayoutGrid size={14} />
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* NATIVE BANNER ADS */}
       <div className="w-full" id="schedule-ad-banner">
@@ -640,7 +646,7 @@ const Schedule = React.memo(function Schedule() {
       </div>
 
       {/* Global Collapsible action bar (Shown if grouped leagues exist) */}
-      {uniqueLeagueNames.length > 0 && (
+      {activeTab !== 'CALENDAR' && uniqueLeagueNames.length > 0 && (
         <div className="flex items-center justify-between px-1">
           <span className="text-[10px] text-gray-400 font-bold">
             عدد البطولات النشطة: <span className="text-secondary font-extrabold">{uniqueLeagueNames.length}</span> بطولة
@@ -664,7 +670,9 @@ const Schedule = React.memo(function Schedule() {
 
       {/* 5. MATCH LISTINGS */}
       <div className="space-y-6 pt-1">
-        {currentQuery.isError ? (
+        {activeTab === 'CALENDAR' ? (
+          <WeekMatchesCalendar />
+        ) : currentQuery.isError ? (
           <EmptyState 
             title="حدث خطأ في تحميل البيانات"
             description="فشل جلب بيانات المباريات. يرجى التحقق من اتصالك بالإنترنت والمحاولة مرة أخرى."

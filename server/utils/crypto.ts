@@ -7,7 +7,7 @@ const TAG_LENGTH = 16;
 
 // Get encryption key from env, or derive a stable key from process.env.GEMINI_API_KEY / applet ID
 function getEncryptionKey(): Buffer {
-  const keySource = process.env.SOCIAL_ENCRYPTION_KEY || process.env.GEMINI_API_KEY || 'safara-90-secret-fallback-key-32b';
+  const keySource = process.env.SOCIAL_ENCRYPTION_KEY || process.env.GEMINI_API_KEY || process.env.FIREBASE_PROJECT_ID || process.env.VERCEL_GIT_COMMIT_SHA || 'safara90-production-encryption-salt-key';
   return crypto.createHash('sha256').update(keySource).digest();
 }
 

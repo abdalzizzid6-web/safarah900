@@ -62,4 +62,9 @@ export class TeamRepository extends BaseRepository<ITeam> implements ITeamReposi
     await this.update(id, { order });
     CacheLayer.invalidate('teams');
   }
+
+  async getTeamKnowledge(id: string | number): Promise<any> {
+    const team = await this.getTeamById(String(id));
+    return team?.knowledge || { history: 'معلومات الفريق الأساسية', tactics: 'تكتيكات الفريق' };
+  }
 }

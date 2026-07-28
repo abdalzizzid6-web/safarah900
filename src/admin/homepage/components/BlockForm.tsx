@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, addDoc, doc, updateDoc } from 'firebase/firestore';
-import { db } from '../../../firebase';
+import { repositories } from '../../../core/repository';
 import { BlockType } from '../../../types';
 import { clearHomepageCache } from '../../../hooks/useHomepageLayout';
 import { Save, Settings, Layers, Palette, Clock, Code } from 'lucide-react';
@@ -448,9 +447,9 @@ export const BlockForm: React.FC<BlockFormProps> = ({ blockToEdit, onSave, onCan
 
     try {
       if (blockToEdit) {
-        await updateDoc(doc(db, 'homepage_blocks', blockToEdit.id), payload);
+        await repositories.homepage.update(blockToEdit.id, payload);
       } else {
-        await addDoc(collection(db, 'homepage_blocks'), payload);
+        await repositories.homepage.create(payload);
       }
       clearHomepageCache();
       onSave();

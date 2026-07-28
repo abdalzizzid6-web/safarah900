@@ -1,10 +1,14 @@
-import { apiManagementRepository } from '../index';
-import { repositories } from '../../repository';
+import { SyncRepository } from '../repository/SyncRepository';
+import { LeagueRepository } from '../repository/LeagueRepository';
+import { ApiKeyRepository } from '../repository/ApiKeyRepository';
 import { ISyncJob, ISyncLog } from '../models/sync.model';
 
 export class UnifiedSyncEngine {
   private static instance: UnifiedSyncEngine;
   private activeJobs: Set<string> = new Set();
+  private syncRepo = new SyncRepository();
+  private leagueRepo = new LeagueRepository();
+  private apiKeyRepo = new ApiKeyRepository();
 
   private constructor() {}
 
@@ -19,7 +23,7 @@ export class UnifiedSyncEngine {
    * Main entry point for triggering a sync job
    */
   async triggerSync(jobData: Omit<ISyncJob, 'id' | 'status' | 'startedAt'>): Promise<string> {
-    const jobId = await apiManagementRepository.syncRepository.triggerSync(jobData);
+    const jobId = await this.syncRepo.triggerSync(jobData);
     
     // Start background execution
     this.executeJob(jobId, jobData).catch(err => {
@@ -31,7 +35,7 @@ export class UnifiedSyncEngine {
 
   private async executeJob(jobId: string, jobData: any) {
     if (this.activeJobs.has(jobData.targetId)) {
-      await apiManagementRepository.syncRepository.updateJobStatus(jobId, 'failed', 'Concurrency conflict: Job already running for this target');
+      await this.syncRepo.updateJobStatus(jobId, 'failed', 'Concurrency conflict: Job already running for this target');
       return;
     }
 
@@ -40,7 +44,7 @@ export class UnifiedSyncEngine {
     const startTime = Date.now();
 
     try {
-      await apiManagementRepository.syncRepository.addSyncLog({
+      await this.syncRepo.addSyncLog({
         jobId,
         providerId: jobData.providerId,
         type: jobData.type,
@@ -64,8 +68,8 @@ export class UnifiedSyncEngine {
           throw new Error(`Sync type ${jobData.type} not implemented yet`);
       }
 
-      await apiManagementRepository.syncRepository.updateJobStatus(jobId, 'completed');
-      await apiManagementRepository.syncRepository.addSyncLog({
+      await this.syncRepo.updateJobStatus(jobId, 'completed');
+      await this.syncRepo.addSyncLog({
         jobId,
         providerId: jobData.providerId,
         type: jobData.type,
@@ -78,8 +82,8 @@ export class UnifiedSyncEngine {
 
     } catch (error: any) {
       itemsCount.errors++;
-      await apiManagementRepository.syncRepository.updateJobStatus(jobId, 'failed', error.message);
-      await apiManagementRepository.syncRepository.addSyncLog({
+      await this.syncRepo.updateJobStatus(jobId, 'failed', error.message);
+      await this.syncRepo.addSyncLog({
         jobId,
         providerId: jobData.providerId,
         type: jobData.type,
@@ -96,25 +100,19 @@ export class UnifiedSyncEngine {
 
   private async syncLeague(leagueId: string, providerId: string, counts: any) {
     // 1. Get league config to find primary provider if not specified
-    const leagues = await apiManagementRepository.leagueRepository.getLeagues();
+    const leagues = await this.leagueRepo.getLeagues();
     const league = leagues.find(l => l.id === leagueId);
     if (!league) throw new Error(`League ${leagueId} not found`);
 
     const targetProviderId = providerId || league.primaryProviderId;
     
     // 2. Get API key for provider
-    const keys = await apiManagementRepository.apiKeyRepository.getKeys();
+    const keys = await this.apiKeyRepo.getKeys();
     const key = keys.find(k => k.id === targetProviderId && k.active);
     if (!key) throw new Error(`No active API key for provider ${targetProviderId}`);
 
     // 3. Perform the actual API fetch (Simplified logic for now, should use adapters)
-    // Here we would call the specialized provider service or adapter
     console.log(`[UnifiedSyncEngine] Fetching fixtures for league ${leagueId} using ${targetProviderId}`);
-    
-    // Placeholder for actual fetch and map logic
-    // const data = await providerAdapter.getFixtures(leagueId, key.value);
-    // counts.matches = data.length;
-    // await repositories.matches.bulkSave(data);
   }
 
   private async syncProvider(providerId: string, counts: any) {

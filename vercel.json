@@ -84,7 +84,7 @@
     },
     {
       "source": "/api/:path*",
-      "destination": "/api/:path*"
+      "destination": "/api/index"
     },
     {
       "source": "/((?!api/|sitemap|robots\\.txt|manifest\\.json|ads\\.txt|.*\\.).*)",

@@ -1,6 +1,5 @@
-import { doc, getDoc, setDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
-import { db } from '../firebase';
 import { Match } from '../types';
+import { repositories } from '../core/repository';
 
 export const syncMatch = async (
   rawMatchData: any,
@@ -13,10 +12,7 @@ export const syncMatch = async (
     const normalizedData = normalizeFn(rawMatchData);
     const matchId = normalizedData.id || `apf-${provider}-${rawMatchData.id}`;
     
-    const matchRef = doc(db, 'matches', matchId);
-    
-    // Check if exists
-    const existingDoc = await getDoc(matchRef);
+    const existingDoc = await repositories.matches.getById(matchId);
     const now = new Date().toISOString();
     
     const matchToSave: any = {
@@ -28,22 +24,21 @@ export const syncMatch = async (
       syncStatus: 'synced',
       lastSyncAt: now,
       lastProviderUpdate: now,
-      updatedAt: serverTimestamp(),
+      updatedAt: now,
     };
 
-    // Ensure temporal fields are stored as actual Timestamps for robust querying
     if (normalizedData.startTime) {
-      matchToSave.startTime = Timestamp.fromDate(new Date(normalizedData.startTime));
+      matchToSave.startTime = new Date(normalizedData.startTime).toISOString();
     }
     if (normalizedData.utcDate) {
-      matchToSave.utcDate = Timestamp.fromDate(new Date(normalizedData.utcDate));
+      matchToSave.utcDate = new Date(normalizedData.utcDate).toISOString();
     }
     
-    if (!existingDoc.exists()) {
-        matchToSave.createdAt = serverTimestamp();
+    if (!existingDoc) {
+      matchToSave.createdAt = now;
     }
     
-    await setDoc(matchRef, matchToSave, { merge: true });
+    await repositories.matches.setById(matchId, matchToSave);
     
     return { success: true, matchId };
   } catch (error) {

@@ -1,7 +1,5 @@
-import { db } from '../../firebase';
-import { doc, getDoc, getDocs, setDoc, deleteDoc, collection, query, limit } from 'firebase/firestore';
+import { repositories } from '../repository';
 import { getCached, setCache, invalidateCache } from '../../utils/cacheUtils';
-// (No import of localDbFallback)
 
 export interface LeagueSettings {
   id: string;
@@ -56,7 +54,6 @@ export interface HomepageConfig {
   featuredTeams: string[];
 }
 
-// Low-overhead Memory and Local Cache to optimize Firestore reads (Firebase Free Plan)
 let memoryCache: Record<string, { data: any; expiresAt: number }> = {};
 const STORAGE_PREFIX = "Safara 90_cms_cache_";
 
@@ -64,8 +61,7 @@ export const cmsService = {
   // Leagues Management
   async updateLeagueSettings(leagueId: string, settings: Partial<LeagueSettings>) {
     const payload = { ...settings, id: String(leagueId), updatedAt: new Date().toISOString() };
-    await setDoc(doc(db, 'cms_leagues', String(leagueId)), payload, { merge: true });
-    // invalidate cache
+    await repositories.cms.setById(`league_${leagueId}`, payload);
     invalidateCache('leagues', memoryCache, STORAGE_PREFIX + 'leagues');
   },
 
@@ -73,7 +69,6 @@ export const cmsService = {
     const cached = getCached<LeagueSettings[]>('leagues', memoryCache, STORAGE_PREFIX + 'leagues');
     if (cached) return cached;
 
-    // 0. Try channels.json cache first for absolute read minimization
     try {
       const response = await fetch('/channels.json');
       if (response.ok) {
@@ -85,18 +80,17 @@ export const cmsService = {
         }
       }
     } catch (err) {
-      console.warn("[cmsService] Channels.json cache fetch failed, querying Firestore fallback:", err);
+      console.warn("[cmsService] Channels.json cache fetch failed:", err);
     }
 
     try {
-      const snap = await getDocs(query(collection(db, 'cms_leagues'), limit(50)));
-      const list = snap.docs.map(docDoc => ({ id: docDoc.id, ...docDoc.data() } as LeagueSettings));
-      // sort by order, then name
+      const all = await repositories.cms.getAll();
+      const list = all.filter((d: any) => d.id?.startsWith('league_') || d.leagueId) as LeagueSettings[];
       list.sort((a, b) => (a.order || 0) - (b.order || 0));
       setCache('leagues', list, memoryCache, STORAGE_PREFIX + 'leagues');
       return list;
     } catch (e) {
-      console.warn("Error reading leagues settings (e.g. Quota/Connection), falling back to cached or mock settings:", e);
+      console.warn("Error reading leagues settings:", e);
       const stale = getCached<LeagueSettings[]>('leagues', memoryCache, STORAGE_PREFIX + 'leagues', true);
       if (stale) return stale;
       return [];
@@ -114,13 +108,12 @@ export const cmsService = {
 
   async getEnabledLeagues(): Promise<LeagueSettings[]> {
     const list = await this.getLeagueSettingsList();
-    return list.filter(l => l.enabled !== false); // default to true if not explicitly disabled or check value
+    return list.filter(l => l.enabled !== false);
   },
 
   async setMatchOverride(matchId: string, override: { hidden?: boolean; pinned?: boolean; serverPriority?: any }) {
     const payload = { ...override, id: String(matchId), updatedAt: new Date().toISOString() };
-    await setDoc(doc(db, 'cms_match_overrides', String(matchId)), payload, { merge: true });
-    // invalidate matches cache
+    await repositories.cms.setById(`match_override_${matchId}`, payload);
     invalidateCache('matches', memoryCache, STORAGE_PREFIX + 'matches');
   },
   
@@ -129,19 +122,16 @@ export const cmsService = {
     if (cached) return cached;
 
     try {
-      const snap = await getDocs(query(collection(db, 'cms_match_overrides'), limit(100)));
+      const all = await repositories.cms.getAll();
       const overrides: Record<string, any> = {};
-      snap.docs.forEach(docDoc => {
-        overrides[docDoc.id] = { id: docDoc.id, ...docDoc.data() };
+      all.filter((d: any) => d.id?.startsWith('match_override_')).forEach((docDoc: any) => {
+        const cleanId = docDoc.id.replace('match_override_', '');
+        overrides[cleanId] = { id: cleanId, ...docDoc };
       });
       setCache('matches', overrides, memoryCache, STORAGE_PREFIX + 'matches');
       return overrides;
     } catch (e: any) {
-      if (e?.code === 8 || e?.message?.includes('RESOURCE_EXHAUSTED') || e?.message?.includes('Quota')) {
-        console.warn("Firestore quota exceeded or exhausted for match overrides, using fallback.");
-      } else {
-        console.error("Error fetching match overrides, falling back to cached stale database:", e);
-      }
+      console.warn("Error fetching match overrides:", e);
       const stale = getCached<Record<string, any>>('matches', memoryCache, STORAGE_PREFIX + 'matches', true);
       if (stale) return stale;
       return {};
@@ -151,8 +141,7 @@ export const cmsService = {
   // Teams Management
   async updateTeamSettings(teamId: string, settings: Partial<TeamSettings>) {
     const payload = { ...settings, id: String(teamId), updatedAt: new Date().toISOString() };
-    await setDoc(doc(db, 'cms_teams', String(teamId)), payload, { merge: true });
-    // invalidate cache
+    await repositories.cms.setById(`team_${teamId}`, payload);
     invalidateCache('teams', memoryCache, STORAGE_PREFIX + 'teams');
   },
 
@@ -161,13 +150,13 @@ export const cmsService = {
     if (cached) return cached;
 
     try {
-      const snap = await getDocs(query(collection(db, 'cms_teams'), limit(100)));
-      const list = snap.docs.map(docDoc => ({ id: docDoc.id, ...docDoc.data() } as TeamSettings));
+      const all = await repositories.cms.getAll();
+      const list = all.filter((d: any) => d.id?.startsWith('team_')) as TeamSettings[];
       list.sort((a, b) => (a.order || 0) - (b.order || 0));
       setCache('teams', list, memoryCache, STORAGE_PREFIX + 'teams');
       return list;
     } catch (e) {
-      console.warn("Error reading teams settings, falling back to cached or mock teams:", e);
+      console.warn("Error reading teams settings:", e);
       const stale = getCached<TeamSettings[]>('teams', memoryCache, STORAGE_PREFIX + 'teams', true);
       if (stale) return stale;
       return [];
@@ -183,80 +172,76 @@ export const cmsService = {
     return map;
   },
 
-  // Channels & Servers Management
-  async updateChannelServerSettings(id: string, settings: Partial<ChannelServerSettings>) {
-    const payload = { ...settings, id: String(id), updatedAt: new Date().toISOString() };
-    await setDoc(doc(db, 'cms_channels_servers', String(id)), payload, { merge: true });
-    // invalidate
-    delete memoryCache['channels'];
-    localStorage.removeItem('Safara 90_cms_cache_channels');
+  // Channel Servers
+  async updateChannelServer(serverId: string, settings: Partial<ChannelServerSettings>) {
+    const payload = { ...settings, id: String(serverId), updatedAt: new Date().toISOString() };
+    await repositories.cms.setById(`channel_server_${serverId}`, payload);
+    invalidateCache('channels', memoryCache, STORAGE_PREFIX + 'channels');
   },
 
-  async deleteChannelServerSettings(id: string) {
-    await deleteDoc(doc(db, 'cms_channels_servers', String(id)));
-    delete memoryCache['channels'];
-    localStorage.removeItem('Safara 90_cms_cache_channels');
+  async updateChannelServerSettings(serverId: string, settings: Partial<ChannelServerSettings>) {
+    return this.updateChannelServer(serverId, settings);
   },
 
-  async getChannelServerSettingsList(): Promise<ChannelServerSettings[]> {
+  async deleteChannelServer(serverId: string) {
+    await repositories.cms.delete(serverId);
+    invalidateCache('channels', memoryCache, STORAGE_PREFIX + 'channels');
+  },
+
+  async deleteChannelServerSettings(serverId: string) {
+    return this.deleteChannelServer(serverId);
+  },
+
+  async getChannelServersList(): Promise<ChannelServerSettings[]> {
     const cached = getCached<ChannelServerSettings[]>('channels', memoryCache, STORAGE_PREFIX + 'channels');
     if (cached) return cached;
 
-    // 0. Try servers.json cache first for absolute read minimization
     try {
-      const response = await fetch('/servers.json');
-      if (response.ok) {
-        const list = await response.json();
-        if (Array.isArray(list) && list.length > 0) {
-          list.sort((a, b) => (a.priority || 0) - (b.priority || 0));
-          setCache('channels', list, memoryCache, STORAGE_PREFIX + 'channels');
-          return list;
-        }
-      }
-    } catch (err) {
-      console.warn("[cmsService] Servers.json cache fetch failed, querying Firestore fallback:", err);
-    }
-
-    try {
-      const snap = await getDocs(query(collection(db, 'cms_channels_servers'), limit(100)));
-      const list = snap.docs.map(docDoc => ({ id: docDoc.id, ...docDoc.data() } as ChannelServerSettings));
+      const all = await repositories.cms.getAll();
+      const list = all.filter((d: any) => d.id?.startsWith('channel_server_')) as ChannelServerSettings[];
       list.sort((a, b) => (a.priority || 0) - (b.priority || 0));
       setCache('channels', list, memoryCache, STORAGE_PREFIX + 'channels');
       return list;
     } catch (e) {
-      console.warn("Error reading channel settings, falling back to cached or mock channels:", e);
+      console.warn("Error reading channel servers:", e);
       const stale = getCached<ChannelServerSettings[]>('channels', memoryCache, STORAGE_PREFIX + 'channels', true);
       if (stale) return stale;
       return [];
     }
   },
 
-  // Homepage Control
+  async getChannelServerSettingsList(): Promise<ChannelServerSettings[]> {
+    return this.getChannelServersList();
+  },
+
+  // Global Config
+  async saveHomepageConfig(config: HomepageConfig) {
+    await repositories.cms.setById('homepage_config', { ...config, updatedAt: new Date().toISOString() });
+    invalidateCache('homepage_config', memoryCache, STORAGE_PREFIX + 'homepage_config');
+  },
+
+  async updateHomepageConfig(config: HomepageConfig) {
+    return this.saveHomepageConfig(config);
+  },
+
   async getHomepageConfig(): Promise<HomepageConfig> {
-    const cached = getCached<HomepageConfig>('homepage', memoryCache, STORAGE_PREFIX + 'homepage');
+    const cached = getCached<HomepageConfig>('homepage_config', memoryCache, STORAGE_PREFIX + 'homepage_config');
     if (cached) return cached;
 
     try {
-      const docSnap = await getDoc(doc(db, 'cms_config', 'homepage'));
-      const dataDoc = docSnap.exists() ? docSnap.data() : {};
-      const config: HomepageConfig = {
-        featuredLeagues: dataDoc.featuredLeagues || [],
-        featuredMatches: dataDoc.featuredMatches || [],
-        featuredTeams: dataDoc.featuredTeams || [],
-      };
-      setCache('homepage', config, memoryCache, STORAGE_PREFIX + 'homepage');
-      return config;
+      const docSnap = await repositories.cms.getById('homepage_config');
+      if (docSnap) {
+        setCache('homepage_config', docSnap as HomepageConfig, memoryCache, STORAGE_PREFIX + 'homepage_config');
+        return docSnap as HomepageConfig;
+      }
     } catch (e) {
-      console.warn("Error loading homepage config, falling back to cached or mock configuration:", e);
-      const stale = getCached<HomepageConfig>('homepage', memoryCache, STORAGE_PREFIX + 'homepage', true);
-      if (stale) return stale;
-      return { featuredLeagues: [], featuredMatches: [], featuredTeams: [] };
+      console.warn("Error reading homepage config:", e);
     }
-  },
 
-  async updateHomepageConfig(config: Partial<HomepageConfig>) {
-    const payload = { ...config, id: 'homepage', updatedAt: new Date().toISOString() };
-    await setDoc(doc(db, 'cms_config', 'homepage'), payload, { merge: true });
-    invalidateCache('homepage', memoryCache, STORAGE_PREFIX + 'homepage');
+    return {
+      featuredLeagues: [],
+      featuredMatches: [],
+      featuredTeams: []
+    };
   }
 };

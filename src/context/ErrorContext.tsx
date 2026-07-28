@@ -1,8 +1,8 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { AlertCircle, CheckCircle2, XCircle, X } from 'lucide-react';
-import { collection, addDoc } from 'firebase/firestore';
-import { db, auth } from '../firebase';
+import { repositories } from '../core/repository';
+import { auth } from '../firebase';
 
 type ToastType = 'error' | 'success' | 'info' | 'warning';
 
@@ -111,8 +111,8 @@ export function ErrorProvider({ children }: { children: React.ReactNode }) {
       const userAgent = typeof navigator !== 'undefined' ? navigator.userAgent : 'Unknown';
       const classification = classifyError(error);
 
-      // Safe add to Firestore. If firestore itself throws quota or network error, let's NOT trigger another showError
-      addDoc(collection(db, 'error_logs'), {
+      // Safe create in error logs repository.
+      repositories.errorLogs.create({
         message: errStr || String(error || ''),
         classification,
         timestamp: new Date().toISOString(),

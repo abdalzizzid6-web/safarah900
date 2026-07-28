@@ -71,6 +71,8 @@ export const ImageResolver = forwardRef<HTMLImageElement, ImageResolverProps>(({
   return (
     <img
       ref={ref}
+      loading={props.loading || "lazy"}
+      decoding={props.decoding || "async"}
       src={currentSrc || (fallbackType === 'team' && fallbackText ? getTeamLogoUrl(undefined, fallbackText, tla) : FALLBACK_IMAGES[fallbackType])}
       alt={alt || fallbackText || 'Image'}
       className={className}

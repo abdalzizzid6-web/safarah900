@@ -2,6 +2,7 @@ import { BaseRepository } from './BaseRepository';
 import { PlayerDetail } from '../../services/playerMapper';
 import { db } from '../../firebase';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
+import apiClient from '../../api/apiClient';
 
 export class PlayersRepositoryV2 extends BaseRepository<PlayerDetail> {
   constructor() {
@@ -50,6 +51,11 @@ export class PlayersRepositoryV2 extends BaseRepository<PlayerDetail> {
     }
 
     return players;
+  }
+
+  async getPlayerKnowledge(playerId: string | number, playerName: string = '') {
+    const res = await apiClient.get(`/api/knowledge/player/${encodeURIComponent(playerId)}?name=${encodeURIComponent(playerName)}`);
+    return res.data;
   }
 }
 

@@ -59,7 +59,7 @@ service cloud.firestore {
     }
 
     match /analytics_events/{eventId} {
-      allow create: if true;
+      allow create: if request.resource.data.keys().hasAll(['eventType']) && request.resource.data.eventType is string;
       allow read, update, delete: if isSignedIn() && isEditor();
     }
 
@@ -292,7 +292,10 @@ service cloud.firestore {
     }
 
     match /contact_messages/{id} {
-      allow create: if true;
+      allow create: if request.resource.data.keys().hasAll(['name', 'message']) 
+                    && request.resource.data.name is string 
+                    && request.resource.data.message is string
+                    && request.resource.data.message.size() <= 3000;
       allow read, update, delete: if isSignedIn() && isEditor();
     }
 

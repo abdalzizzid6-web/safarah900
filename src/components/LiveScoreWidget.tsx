@@ -5,7 +5,7 @@ import { useLiveMatches } from '../hooks/useMatchesV2';
 import { useSettings } from '../context/SettingsContext';
 import { Match } from '../types';
 
-export default function LiveScoreWidget() {
+export default React.memo(function LiveScoreWidget() {
   const { settings } = useSettings();
   const { data: matches = [] } = useLiveMatches();
   const [isVisible, setIsVisible] = useState(false);
@@ -70,4 +70,4 @@ export default function LiveScoreWidget() {
       )}
     </AnimatePresence>
   );
-}
+});

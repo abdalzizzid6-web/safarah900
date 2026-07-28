@@ -1,5 +1,6 @@
 import { BaseRepository } from './BaseRepository';
 import { Team } from '../../types';
+import apiClient from '../../api/apiClient';
 
 export class TeamsRepositoryV2 extends BaseRepository<Team> {
   constructor() {
@@ -21,6 +22,11 @@ export class TeamsRepositoryV2 extends BaseRepository<Team> {
 
   async deleteTeam(id: string): Promise<void> {
     await this.delete(id);
+  }
+
+  async getTeamKnowledge(teamId: string | number) {
+    const res = await apiClient.get(`/api/knowledge/team/${encodeURIComponent(teamId)}`);
+    return res.data;
   }
 }
 

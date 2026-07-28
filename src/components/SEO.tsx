@@ -14,7 +14,7 @@ interface SEOProps {
   sportsEvent?: {
     name: string;
     startDate: string;
-    location: string;
+    location?: string;
     homeTeam: string;
     homeTeamLink?: string;
     awayTeam: string;
@@ -37,11 +37,11 @@ interface SEOProps {
   breadcrumbs?: { name: string; item: string; }[];
 }
 
-const DEFAULT_TITLE = 'Safara 90 | تغطية رياضية مباشرة وحصرية';
-const DEFAULT_DESCRIPTION = 'بوابتك الرياضية المفضلة لمتابعة نتائج المباريات، أخبار كرة القدم، وإحصائيات الدوري والبطولات العالمية لحظة بلحظة. مباريات اليوم، نتائج، وكأس العالم.';
-const DEFAULT_KEYWORDS = 'مباريات اليوم, نتائج المباريات, كأس العالم, أخبار المنتخبات, live football scores, football statistics, Safara 90';
+const DEFAULT_TITLE = 'صافرة 90 | تغطية رياضية مباشرة وحصرية لمباريات اليوم والأخبار الكروية';
+const DEFAULT_DESCRIPTION = 'بوابتك الرياضية الأولى لمتابعة نتائج مباريات اليوم المباشرة، أخبار كرة القدم، جدول الترتيب، وإحصائيات الدوري والبطولات العربية والعالمية وكأس العالم 2026.';
+const DEFAULT_KEYWORDS = 'مباريات اليوم, نتائج المباريات المباشرة, أخبار كرة القدم, صافرة 90, ترتيب الدوري, كأس العالم 2026, بث مباشر, كورة 90';
 const SITE_URL = 'https://korea90.xyz';
-const DEFAULT_OG_IMAGE = `${SITE_URL}/og-image.png`;
+const DEFAULT_OG_IMAGE = `${SITE_URL}/logo-master.png`;
 
 export default function SEO({
   title = DEFAULT_TITLE,
@@ -50,7 +50,7 @@ export default function SEO({
   canonical,
   ogType = 'website',
   ogImage = DEFAULT_OG_IMAGE,
-  twitterHandle = '@Safara 90',
+  twitterHandle = '@Safara90',
   structuredData,
   sportsEvent,
   article,
@@ -58,7 +58,7 @@ export default function SEO({
   faq,
   breadcrumbs
 }: SEOProps) {
-  const fullTitle = title === DEFAULT_TITLE ? title : `${title} | Safara 90`;
+  const fullTitle = title === DEFAULT_TITLE ? title : `${title} | صافرة 90`;
   
   // Safe window check for canonical
   const pathname = typeof window !== 'undefined' ? window.location.pathname : '/';
@@ -68,12 +68,19 @@ export default function SEO({
   const orgSchema = {
     '@context': 'https://schema.org',
     '@type': 'Organization',
-    'name': 'Safara 90',
+    '@id': `${SITE_URL}/#organization`,
+    'name': 'صافرة 90 - Safara 90',
+    'alternateName': ['صافرة 90', 'Safara 90', 'كورة 90'],
     'url': SITE_URL,
-    'logo': `${SITE_URL}/android-512.png`,
+    'logo': {
+      '@type': 'ImageObject',
+      'url': `${SITE_URL}/safera-logo-512.png`,
+      'width': 512,
+      'height': 512
+    },
     'sameAs': [
-      'https://twitter.com/Safara 90',
-      'https://facebook.com/Safara 90'
+      'https://twitter.com/Safara90',
+      'https://facebook.com/Safara90'
     ]
   };
 
@@ -81,7 +88,12 @@ export default function SEO({
   const websiteSchema = {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
+    '@id': `${SITE_URL}/#website`,
     'url': SITE_URL,
+    'name': 'صافرة 90',
+    'publisher': {
+      '@id': `${SITE_URL}/#organization`
+    },
     'potentialAction': {
       '@type': 'SearchAction',
       'target': `${SITE_URL}/?q={search_term_string}`,
@@ -89,7 +101,7 @@ export default function SEO({
     }
   };
 
-  // Breadcrumb Schema with dynamic elements support
+  // Breadcrumb Schema
   const breadcrumbElements = [
     {
       "@type": "ListItem",
@@ -110,13 +122,13 @@ export default function SEO({
     });
   }
 
-  const breadcrumbSchema: any = {
+  const breadcrumbSchema = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     "itemListElement": breadcrumbElements
   };
 
-  // FAQ Schema dynamic generation
+  // FAQ Schema
   let faqSchema: any = null;
   if (faq && faq.length > 0) {
     faqSchema = {
@@ -133,13 +145,13 @@ export default function SEO({
     };
   }
 
-  let specificSchema = null;
-  let articleSchema = null;
+  let specificSchema: any = null;
+  let articleSchema: any = null;
 
   if (sportsEvent) {
     const statusMap = {
       'Scheduled': 'https://schema.org/EventScheduled',
-      'Live': 'https://schema.org/EventScheduled', // Event is scheduled or ongoing
+      'Live': 'https://schema.org/EventScheduled',
       'Finished': 'https://schema.org/EventConcluded'
     };
     specificSchema = {
@@ -150,52 +162,55 @@ export default function SEO({
       'eventStatus': statusMap[sportsEvent.status] || 'https://schema.org/EventScheduled',
       'location': {
         '@type': 'Place',
-        'name': sportsEvent.location
+        'name': sportsEvent.location || 'الملعب الرئيسي'
       },
       'competitor': [
         {
           '@type': 'SportsTeam',
           'name': sportsEvent.homeTeam,
-          'url': sportsEvent.homeTeamLink
+          'url': sportsEvent.homeTeamLink ? `${SITE_URL}${sportsEvent.homeTeamLink}` : undefined
         },
         {
           '@type': 'SportsTeam',
           'name': sportsEvent.awayTeam,
-          'url': sportsEvent.awayTeamLink
+          'url': sportsEvent.awayTeamLink ? `${SITE_URL}${sportsEvent.awayTeamLink}` : undefined
         }
       ],
-      'sport': sportsEvent.leagueName ? {
-        '@type': 'SportsEvent',
-        'name': sportsEvent.leagueName,
-        'url': sportsEvent.leagueLink
-      } : undefined
+      'organizer': {
+        '@type': 'Organization',
+        'name': sportsEvent.leagueName || 'صافرة 90',
+        'url': sportsEvent.leagueLink ? `${SITE_URL}${sportsEvent.leagueLink}` : SITE_URL
+      }
     };
   }
 
-  // Generate Article schema based on explicit prop or sportsEvent
-  const shouldUseArticle = article || sportsEvent || ogType === 'article';
+  const shouldUseArticle = article || ogType === 'article';
   if (shouldUseArticle) {
-    const pubDate = article?.datePublished || sportsEvent?.startDate || new Date().toISOString();
+    const pubDate = article?.datePublished || new Date().toISOString();
     articleSchema = {
       '@context': 'https://schema.org',
-      '@type': 'Article',
+      '@type': 'NewsArticle',
+      'mainEntityOfPage': {
+        '@type': 'WebPage',
+        '@id': pageUrl
+      },
       'headline': article?.headline || fullTitle,
       'description': article?.description || description,
       'datePublished': pubDate,
       'dateModified': article?.dateModified || pubDate,
       'author': {
         '@type': 'Organization',
-        'name': article?.author || 'Safara 90'
+        'name': article?.author || 'قسم الأخبار | صافرة 90'
       },
       'publisher': {
         '@type': 'Organization',
-        'name': article?.publisher || 'Safara 90',
+        'name': article?.publisher || 'صافرة 90',
         'logo': {
           '@type': 'ImageObject',
-          'url': `${SITE_URL}/android-512.png`
+          'url': `${SITE_URL}/safera-logo-512.png`
         }
       },
-      'image': article?.image || (ogImage.startsWith('http') ? ogImage : `${SITE_URL}${ogImage}`)
+      'image': article?.image ? (article.image.startsWith('http') ? article.image : `${SITE_URL}${article.image}`) : (ogImage.startsWith('http') ? ogImage : `${SITE_URL}${ogImage}`)
     };
   }
 
@@ -208,15 +223,20 @@ export default function SEO({
       <link rel="canonical" href={pageUrl} />
       <meta name="robots" content={noindex ? "noindex, nofollow" : "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"} />
 
+      {/* hreflang tags */}
+      <link rel="alternate" hrefLang="ar" href={pageUrl} />
+      <link rel="alternate" hrefLang="x-default" href={pageUrl} />
+
       {/* Open Graph / Facebook */}
       <meta property="og:type" content={ogType} />
       <meta property="og:url" content={pageUrl} />
       <meta property="og:title" content={fullTitle} />
       <meta property="og:description" content={description} />
       <meta property="og:image" content={ogImage.startsWith('http') ? ogImage : `${SITE_URL}${ogImage}`} />
-      <meta property="og:site_name" content="Safara 90" />
+      <meta property="og:site_name" content="صافرة 90" />
+      <meta property="og:locale" content="ar_SA" />
 
-      {/* Twitter */}
+      {/* Twitter Cards */}
       <meta name="twitter:card" content="summary_large_image" />
       <meta name="twitter:url" content={pageUrl} />
       <meta name="twitter:title" content={fullTitle} />
@@ -224,7 +244,7 @@ export default function SEO({
       <meta name="twitter:image" content={ogImage.startsWith('http') ? ogImage : `${SITE_URL}${ogImage}`} />
       {twitterHandle && <meta name="twitter:site" content={twitterHandle} />}
 
-      {/* Structured Data */}
+      {/* Structured Data / JSON-LD */}
       <script type="application/ld+json">
         {JSON.stringify(orgSchema)}
       </script>
@@ -257,3 +277,4 @@ export default function SEO({
     </Helmet>
   );
 }
+

@@ -1,4 +1,4 @@
-import { WCMatch, StandingGroup, WCTeam, ScorerEntry } from './worldCupService';
+import { WCMatch, StandingGroup, WCTeam, ScorerEntry } from '../types/worldCupTypes';
 import { openFootballService } from './openFootballService';
 
 export interface WorldCupDataProvider {

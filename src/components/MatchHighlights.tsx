@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Play, Video, Loader2, ExternalLink, Sparkles } from 'lucide-react';
 import ImageResolver from './ui/ImageResolver';
+import { matchService } from '../services/matchService';
 
 interface Highlight {
   title: string;
@@ -19,8 +20,7 @@ export default function MatchHighlights({ matchId }: { matchId: string }) {
 
   useEffect(() => {
     setLoading(true);
-    fetch(`/api/knowledge/match/${encodeURIComponent(matchId)}`)
-      .then(res => res.json())
+    matchService.getMatchKnowledge(matchId)
       .then(d => {
         setData(d);
         setLoading(false);

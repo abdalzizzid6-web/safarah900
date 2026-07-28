@@ -158,6 +158,10 @@ export const teamService = {
       console.error("Error deleting custom team:", e);
       throw e;
     }
+  },
+
+  async getTeamKnowledge(teamId: string | number) {
+    return apiManagementRepository.teamRepository.getTeamKnowledge(teamId);
   }
 };
 

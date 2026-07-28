@@ -31,6 +31,14 @@ export const matchService = {
   getTeamMatches: (teamId: string) => matchesRepositoryV2.getTeamMatches(teamId),
   getAllMatches: () => matchesRepositoryV2.getMatches(),
 
+  // Knowledge & AI Analysis
+  analyzeLineup: async (matchId: string, payload: { matchData: any; homeRoster: any; awayRoster: any }) => {
+    return matchesRepositoryV2.analyzeLineup(matchId, payload);
+  },
+  getMatchKnowledge: async (matchId: string) => {
+    return matchesRepositoryV2.getKnowledge(matchId);
+  },
+
   // Keep complex business logic
   fetchFullMatchDetails: async (id: string | number) => {
     try {

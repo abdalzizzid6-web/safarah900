@@ -1128,3 +1128,6 @@ export async function bootstrap() {
 if (import.meta.url === `file://${process.argv[1]}`) {
   bootstrap();
 }
+
+export { app };
+export default app;

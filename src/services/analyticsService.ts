@@ -1,4 +1,3 @@
-import { serverTimestamp } from 'firebase/firestore';
 import * as analyticsRepository from '../features/analytics/repositories/analyticsRepository';
 
 export type AnalyticsEvent = 
@@ -102,7 +101,7 @@ export const logEvent = async (eventName: AnalyticsEvent, params?: Record<string
     const eventPayload = {
       eventName,
       params: params || {},
-      timestamp: serverTimestamp(),
+      timestamp: new Date().toISOString(),
       userAgent: navigator.userAgent,
       os: uaParsing.os,
       device: uaParsing.device,

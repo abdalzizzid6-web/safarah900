@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Calendar, Trophy, TrendingUp, UserMinus, Flame, Play, Image, Video, FileText, Loader2, Award, ArrowUpRight } from 'lucide-react';
+import { playerService } from '../../services/playerService';
 
 interface TimelineEvent {
   date: string;
@@ -30,8 +31,7 @@ export default function PlayerKnowledgeGraph({ playerId, playerName }: { playerI
 
   useEffect(() => {
     setLoading(true);
-    fetch(`/api/knowledge/player/${encodeURIComponent(playerId)}?name=${encodeURIComponent(playerName)}`)
-      .then(res => res.json())
+    playerService.getPlayerKnowledge(playerId, playerName)
       .then(d => {
         setData(d);
         setLoading(false);

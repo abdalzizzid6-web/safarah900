@@ -31,6 +31,28 @@ export default defineConfig(({ mode }) => {
                 },
               },
             },
+            {
+              urlPattern: ({ request }) => request.destination === 'image',
+              handler: 'StaleWhileRevalidate',
+              options: {
+                cacheName: 'images-cache',
+                expiration: {
+                  maxEntries: 100,
+                  maxAgeSeconds: 86400 * 7, // 7 days
+                },
+              },
+            },
+            {
+              urlPattern: ({ request }) => request.destination === 'font',
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'fonts-cache',
+                expiration: {
+                  maxEntries: 20,
+                  maxAgeSeconds: 86400 * 30, // 30 days
+                },
+              },
+            },
           ],
           navigateFallbackDenylist: [
             /^\/api\//, 
@@ -77,7 +99,6 @@ export default defineConfig(({ mode }) => {
       }),
     ],
     define: {
-      'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
       'process.env.GOOGLE_MAPS_PLATFORM_KEY': JSON.stringify(env.GOOGLE_MAPS_PLATFORM_KEY || ''),
     },
     resolve: {
@@ -86,10 +107,32 @@ export default defineConfig(({ mode }) => {
       },
     },
     build: {
-      chunkSizeWarningLimit: 5000,
+      chunkSizeWarningLimit: 1500,
       rollupOptions: {
         output: {
-          // Automatic chunking based on dependency usage
+          manualChunks(id) {
+            if (id.includes('node_modules')) {
+              if (id.includes('react') || id.includes('react-dom') || id.includes('react-router-dom')) {
+                return 'vendor-react';
+              }
+              if (id.includes('firebase')) {
+                return 'vendor-firebase';
+              }
+              if (id.includes('lucide-react') || id.includes('motion')) {
+                return 'vendor-ui';
+              }
+              if (id.includes('recharts') || id.includes('d3')) {
+                return 'vendor-charts';
+              }
+              if (id.includes('@tanstack/react-query')) {
+                return 'vendor-query';
+              }
+              if (id.includes('hls.js')) {
+                return 'vendor-hls';
+              }
+              return 'vendor-utils';
+            }
+          }
         }
       }
     },

@@ -2,6 +2,7 @@ import express from 'express';
 import crypto from 'crypto';
 import { firestore, isFirestoreQuotaExceeded, isFirebaseQuotaError, setFirestoreQuotaExceeded } from '../firestore/collections';
 import { encrypt, decrypt } from '../utils/crypto';
+import { authMiddleware } from '../middleware/auth';
 
 const router = express.Router();
 
@@ -99,7 +100,7 @@ async function logAuditEvent(action: string, platform: string, status: 'success'
 }
 
 // --- 1. Fetch Connected Accounts ---
-router.get('/accounts', async (req, res) => {
+router.get('/accounts', authMiddleware('editor'), async (req, res) => {
   try {
     const snapshot = await firestore.collection('social_accounts').get();
     const accounts = snapshot.docs.map((doc: any) => {
@@ -125,7 +126,7 @@ router.get('/accounts', async (req, res) => {
 });
 
 // --- 2. Fetch API Keys / Credentials ---
-router.get('/apikeys', async (req, res) => {
+router.get('/apikeys', authMiddleware('admin'), async (req, res) => {
   try {
     const docRef = await firestore.collection('social_settings').doc('api_credentials').get();
     const credentials = docRef.exists ? docRef.data() : {};
@@ -155,7 +156,7 @@ router.get('/apikeys', async (req, res) => {
 });
 
 // --- 3. Save API Keys / Credentials (AES-256 encrypted) ---
-router.post('/apikeys', async (req, res) => {
+router.post('/apikeys', authMiddleware('admin'), async (req, res) => {
   try {
     const { platform, keys } = req.body;
     if (!platform || !keys) {

@@ -1,24 +1,6 @@
-import { db } from '../../../firebase';
-import { 
-  collection, 
-  doc, 
-  getDocs, 
-  getDoc, 
-  addDoc, 
-  updateDoc, 
-  deleteDoc, 
-  query, 
-  where, 
-  orderBy, 
-  limit, 
-  Timestamp,
-  startAfter,
-  DocumentSnapshot
-} from 'firebase/firestore';
+import { repositories } from '../../../core/repository';
 import { NewsArticle, NewsArticleStatus, NewsVersion, NewsSeo } from '../types';
 import { newsSeoService } from './newsSeoService';
-
-const NEWS_COLLECTION = 'news';
 
 export const newsService = {
   // Fetch paginated list with optional filters
@@ -28,56 +10,34 @@ export const newsService = {
     tag?: string;
     search?: string;
     limitSize?: number;
-    lastDoc?: DocumentSnapshot;
-  } = {}): Promise<{ articles: NewsArticle[]; lastVisible: DocumentSnapshot | null }> {
+    lastDoc?: any;
+  } = {}): Promise<{ articles: NewsArticle[]; lastVisible: any }> {
     try {
-      const { status, category, tag, search, limitSize = 20, lastDoc } = filters;
-      
-      let q = collection(db, NEWS_COLLECTION);
-      const queryConstraints: any[] = [];
+      const { status, category, tag, search, limitSize = 20 } = filters;
+      let articles = (await repositories.news.getAll()) as NewsArticle[];
 
       if (status) {
-        queryConstraints.push(where('status', '==', status));
+        articles = articles.filter(a => a.status === status);
       }
-
       if (category) {
-        queryConstraints.push(where('categories', 'array-contains', category));
+        articles = articles.filter(a => a.categories?.includes(category));
       }
-
       if (tag) {
-        queryConstraints.push(where('tags', 'array-contains', tag));
+        articles = articles.filter(a => a.tags?.includes(tag));
       }
-
-      // Order by creation date descending
-      queryConstraints.push(orderBy('createdAt', 'desc'));
-      queryConstraints.push(limit(limitSize));
-
-      if (lastDoc) {
-        queryConstraints.push(startAfter(lastDoc));
-      }
-
-      const newsQuery = query(q, ...queryConstraints);
-      const snapshot = await getDocs(newsQuery);
-      
-      let articles: NewsArticle[] = [];
-      snapshot.forEach(doc => {
-        articles.push({ id: doc.id, ...doc.data() } as NewsArticle);
-      });
-
-      // Simple client-side client-side text-search for demo safety if search text is provided
       if (search) {
         const lowerSearch = search.toLowerCase();
         articles = articles.filter(a => 
-          a.title.toLowerCase().includes(lowerSearch) || 
-          a.content.toLowerCase().includes(lowerSearch)
+          a.title?.toLowerCase().includes(lowerSearch) || 
+          (typeof a.content === 'string' ? a.content : a.content?.fullText)?.toLowerCase().includes(lowerSearch)
         );
       }
 
-      const lastVisible = snapshot.docs.length > 0 ? snapshot.docs[snapshot.docs.length - 1] : null;
+      articles = articles.slice(0, limitSize);
 
       return {
         articles,
-        lastVisible
+        lastVisible: null
       };
     } catch (error) {
       console.error('Error fetching news articles:', error);
@@ -88,10 +48,9 @@ export const newsService = {
   // Get article by ID
   async getArticleById(id: string): Promise<NewsArticle | null> {
     try {
-      const docRef = doc(db, NEWS_COLLECTION, id);
-      const docSnap = await getDoc(docRef);
-      if (docSnap.exists()) {
-        return { id: docSnap.id, ...docSnap.data() } as NewsArticle;
+      const data = await repositories.news.getById(id);
+      if (data) {
+        return { id, ...data } as NewsArticle;
       }
       return null;
     } catch (error) {
@@ -107,13 +66,13 @@ export const newsService = {
     // Automatically pre-fill SEO
     const seo: NewsSeo = data.seo || newsSeoService.generateDefaultSeo(
       data.title, 
-      data.content, 
+      typeof data.content === 'string' ? data.content : data.content?.fullText || '', 
       data.categories, 
       data.tags
     );
 
     // Compute reading time
-    seo.readingTime = newsSeoService.calculateReadingTime(data.content);
+    seo.readingTime = newsSeoService.calculateReadingTime(typeof data.content === 'string' ? data.content : data.content?.fullText || '');
 
     const newArticle: Omit<NewsArticle, 'id'> = {
       ...data,
@@ -135,16 +94,16 @@ export const newsService = {
       }
     };
 
-    const docRef = await addDoc(collection(db, NEWS_COLLECTION), finalArticleObj);
+    const docId = `news_${Date.now()}`;
+    await repositories.news.setById(docId, finalArticleObj);
     return {
-      id: docRef.id,
+      id: docId,
       ...finalArticleObj
     } as NewsArticle;
   },
 
   // Update with version history logging
   async updateArticle(id: string, updates: Partial<NewsArticle>, updatedBy: string): Promise<void> {
-    const docRef = doc(db, NEWS_COLLECTION, id);
     const existing = await this.getArticleById(id);
     if (!existing) throw new Error('Article not found');
 
@@ -158,7 +117,7 @@ export const newsService = {
       updatedAt: existing.updatedAt || timestamp,
       updatedBy: existing.author?.name || 'محرر مجهول',
       title: existing.title,
-      content: existing.content,
+      content: typeof existing.content === 'string' ? existing.content : existing.content?.fullText || '',
       status: existing.status
     };
 
@@ -167,7 +126,8 @@ export const newsService = {
     // Compute read time if content is updated
     if (updates.content) {
       if (!updates.seo) updates.seo = existing.seo;
-      updates.seo.readingTime = newsSeoService.calculateReadingTime(updates.content);
+      const contentStr = typeof updates.content === 'string' ? updates.content : updates.content?.fullText || '';
+      updates.seo.readingTime = newsSeoService.calculateReadingTime(contentStr);
     }
 
     const finalUpdates = {
@@ -177,13 +137,12 @@ export const newsService = {
       history: mergedHistory
     };
 
-    await updateDoc(docRef, finalUpdates);
+    await repositories.news.update(id, finalUpdates);
   },
 
   // Delete / Remove completely
   async deleteArticle(id: string): Promise<void> {
-    const docRef = doc(db, NEWS_COLLECTION, id);
-    await deleteDoc(docRef);
+    await repositories.news.delete(id);
   },
 
   // Status transitions
@@ -205,7 +164,7 @@ export const newsService = {
 
     await this.updateArticle(id, {
       title: previousVer.title,
-      content: previousVer.content,
+      content: previousVer.content as any,
       status: previousVer.status
     }, updatedBy);
   }

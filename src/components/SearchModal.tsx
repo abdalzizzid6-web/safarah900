@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { Search, X, Users, Trophy, Loader2, Compass, Sparkles, Newspaper, Video, Calendar, ArrowRight, Play, Award } from 'lucide-react';
 import { teamService } from '../services/teamService';
+import { searchService } from '../services/api/searchService';
 import { getStoredFilterSettings } from '../utils/leagueFilter';
 import { createSlugPath } from '../utils/slugify';
 import ImageResolver from './ui/ImageResolver';
@@ -63,9 +64,8 @@ export default function SearchModal() {
     const delayTimer = setTimeout(async () => {
       try {
         // 1. Call Premium AI Semantic Search route
-        const semRes = await fetch(`/api/knowledge/search?q=${encodeURIComponent(query)}`);
-        if (semRes.ok) {
-          const semData = await semRes.json();
+        const semData = await searchService.searchKnowledge(query);
+        if (semData) {
           setSemanticResults(semData);
         }
 

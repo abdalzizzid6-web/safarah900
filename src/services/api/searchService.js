@@ -93,5 +93,10 @@ export const searchService = {
     }
 
     return results;
+  },
+
+  async searchKnowledge(query) {
+    const res = await apiClient.get(`/api/knowledge/search?q=${encodeURIComponent(query)}`);
+    return res.data;
   }
 };

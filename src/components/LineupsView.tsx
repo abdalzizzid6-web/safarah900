@@ -5,6 +5,7 @@ import { Match } from '../types';
 import { cn } from '../lib/utils';
 import { useNavigate } from 'react-router-dom';
 import { translationService } from '../services/translationService';
+import { matchService } from '../services/matchService';
 
 // Import newly refactored modular components & helper functions
 import { Player, TeamRoster, mapTeamRoster } from './lineups/LineupTypes';
@@ -51,23 +52,11 @@ export default function LineupsView({ match }: LineupsViewProps) {
     }, 1250);
 
     try {
-      const response = await fetch(`/api/matches/${match.id || 'match'}/analyze-lineup`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          matchData: match,
-          homeRoster,
-          awayRoster
-        })
+      const data = await matchService.analyzeLineup(match.id, {
+        matchData: match,
+        homeRoster,
+        awayRoster
       });
-
-      if (!response.ok) {
-        throw new Error("فشلت عملية الاتصال بخادم الذكاء الاصطناعي لتحليل التشكيل. يرجى المحاولة لاحقاً.");
-      }
-
-      const data = await response.json();
       setAnalysisResult(data);
     } catch (err: any) {
       console.error("AI lineup analysis failed:", err);

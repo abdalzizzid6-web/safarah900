@@ -1,5 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
+import { worldCupService } from '../services/worldCupService';
 
 interface Match {
   id: string;
@@ -26,11 +27,9 @@ const WorldCupMatches: React.FC = () => {
       }
 
       try {
-        const response = await fetch('/api/world-cup/matches');
-        if (!response.ok) throw new Error('Failed to fetch matches');
-        const data = await response.json();
-        setMatches(data);
-        localStorage.setItem('world_cup_matches', JSON.stringify(data));
+        const data = await worldCupService.getWorldCupMatches(2026) as any;
+        setMatches(data || []);
+        localStorage.setItem('world_cup_matches', JSON.stringify(data || []));
       } catch (err: any) {
         setError(err.message);
       } finally {

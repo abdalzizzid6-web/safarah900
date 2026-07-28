@@ -1,5 +1,4 @@
-import { collection, getDocs, doc, updateDoc, query, limit, orderBy } from 'firebase/firestore';
-import { db } from '@/firebase';
+import { repositories } from '../../../core/repository';
 import { SeoArticle } from '../types';
 
 export const seoDiagnosticsService = {
@@ -7,30 +6,22 @@ export const seoDiagnosticsService = {
    * Fetch news articles from Firestore with limit
    */
   async fetchArticles(): Promise<SeoArticle[]> {
-    const q = query(collection(db, 'news'), orderBy('publishedAt', 'desc'), limit(100));
-    const querySnapshot = await getDocs(q);
-    const fetchedArticles: SeoArticle[] = [];
-    querySnapshot.forEach((document) => {
-      fetchedArticles.push({ id: document.id, ...document.data() } as SeoArticle);
-    });
-    return fetchedArticles;
+    const articles = await repositories.news.getAll();
+    return articles.slice(0, 100) as SeoArticle[];
   },
 
   /**
    * Update article SEO parameters in Firestore news collection
    */
   async updateArticleSeo(articleId: string, seoFields: Record<string, any>): Promise<void> {
-    const docRef = doc(db, 'news', articleId);
-    await updateDoc(docRef, seoFields);
+    await repositories.news.update(articleId, seoFields);
   },
 
   /**
    * Fetch matches for sitemap indexing status reports
    */
   async fetchMatches(): Promise<any[]> {
-    const q = query(collection(db, 'matches'), orderBy('startTime', 'desc'), limit(100));
-    const matchesSnap = await getDocs(q);
-    return matchesSnap.docs.map(document => ({ id: document.id, ...document.data() }));
+    return await repositories.matches.getMatches({ limit: 100 });
   },
 
   /**
@@ -58,7 +49,7 @@ export const seoDiagnosticsService = {
     }
     const response = await fetch(targetUrl);
     if (!response.ok) {
-      throw new Error(`HTTP Error ${response.status}`);
+      throw new Error(`Failed to fetch sitemap: ${response.statusText}`);
     }
     return response.text();
   }

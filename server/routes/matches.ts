@@ -859,7 +859,7 @@ router.post("/stats", authMiddleware('admin'), validateBody(MatchStatsSchema), a
   }
 });
 
-router.post("/refresh", async (req, res) => {
+router.post("/refresh", authMiddleware('editor'), async (req, res) => {
   try {
     const { syncMatchesFromAPI } = await import("../services/syncService");
     const result = await syncMatchesFromAPI();

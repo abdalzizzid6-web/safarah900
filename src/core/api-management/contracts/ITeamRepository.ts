@@ -14,4 +14,5 @@ export interface ITeamRepository {
   setTeamHidden(id: string, hidden: boolean): Promise<void>;
   
   updateOrder(id: string, order: number): Promise<void>;
+  getTeamKnowledge(id: string | number): Promise<any>;
 }

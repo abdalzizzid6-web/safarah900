@@ -88,5 +88,9 @@ export const playerService = {
     } finally {
         pendingRequests.delete(cacheKey);
     }
+  },
+
+  async getPlayerKnowledge(playerId: string | number, playerName: string = '') {
+    return playersRepositoryV2.getPlayerKnowledge(playerId, playerName);
   }
 };

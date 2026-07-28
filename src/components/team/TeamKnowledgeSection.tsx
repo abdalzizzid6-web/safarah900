@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { BookOpen, TrendingUp, Users, Video, Newspaper, Calendar, History, ArrowUpRight, Flame, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createSlugPath } from '../../utils/slugify';
+import { teamService } from '../../services/teamService';
 
 interface TeamKG {
   id: string;
@@ -22,8 +23,7 @@ export default function TeamKnowledgeSection({ teamId }: { teamId: string }) {
 
   useEffect(() => {
     setLoading(true);
-    fetch(`/api/knowledge/team/${encodeURIComponent(teamId)}`)
-      .then(res => res.json())
+    teamService.getTeamKnowledge(teamId)
       .then(d => {
         setData(d);
         setLoading(false);

@@ -9,7 +9,7 @@ import { apiManager } from "../services/apiManager";
 
 const router = express.Router();
 
-router.get("/metrics", (req, res) => {
+router.get("/metrics", authMiddleware('admin'), (req, res) => {
     // Logic from server.ts approx line 714
     res.json({ status: "ok", isFirestoreQuotaExceeded });
 });
@@ -30,7 +30,7 @@ router.get("/security/audits", authMiddleware('admin'), (req, res) => {
 
 router.get("/health", (req, res) => res.json({ status: "healthy", timestamp: new Date().toISOString() }));
 
-router.get("/test", (req, res) => res.json({ success: true }));
+router.get("/test", authMiddleware('admin'), (req, res) => res.json({ success: true }));
 // Automatic Arabization endpoint for Leagues and their Teams
 router.post("/arabize-league", authMiddleware('editor'), async (req, res) => {
     try {

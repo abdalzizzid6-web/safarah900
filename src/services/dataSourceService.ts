@@ -1,5 +1,4 @@
-import { db } from '../firebase';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { repositories } from '../core/repository';
 
 export type FootballProvider = 'TheSportsDB' | 'API-Football' | 'SportMonks' | 'Custom' | 'None';
 
@@ -100,11 +99,9 @@ export const dataSourceService = {
     }
 
     try {
-      const docRef = doc(db, 'settings', 'data_sources');
-      const docSnap = await getDoc(docRef);
+      const data = await repositories.settings.getDataSourceSettings();
       
-      if (docSnap.exists()) {
-        const data = docSnap.data() as Partial<DataSourceSettings>;
+      if (data) {
         const merged: DataSourceSettings = { ...DEFAULT_DATA_SOURCE_SETTINGS, ...data };
         if (!merged.sportMonksKey && DEFAULT_DATA_SOURCE_SETTINGS.sportMonksKey) {
           merged.sportMonksKey = DEFAULT_DATA_SOURCE_SETTINGS.sportMonksKey;
@@ -117,7 +114,7 @@ export const dataSourceService = {
           localStorage.setItem(STORAGE_KEY, JSON.stringify(cachedSettings));
         } catch (err) {}
       } else {
-        // Initialize doc in Firestore if it doesn't exist
+        // Initialize doc if it doesn't exist
         await this.saveSettings(DEFAULT_DATA_SOURCE_SETTINGS);
       }
     } catch (err) {
@@ -139,8 +136,7 @@ export const dataSourceService = {
     } catch (err) {}
 
     try {
-      const docRef = doc(db, 'settings', 'data_sources');
-      await setDoc(docRef, settings);
+      await repositories.settings.saveDataSourceSettings(settings);
     } catch (err: any) {
       console.error('[dataSourceService] Failed to save settings to Firestore:', err);
       throw err;

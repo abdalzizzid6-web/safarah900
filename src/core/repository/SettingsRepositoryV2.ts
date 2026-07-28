@@ -66,6 +66,14 @@ export class SettingsRepositoryV2 extends BaseRepository<AppSettings> {
       throw e;
     }
   }
+
+  async getDataSourceSettings(): Promise<any> {
+    return await this.getById('data_sources');
+  }
+
+  async saveDataSourceSettings(settings: any): Promise<void> {
+    await this.setById('data_sources', settings);
+  }
 }
 
 export const settingsRepositoryV2 = new SettingsRepositoryV2();

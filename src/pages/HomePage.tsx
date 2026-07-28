@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import SEO from '../components/SEO';
 import InstallFloatingWidget from '../components/InstallFloatingWidget';
@@ -9,7 +9,7 @@ import MatchSchedule from '../components/MatchSchedule';
 export default function HomePage() {
   const queryClient = useQueryClient();
 
-  const handlePullToRefresh = async () => {
+  const handlePullToRefresh = useCallback(async () => {
     try {
       await Promise.all([
         queryClient.refetchQueries({ queryKey: ['wcMatches'] }),
@@ -21,7 +21,7 @@ export default function HomePage() {
     } catch (err) {
       console.error("[HomePage] Error refetching layout streams:", err);
     }
-  };
+  }, [queryClient]);
 
   return (
     <div className="bg-[#080808] font-sans" dir="rtl">

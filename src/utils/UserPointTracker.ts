@@ -1,16 +1,5 @@
-import { auth, db, handleFirestoreError, OperationType } from '../firebase';
-import { 
-  doc, 
-  getDoc, 
-  setDoc, 
-  updateDoc, 
-  collection, 
-  getDocs, 
-  query, 
-  orderBy, 
-  limit,
-  serverTimestamp 
-} from 'firebase/firestore';
+import { auth } from '../firebase';
+import { repositories } from '../core/repository';
 
 // Point values for different engagement activities
 export const POINT_VALUES = {
@@ -75,12 +64,10 @@ export async function trackActivity(
 
   if (user) {
     const userId = user.uid;
-    const userDocRef = doc(db, 'users', userId);
-    const publicPointsRef = doc(db, 'user_points', userId);
 
     try {
       // 1. Fetch current progress
-      const userSnap = await getDoc(userDocRef);
+      const userSnap = await repositories.users.getById(userId);
       let currentProgress = {
         points: 0,
         newsCount: 0,
@@ -89,14 +76,13 @@ export async function trackActivity(
         trackedIds: [] as string[]
       };
 
-      if (userSnap.exists()) {
-        const data = userSnap.data();
+      if (userSnap) {
         currentProgress = {
-          points: data.points || 0,
-          newsCount: data.newsCount || 0,
-          matchesCount: data.matchesCount || 0,
-          contestsCount: data.contestsCount || 0,
-          trackedIds: data.trackedIds || []
+          points: userSnap.points || 0,
+          newsCount: userSnap.newsCount || 0,
+          matchesCount: userSnap.matchesCount || 0,
+          contestsCount: userSnap.contestsCount || 0,
+          trackedIds: userSnap.trackedIds || []
         };
       }
 
@@ -118,173 +104,123 @@ export async function trackActivity(
       };
 
       if (activityType === 'news') {
-        incrementFields.newsCount = currentProgress.newsCount + 1;
+        incrementFields.newsCount = (currentProgress.newsCount || 0) + 1;
       } else if (activityType === 'match') {
-        incrementFields.matchesCount = currentProgress.matchesCount + 1;
+        incrementFields.matchesCount = (currentProgress.matchesCount || 0) + 1;
       } else if (activityType === 'contest') {
-        incrementFields.contestsCount = currentProgress.contestsCount + 1;
+        incrementFields.contestsCount = (currentProgress.contestsCount || 0) + 1;
       }
 
-      // 2. Save private/main user document
-      await updateDoc(userDocRef, incrementFields).catch(async (err) => {
-        // If document doesn't have partial properties, merge set
-        await setDoc(userDocRef, incrementFields, { merge: true });
-      });
+      await repositories.users.update(userId, incrementFields);
 
-      // 3. Save to public user_points ledger for leaderboard queries
-      const displayName = user.displayName || user.email?.split('@')[0] || 'مشجع متميز';
-      const photoURL = user.photoURL || `https://api.dicebear.com/7.x/initials/svg?seed=${userId}`;
+      const oldLevel = calculateLevel(oldPoints);
+      const newLevel = calculateLevel(newPoints);
 
-      await setDoc(publicPointsRef, {
-        userId,
-        displayName,
-        photoURL,
-        points: newPoints,
-        totalPoints: newPoints,
-        level: calculateLevel(newPoints),
-        rankTitle: getRankTitle(newPoints),
-        updatedAt: serverTimestamp()
-      }, { merge: true });
-
-      // Update local storage representation as well
-      localStorage.setItem('s90_offline_points', String(newPoints));
-
+      return {
+        pointsAdded: pointsToAdd,
+        newPoints,
+        leveledUp: newLevel > oldLevel
+      };
     } catch (error) {
-      handleFirestoreError(error, OperationType.WRITE, `users/${userId}`);
+      console.error('Failed to update user points in Firestore:', error);
     }
-  } else {
-    // Guest user tracking
-    const guestPointsStr = localStorage.getItem('s90_offline_points') || '0';
-    oldPoints = parseInt(guestPointsStr, 10);
-    newPoints = oldPoints + pointsToAdd;
-
-    localStorage.setItem('s90_offline_points', String(newPoints));
-
-    // Save interaction counters in local storage
-    const metricKey = `s90_offline_count_${activityType}`;
-    const currentCount = parseInt(localStorage.getItem(metricKey) || '0', 10);
-    localStorage.setItem(metricKey, String(currentCount + 1));
   }
+
+  // Guest fallback in localStorage
+  const guestPointsKey = 's90_guest_user_points';
+  const currentGuestPoints = parseInt(localStorage.getItem(guestPointsKey) || '0', 10);
+  oldPoints = currentGuestPoints;
+  newPoints = currentGuestPoints + pointsToAdd;
+  localStorage.setItem(guestPointsKey, newPoints.toString());
 
   const oldLevel = calculateLevel(oldPoints);
   const newLevel = calculateLevel(newPoints);
-  const leveledUp = newLevel > oldLevel;
 
-  // Let UI components know about point changes
-  window.dispatchEvent(new CustomEvent('Safara 90_points_updated', {
-    detail: { points: newPoints, pointsAdded: pointsToAdd, leveledUp }
-  }));
-
-  return { pointsAdded: pointsToAdd, newPoints, leveledUp };
+  return {
+    pointsAdded: pointsToAdd,
+    newPoints,
+    leveledUp: newLevel > oldLevel
+  };
 }
 
 /**
- * Returns current user total points from local/live state.
+ * Retrieves the current user's total accumulated points.
  */
 export async function getCurrentUserPoints(): Promise<number> {
   const user = auth.currentUser;
   if (user) {
     try {
-      const userDocRef = doc(db, 'users', user.uid);
-      const userSnap = await getDoc(userDocRef);
-      if (userSnap.exists()) {
-        return userSnap.data().points || 0;
+      const userSnap = await repositories.users.getById(user.uid);
+      if (userSnap) {
+        return userSnap.points || 0;
       }
     } catch (e) {
-      console.warn("Could not fetch user points from Firestore:", e);
+      console.warn('Failed to fetch user points from Firestore:', e);
     }
   }
-  
-  const offlinePoints = localStorage.getItem('s90_offline_points');
-  return offlinePoints ? parseInt(offlinePoints, 10) : 0;
+
+  const guestPoints = localStorage.getItem('s90_guest_user_points');
+  return guestPoints ? parseInt(guestPoints, 10) : 0;
 }
 
 /**
- * Retrieves the complete UserProgress statistics object.
+ * Returns complete UserProgress info for the current user.
  */
 export async function getUserProgress(): Promise<UserProgress> {
   const user = auth.currentUser;
+  const points = await getCurrentUserPoints();
+  const level = calculateLevel(points);
+  const rankTitle = getRankTitle(points);
+
   if (user) {
     try {
-      const userDocRef = doc(db, 'users', user.uid);
-      const userSnap = await getDoc(userDocRef);
-      if (userSnap.exists()) {
-        const data = userSnap.data();
-        const points = data.points || 0;
+      const userSnap = await repositories.users.getById(user.uid);
+      if (userSnap) {
         return {
           uid: user.uid,
           points,
-          level: data.level || calculateLevel(points),
-          rankTitle: data.rankTitle || getRankTitle(points),
-          newsCount: data.newsCount || 0,
-          matchesCount: data.matchesCount || 0,
-          contestsCount: data.contestsCount || 0,
+          level,
+          rankTitle,
+          newsCount: userSnap.newsCount || 0,
+          matchesCount: userSnap.matchesCount || 0,
+          contestsCount: userSnap.contestsCount || 0,
+          lastUpdated: userSnap.updatedAt || new Date().toISOString()
         };
       }
     } catch (e) {
-      console.warn("Error getting user stats from database:", e);
+      console.warn('Failed to fetch full user progress:', e);
     }
   }
-
-  // Guest progress
-  const points = parseInt(localStorage.getItem('s90_offline_points') || '0', 10);
-  const newsCount = parseInt(localStorage.getItem('s90_offline_count_news') || '0', 10);
-  const matchesCount = parseInt(localStorage.getItem('s90_offline_count_match') || '0', 10);
-  const contestsCount = parseInt(localStorage.getItem('s90_offline_count_contest') || '0', 10);
 
   return {
     uid: 'guest',
     points,
-    level: calculateLevel(points),
-    rankTitle: getRankTitle(points),
-    newsCount,
-    matchesCount,
-    contestsCount,
+    level,
+    rankTitle,
+    newsCount: 0,
+    matchesCount: 0,
+    contestsCount: 0
   };
 }
 
 /**
- * Retrieves top users for competitive rankings from user_points collection.
- * If Firestore fails or is empty, returns a polished mock set with user dynamic position.
+ * Retrieves leaderboard of top users sorted by points.
  */
-export async function getLiveLeaderboard(): Promise<{ name: string; photoURL: string; points: number; rankTitle: string; isCurrentUser: boolean }[]> {
-  const leaderList: { name: string; photoURL: string; points: number; rankTitle: string; isCurrentUser: boolean }[] = [];
-  const user = auth.currentUser;
-
+export async function getTopLeaderboard(limitSize = 10): Promise<UserProgress[]> {
   try {
-    const pointsCollRef = collection(db, 'user_points');
-    const q = query(pointsCollRef, orderBy('points', 'desc'), limit(10));
-    const querySnapshot = await getDocs(q);
-
-    querySnapshot.forEach((docSnap) => {
-      const data = docSnap.data();
-      leaderList.push({
-        name: data.displayName || 'مشجع وفي',
-        photoURL: data.photoURL || `https://api.dicebear.com/7.x/initials/svg?seed=${docSnap.id}`,
-        points: data.points || 0,
-        rankTitle: data.rankTitle || getRankTitle(data.points || 0),
-        isCurrentUser: user ? docSnap.id === user.uid : false
-      });
-    });
+    const users = await repositories.users.getAll();
+    const sorted = [...users].sort((a, b) => (b.points || 0) - (a.points || 0)).slice(0, limitSize);
+    return sorted.map(u => ({
+      uid: u.id,
+      points: u.points || 0,
+      level: calculateLevel(u.points || 0),
+      rankTitle: getRankTitle(u.points || 0),
+      newsCount: u.newsCount || 0,
+      matchesCount: u.matchesCount || 0,
+      contestsCount: u.contestsCount || 0
+    }));
   } catch (error) {
-    console.warn("Fallback to premium offline leaderboard layout parsing standard rules:", error);
+    console.warn('Failed to fetch leaderboard from Firestore:', error);
+    return [];
   }
-
-  // No mock data if empty - only include current user's state
-  if (leaderList.length === 0) {
-    const userPoints = await getCurrentUserPoints();
-    const guestProgress = await getUserProgress();
-
-    const meRow = {
-      name: user ? (user.displayName || 'أنت') : 'أنت (زائر)',
-      photoURL: user?.photoURL || 'https://api.dicebear.com/7.x/initials/svg?seed=guest',
-      points: userPoints,
-      rankTitle: guestProgress.rankTitle,
-      isCurrentUser: true
-    };
-
-    leaderList.push(meRow);
-  }
-
-  return leaderList.slice(0, 10);
 }

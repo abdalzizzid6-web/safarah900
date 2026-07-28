@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '../firebase';
+import { repositories } from '../core/repository';
 import SEO from '../components/SEO';
 import { Helmet } from 'react-helmet-async';
 
@@ -65,10 +64,9 @@ export const BrandingProvider: React.FC<{children: React.ReactNode}> = ({ childr
   useEffect(() => {
     const fetchBranding = async () => {
       try {
-        const docRef = doc(db, "settings", "branding");
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          const fetchedData = { ...defaultBranding, ...docSnap.data() } as BrandingSettings;
+        const data = await repositories.settings.getById("branding");
+        if (data) {
+          const fetchedData = { ...defaultBranding, ...data } as BrandingSettings;
           setBranding(fetchedData);
           try {
             localStorage.setItem('safara90_cached_branding', JSON.stringify(fetchedData));

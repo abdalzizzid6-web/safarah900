@@ -38,6 +38,8 @@ export class ErrorLogRepository extends BaseRepository<any> { constructor() { su
 export class UserManagementRepository extends BaseRepository<any> { constructor() { super('users'); } }
 export class MediaRepository extends BaseRepository<any> { constructor() { super('media_assets'); } }
 
+export class CmsSettingsRepository extends BaseRepository<any> { constructor() { super('cms_settings'); } }
+
 export const repositories = {
   matches: new MatchesRepositoryV2(),
   leagues: new LeaguesRepositoryV2(),
@@ -45,6 +47,7 @@ export const repositories = {
   news: new NewsRepositoryV2(),
   players: new PlayersRepositoryV2(),
   settings: new SettingsRepositoryV2(),
+  cms: new CmsSettingsRepository(),
   ads: new AdsRepositoryV2(),
   newsTags: new NewsTagsRepository(),
   homepage: new HomepageRepository(),

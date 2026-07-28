@@ -23,7 +23,7 @@ export function useNewsCategories() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({id, name, description}: {id: string, name: string, description?: string}) => newsCategoryService.updateCategory(id, name, description),
+    mutationFn: ({id, name, description}: {id: string, name: string, description?: string}) => newsCategoryService.updateCategory(id, { name, description }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['newsCategories'] }),
   });
 

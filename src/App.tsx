@@ -63,6 +63,9 @@ const ContactPage = lazy(() => import('@/pages/ContactPage'));
 const DisclaimerPage = lazy(() => import('@/pages/DisclaimerPage'));
 
 // Admin Lazy Loads
+const AdminLayout = lazy(() => import('@/admin/layouts/AdminLayout'));
+const Profile = lazy(() => import('@/components/Profile'));
+const Schedule = lazy(() => import('@/components/Schedule'));
 const MatchesCms = lazy(() => import('@/admin/shared/MatchesCms'));
 const LeagueManager = lazy(() => import('@/admin/shared/LeagueManager'));
 const TeamsCms = lazy(() => import('@/admin/shared/TeamsCms'));
@@ -86,15 +89,13 @@ const SystemHealthPage = lazy(() => import('@/admin/pages/SystemHealthPage'));
 const RouteDiagnosticsPage = lazy(() => import('@/admin/pages/RouteDiagnosticsPage'));
 const SeoDiagnosticsPage = lazy(() => import('@/admin/pages/SeoDiagnosticsPage'));
 const SecurityDashboardPage = lazy(() => import('@/admin/security/SecurityDashboardPage'));
-const NewsDashboardPage = lazy(() => import('@/admin/news/pages/NewsDashboardPage'));
+const NewsDashboardPage = lazy(() => import('@/admin/news/pages/NewsDashboardPage').then(m => ({ default: m.NewsDashboardPage })));
 const HomepageManager = lazy(() => import('@/admin/homepage/pages/HomepageManager'));
 const SocialMediaCenter = lazy(() => import('@/admin/social/SocialMediaCenter'));
+const BackupManagerPage = lazy(() => import('@/admin/pages/BackupManagerPage'));
 
-import AdminLayout from '@/admin/layouts/AdminLayout';
-import Profile from '@/components/Profile';
 import AnnouncementBar from '@/components/AnnouncementBar';
 import SplashScreen from '@/components/SplashScreen';
-import Schedule from '@/components/Schedule';
 import ScrollToHash from '@/components/ScrollToHash';
 import Footer from '@/components/Footer';
 import { SettingsProvider } from '@/context/SettingsContext';
@@ -235,9 +236,11 @@ export default function App() {
                                     <Route index element={<Navigate to="dashboard" replace />} />
                                     <Route path="dashboard" element={<AdminDashboardPage />} />
                                     <Route path="analytics-center" element={<AnalyticsCenter />} />
+                                    <Route path="news/*" element={<NewsDashboardPage />} />
                                     <Route path="matches" element={<MatchesCms />} />
                                     <Route path="leagues" element={<LeagueManager />} />
                                     <Route path="teams" element={<TeamsCms />} />
+                                    <Route path="channels" element={<ChannelsCms />} />
                                     <Route path="media" element={<MediaDashboard />} />
                                     <Route path="knowledge-base" element={<KnowledgeBaseManager />} />
                                     <Route path="homepage" element={<HomepageManager />} />
@@ -249,6 +252,7 @@ export default function App() {
                                     <Route path="social/*" element={<SocialMediaCenter />} />
                                     <Route path="system-health" element={<SystemHealthPage />} />
                                     <Route path="security-dashboard" element={<SecurityDashboardPage />} />
+                                    <Route path="backups" element={<BackupManagerPage />} />
                                     <Route path="error-center" element={<BugLogsDashboard />} />
                                     <Route path="seo-diagnostics" element={<SeoDiagnosticsPage />} />
                                     <Route path="pages" element={<DynamicPageController />} />

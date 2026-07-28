@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { NewsArticle, NewsArticleStatus } from '../types';
 import { newsService } from '../services/newsService';
-import { DocumentSnapshot } from 'firebase/firestore';
 
 export function useNews(initialFilters: {
   status?: NewsArticleStatus;
@@ -13,7 +12,7 @@ export function useNews(initialFilters: {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState(initialFilters);
-  const [lastVisible, setLastVisible] = useState<DocumentSnapshot | null>(null);
+  const [lastVisible, setLastVisible] = useState<any>(null);
   const [hasMore, setHasMore] = useState<boolean>(true);
 
   const fetchArticles = useCallback(async (isLoadMore = false) => {

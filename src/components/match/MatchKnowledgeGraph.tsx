@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Sparkles, Newspaper, Video, ListCollapse, Award, TrendingUp, Info, Loader2 } from 'lucide-react';
 import ImageResolver from '../ui/ImageResolver';
+import { matchService } from '../../services/matchService';
 
 interface MatchKG {
   id: string;
@@ -25,8 +26,7 @@ export default function MatchKnowledgeGraph({ matchId }: { matchId: string }) {
 
   useEffect(() => {
     setLoading(true);
-    fetch(`/api/knowledge/match/${encodeURIComponent(matchId)}`)
-      .then(res => res.json())
+    matchService.getMatchKnowledge(matchId)
       .then(d => {
         setData(d);
         setLoading(false);

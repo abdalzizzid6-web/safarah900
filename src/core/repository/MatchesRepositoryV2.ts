@@ -900,6 +900,16 @@ export class MatchesRepositoryV2 extends BaseRepository<Match> {
     
     return teamsMap;
   }
+
+  async analyzeLineup(matchId: string, payload: { matchData: any; homeRoster: any; awayRoster: any }) {
+    const res = await apiClient.post(`/api/matches/${matchId || 'match'}/analyze-lineup`, payload);
+    return res.data;
+  }
+
+  async getKnowledge(matchId: string) {
+    const res = await apiClient.get(`/api/knowledge/match/${encodeURIComponent(matchId)}`);
+    return res.data;
+  }
 }
 
 export const matchesRepositoryV2 = new MatchesRepositoryV2();

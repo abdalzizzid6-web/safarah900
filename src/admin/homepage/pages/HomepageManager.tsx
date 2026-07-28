@@ -1,6 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { writeBatch, doc } from 'firebase/firestore';
-import { db } from '../../../firebase';
 import { repositories } from '../../../core/repository';
 import { BlockType } from '../../../types';
 import { Layout, RefreshCw, Plus, Smartphone, Grid } from 'lucide-react';
@@ -81,13 +79,11 @@ export const HomepageManager: React.FC = () => {
 
     setApplyingTemplate(true);
     try {
-      // Need to delete all existing blocks. Use batch for efficiency.
+      // Delete all existing blocks
       const currentBlocks = await repositories.homepage.getAll();
-      const batch = writeBatch(db);
-      currentBlocks.forEach(d => {
-        batch.delete(doc(db, 'homepage_blocks', d.id));
-      });
-      await batch.commit();
+      for (const d of currentBlocks) {
+        await repositories.homepage.delete(d.id);
+      }
 
       for (let i = 0; i < template.rows.length; i++) {
         const row = template.rows[i];

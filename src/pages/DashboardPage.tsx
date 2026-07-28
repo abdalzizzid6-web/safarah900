@@ -251,10 +251,10 @@ export default function DashboardPage() {
   ];
 
   const statItems = [
-    { name: 'إجمالي المشاهدات', value: stats.pageViews, icon: Trophy },
-    { name: 'المباريات', value: stats.matchViews, icon: Activity },
-    { name: 'المستخدمين', value: stats.userActivity, icon: Users },
-    { name: 'البيانات', value: stats.apiLogs, icon: Newspaper }
+    { name: 'المباريات والفعاليات', value: stats?.matches || 0, icon: Trophy },
+    { name: 'المستخدمين والفرق', value: (stats?.users || 0) + (stats?.teams || 0), icon: Activity },
+    { name: 'الدوريات النشطة', value: stats?.leagues || 0, icon: Users },
+    { name: 'معدل الاستجابة', value: '100%', icon: Newspaper }
   ];
 
   return (

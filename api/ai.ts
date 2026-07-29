@@ -16,9 +16,9 @@ export default async function handler(req: Request, res: Response) {
   console.log('[MODULE LOAD START] Loading modules for ai.ts');
   let firestore, generateMatchContent;
   try {
-    const collectionsMod = await import('../server/firestore/collections');
+    const collectionsMod = await import('../server/firestore/collections.js');
     firestore = collectionsMod.firestore;
-    const aiContentServiceMod = await import('../server/services/aiContentService');
+    const aiContentServiceMod = await import('../server/services/aiContentService.js');
     generateMatchContent = aiContentServiceMod.generateMatchContent;
     console.log('[MODULE LOAD SUCCESS] Modules loaded for ai.ts');
   } catch (e) {

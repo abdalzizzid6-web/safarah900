@@ -4,12 +4,12 @@ export default async function handler(req: Request, res: Response) {
   console.log('[MODULE LOAD START] Loading modules for matches.ts');
   let firestore, FieldValue, syncMatchesForNotifications, syncFromSource;
   try {
-    const collectionsMod = await import('../server/firestore/collections');
+    const collectionsMod = await import('../server/firestore/collections.js');
     firestore = collectionsMod.firestore;
     FieldValue = collectionsMod.FieldValue;
-    const matchServiceMod = await import('../server/services/matchService');
+    const matchServiceMod = await import('../server/services/matchService.js');
     syncMatchesForNotifications = matchServiceMod.syncMatchesForNotifications;
-    const syncServiceMod = await import('../server/services/syncService');
+    const syncServiceMod = await import('../server/services/syncService.js');
     syncFromSource = syncServiceMod.syncFromSource;
     console.log('[MODULE LOAD SUCCESS] Modules loaded for matches.ts');
   } catch (e) {

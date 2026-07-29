@@ -6,10 +6,10 @@ import {
   generateSitemapIndexXml, 
   generateNewsSitemapXml, 
   generateImageSitemapXml 
-} from "../server/utils/seoHelpers";
-import { normalizeMatch, normalizeLeague, normalizeTeam, normalizeNews } from "../server/utils/normalizer";
-import { createSlugPath, getIdFromSlug } from "../src/utils/slugify";
-import { collections, firestore, isFirebaseAdminReady } from "../server/firestore/collections";
+} from "../server/utils/seoHelpers.js";
+import { normalizeMatch, normalizeLeague, normalizeTeam, normalizeNews } from "../server/utils/normalizer.js";
+import { createSlugPath, getIdFromSlug } from "../src/utils/slugify.js";
+import { collections, firestore, isFirebaseAdminReady } from "../server/firestore/collections.js";
 // --- CACHING & CONFIGURATION ---
 const getBaseUrl = (req: Request) => "https://korea90.xyz";
 
@@ -77,12 +77,26 @@ const getCachedOrGenerate = async (
     return sitemapCache[key].xml;
   }
 
-  const xml = await generator();
-  sitemapCache[key] = {
-    xml,
-    expiry: now + duration
-  };
-  return xml;
+  try {
+    const xml = await generator();
+    sitemapCache[key] = {
+      xml,
+      expiry: now + duration
+    };
+    return xml;
+  } catch (err: any) {
+    console.error(`[getCachedOrGenerate] Error generating sitemap for key ${key}:`, err);
+    if (sitemapCache[key]?.xml) {
+      return sitemapCache[key].xml;
+    }
+    if (key === "news") {
+      return generateNewsSitemapXml([]);
+    } else if (key === "images") {
+      return generateImageSitemapXml([]);
+    } else {
+      return generateSitemapXml([]);
+    }
+  }
 };
 
 // --- SEO INDEX PAGE LOADING ---

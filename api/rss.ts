@@ -4,7 +4,7 @@ export default async function handler(req: Request, res: Response) {
   console.log('[MODULE LOAD START] Loading modules for rss.ts');
   let firestore;
   try {
-    const collectionsMod = await import('../server/firestore/collections');
+    const collectionsMod = await import('../server/firestore/collections.js');
     firestore = collectionsMod.firestore;
     console.log('[MODULE LOAD SUCCESS] Modules loaded for rss.ts');
   } catch (e) {

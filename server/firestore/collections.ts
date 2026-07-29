@@ -1,5 +1,5 @@
 
-import { firestore as rawFirestore, auth, messaging, isFirebaseAdminReady, FieldValue } from '../../src/lib/firebase-admin';
+import { firestore as rawFirestore, auth, messaging, isFirebaseAdminReady, FieldValue } from '../../src/lib/firebase-admin.js';
 
 export let isFirestoreQuotaExceeded = false;
 let resetTimer: NodeJS.Timeout | null = null;

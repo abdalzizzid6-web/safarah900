@@ -13,7 +13,8 @@ export function wrapSeoHandler(handler: (req: Request, res: Response) => Promise
 
     // Intercept res.send to capture the response body
     res.send = function (body: any): Response {
-      const contentType = res.get("Content-Type") || "";
+      const rawHeader = typeof res.getHeader === "function" ? res.getHeader("Content-Type") : typeof res.get === "function" ? res.get("Content-Type") : "";
+      const contentType = String(rawHeader || "");
       const statusCode = res.statusCode;
       const duration = Date.now() - startTime;
 

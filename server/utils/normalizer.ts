@@ -1,4 +1,4 @@
-import { safeExtractString, createSlugPath } from "./slugify";
+import { safeExtractString, createSlugPath } from "./slugify.js";
 
 export interface NormalizedMatch {
   id: string;

@@ -30,7 +30,7 @@ export default function PremiumLayout({ children }: PremiumLayoutProps) {
       <PremiumBottomNavigation />
 
       <SearchModal />
-      {settings.liveScoreWidgetEnabled && <LiveScoreWidget />}
+      {settings?.liveScoreWidgetEnabled && <LiveScoreWidget />}
     </div>
   );
 }

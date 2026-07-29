@@ -21,28 +21,38 @@ function AdCodeRenderer({ code }: { code: string }) {
     if (!containerRef.current || !code) return;
 
     const container = containerRef.current;
-    container.innerHTML = code;
+    try {
+      container.innerHTML = code;
 
-    // Extract all script tags and recreate them to force execution
-    const scripts = container.getElementsByTagName('script');
-    const oldScripts = Array.from(scripts);
+      // Extract all script tags and recreate them to force execution safely
+      const scripts = container.getElementsByTagName('script');
+      const oldScripts = Array.from(scripts);
 
-    oldScripts.forEach((oldScript) => {
-      const newScript = document.createElement('script');
-      Array.from(oldScript.attributes).forEach((attr) => {
-        newScript.setAttribute(attr.name, attr.value);
+      oldScripts.forEach((oldScript) => {
+        try {
+          const newScript = document.createElement('script');
+          Array.from(oldScript.attributes).forEach((attr) => {
+            newScript.setAttribute(attr.name, attr.value);
+          });
+          if (oldScript.innerHTML) {
+            newScript.innerHTML = oldScript.innerHTML;
+          }
+          if (oldScript.parentNode) {
+            oldScript.parentNode.replaceChild(newScript, oldScript);
+          }
+        } catch (scriptErr) {
+          console.warn('[AdCodeRenderer] Script tag execution safely caught:', scriptErr);
+        }
       });
-      if (oldScript.innerHTML) {
-        newScript.innerHTML = oldScript.innerHTML;
-      }
-      if (oldScript.parentNode) {
-        oldScript.parentNode.replaceChild(newScript, oldScript);
-      }
-    });
+    } catch (err) {
+      console.warn('[AdCodeRenderer] HTML render error safely caught:', err);
+    }
 
     return () => {
       if (containerRef.current) {
-        containerRef.current.innerHTML = '';
+        try {
+          containerRef.current.innerHTML = '';
+        } catch (_) {}
       }
     };
   }, [code]);

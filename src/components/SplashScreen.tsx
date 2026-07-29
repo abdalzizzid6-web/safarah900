@@ -35,7 +35,7 @@ export default function SplashScreen() {
             className="relative"
           >
             <div className="absolute inset-0 bg-primary/20 blur-3xl rounded-full" />
-            <img src={settings.logoUrl || "/safera-logo-512.png"} alt="App Logo" className="w-40 h-40 object-contain relative z-10 drop-shadow-2xl" />
+            <img src={settings?.logoUrl || "/safera-logo-512.png"} alt="App Logo" className="w-40 h-40 object-contain relative z-10 drop-shadow-2xl" />
           </motion.div>
 
           <motion.div

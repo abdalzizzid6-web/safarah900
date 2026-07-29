@@ -63,29 +63,40 @@ export class ErrorBoundary extends Component<Props, State> {
         return this.props.fallback;
       }
       return (
-        <div className="min-h-screen bg-[#0F0F10] flex items-center justify-center p-6 text-center">
-          <div className="bg-[#1A1A1A] p-8 rounded-3xl border border-red-500/20 max-w-md w-full">
-            <div className="w-16 h-16 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
+        <div className="min-h-screen bg-[#0F0F10] text-white flex items-center justify-center p-6 text-center" dir="rtl">
+          <div className="bg-[#1A1A1A] p-8 rounded-3xl border border-red-500/20 max-w-md w-full shadow-2xl">
+            <div className="w-16 h-16 bg-red-500/10 text-red-500 rounded-2xl flex items-center justify-center mx-auto mb-6 border border-red-500/20">
               <AlertTriangle size={32} />
             </div>
-            <h1 className="text-2xl font-black text-white mb-4">Oops! Something went wrong.</h1>
-            <p className="text-gray-400 mb-8 max-w-sm mx-auto">
-              {this.state.error?.message || "An unexpected error has occurred."}
+            <h1 className="text-2xl font-black text-white mb-2">عفواً، حدث خطأ غير متوقع</h1>
+            <p className="text-gray-400 text-sm mb-6 max-w-sm mx-auto leading-relaxed">
+              تعذر تحميل بعض عناصر الصفحة. تم تفعيل نظام الاستعادة الآلي لمتابعة التصفح.
             </p>
-            <div className="flex gap-4 justify-center">
+            {this.state.error?.message && (
+              <div className="bg-black/40 p-3 rounded-xl border border-white/5 text-[11px] text-gray-400 font-mono mb-6 overflow-x-auto text-left dir-ltr">
+                {this.state.error.message}
+              </div>
+            )}
+            <div className="flex gap-3 justify-center">
               <button 
-                onClick={() => window.location.reload()}
-                className="px-6 py-3 bg-[#D4AF37] text-black font-bold rounded-xl flex items-center gap-2 hover:opacity-90 transition-opacity"
+                onClick={() => {
+                  this.setState({ hasError: false, error: null });
+                  window.location.reload();
+                }}
+                className="px-5 py-2.5 bg-[#D4AF37] text-black font-black rounded-xl flex items-center gap-2 hover:opacity-90 transition-all text-xs active:scale-95"
               >
-                <RefreshCw size={18} />
-                Refresh Page
+                <RefreshCw size={16} />
+                تحديث الصفحة
               </button>
               <button 
-                onClick={() => window.location.href = '/'}
-                className="px-6 py-3 bg-white/10 text-white font-bold rounded-xl flex items-center gap-2 hover:bg-white/20 transition-opacity"
+                onClick={() => {
+                  this.setState({ hasError: false, error: null });
+                  window.location.href = '/';
+                }}
+                className="px-5 py-2.5 bg-white/10 text-white font-bold rounded-xl flex items-center gap-2 hover:bg-white/20 transition-all text-xs active:scale-95 border border-white/10"
               >
-                <Home size={18} />
-                Return Home
+                <Home size={16} />
+                الرئيسية
               </button>
             </div>
           </div>

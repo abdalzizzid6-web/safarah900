@@ -31,6 +31,8 @@ import { firestore, isFirestoreQuotaExceeded, messaging, setFirestoreQuotaExceed
 import { generateContentWithRetry } from "./services/aiService";
 import { Type } from "@google/genai";
 import { apiManager } from "./services/apiManager";
+import { initSocket } from "./socket.js";
+import { syncMatchesFromAPI } from "./services/syncService";
 
 const app = express();
 app.use(express.json());
@@ -922,7 +924,7 @@ export async function bootstrap() {
   }
 
   if (shouldGenerate) {
-    import("./services/syncService").then(({ syncMatchesFromAPI }) => syncMatchesFromAPI().catch(e => console.error("Initial Sync Error:", e)));
+    syncMatchesFromAPI().catch(e => console.error("Initial Sync Error:", e));
   }
 
   // Vite / Static Fallback
@@ -1116,17 +1118,12 @@ export async function bootstrap() {
 
   if (!process.env.VERCEL) {
     try {
-      const { initSocket } = await import("./socket.js");
       initSocket(server);
       console.log("[WebSocket] Socket.io initialized successfully.");
     } catch (err) {
       console.error("[WebSocket] Failed to initialize Socket.io:", err);
     }
   }
-}
-
-if (import.meta.url === `file://${process.argv[1]}`) {
-  bootstrap();
 }
 
 export { app };

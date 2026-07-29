@@ -194,7 +194,26 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
 export function useSettings() {
   const context = useContext(SettingsContext);
   if (context === undefined) {
-    throw new Error('useSettings must be used within a SettingsProvider');
+    console.warn('[useSettings] Called outside of SettingsProvider. Returning fallback settings.');
+    return {
+      settings: {
+        appName: 'Safara 90',
+        logoUrl: '/logo-master.png',
+        iconUrl: '/logo-master.png',
+        adsEnabled: true,
+        adPublisherId: 'ca-pub-3940256099942544',
+        liveScoreWidgetEnabled: true,
+        worldCupModule: {
+          enabled: true,
+          title: 'كأس العالم 2026',
+          icon: 'Globe',
+          url: 'https://korea90.xyz'
+        }
+      },
+      loading: false,
+      setLogo: () => {},
+      updateSettings: async () => {},
+    };
   }
   return context;
 }

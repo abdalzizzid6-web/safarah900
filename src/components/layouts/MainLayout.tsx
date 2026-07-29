@@ -88,11 +88,11 @@ export default function MainLayout({ children }: MainLayoutProps) {
               <Link to="/" className="flex items-center gap-3 group relative">
               <div className="relative">
                 <div className="absolute -inset-2 bg-primary/20 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                {settings.logoUrl ? (
+                {settings?.logoUrl ? (
                   <div className="w-10 h-10 md:w-14 md:h-14 rounded-2xl overflow-hidden border border-white/10 bg-black/40 p-1 flex items-center justify-center transform group-hover:scale-110 transition-transform duration-500 shadow-2xl">
                     <img 
-                      src={settings.logoUrl || undefined} 
-                      alt={settings.appName || 'logo'} 
+                      src={settings?.logoUrl || undefined} 
+                      alt={settings?.appName || 'logo'} 
                       className="w-full h-full object-contain"
                       referrerPolicy="no-referrer"
                     />
@@ -265,7 +265,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
       </nav>
       
       <SearchModal />
-      {settings.liveScoreWidgetEnabled && <LiveScoreWidget />}
+      {settings?.liveScoreWidgetEnabled && <LiveScoreWidget />}
     </div>
   );
 }

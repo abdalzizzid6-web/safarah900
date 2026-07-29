@@ -80,18 +80,64 @@ const getCachedOrGenerate = async (
 const getIndexHtml = () => {
   if (cachedIndexHtml && process.env.NODE_ENV === "production") return cachedIndexHtml;
   
-  const distPath = path.join(process.cwd(), "dist");
-  try {
-    cachedIndexHtml = fs.readFileSync(path.join(distPath, "index.html"), "utf-8");
-    return cachedIndexHtml;
-  } catch (e) {
+  const possiblePaths = [
+    path.join(process.cwd(), "dist", "index.html"),
+    path.join(process.cwd(), "index.html"),
+    path.resolve("./dist/index.html"),
+    path.resolve("./index.html"),
+    path.join(__dirname, "dist", "index.html"),
+    path.join(__dirname, "..", "dist", "index.html"),
+    path.join(__dirname, "../..", "dist", "index.html"),
+    path.join(__dirname, "..", "index.html"),
+    path.join(__dirname, "index.html")
+  ];
+
+  for (const p of possiblePaths) {
     try {
-      cachedIndexHtml = fs.readFileSync(path.join(process.cwd(), "index.html"), "utf-8");
-      return cachedIndexHtml;
-    } catch (err) {
-      return "<html><head><title>صافرة 90</title></head><body><div id=\"root\"></div></body></html>";
-    }
+      if (fs.existsSync(p)) {
+        cachedIndexHtml = fs.readFileSync(p, "utf-8");
+        if (cachedIndexHtml && cachedIndexHtml.includes("id=\"root\"")) {
+          return cachedIndexHtml;
+        }
+      }
+    } catch (_) {}
   }
+
+  // Fallback: try to locate main JS bundle script from dist/assets
+  let assetScript = "";
+  try {
+    const assetsDir = path.join(process.cwd(), "dist", "assets");
+    if (fs.existsSync(assetsDir)) {
+      const files = fs.readdirSync(assetsDir);
+      const mainJs = files.find(f => f.startsWith("index") && f.endsWith(".js"));
+      const mainCss = files.find(f => f.startsWith("index") && f.endsWith(".css"));
+      if (mainJs) {
+        assetScript += `  <script type="module" crossorigin src="/assets/${mainJs}"></script>\n`;
+      }
+      if (mainCss) {
+        assetScript += `  <link rel="stylesheet" crossorigin href="/assets/${mainCss}">\n`;
+      }
+    }
+  } catch (_) {}
+
+  if (!assetScript) {
+    assetScript = `  <script type="module" src="/src/main.tsx"></script>\n`;
+  }
+
+  cachedIndexHtml = `<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" href="/logo-master.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>صافرة 90 | أهم أخبار ونتائج مباريات كرة القدم</title>
+${assetScript}  </head>
+  <body class="bg-[#0F0F10] text-white min-h-screen">
+    <div id="root"></div>
+  </body>
+</html>`;
+
+  return cachedIndexHtml;
 };
 
 const generateBreadcrumbs = (pathname: string, pageTitle?: string) => {
@@ -782,10 +828,18 @@ Sitemap: https://korea90.xyz/sitemap.xml`);
     return res.status(200).send(html);
   } catch (e: any) {
     console.error(`[SEO Serverless Error] Failed to process meta:`, e);
+    const isHtmlReq = req.headers?.accept?.includes("text/html") || req.query?.action === "render" || !req.query?.action;
+    if (isHtmlReq) {
+      return res.status(200).send(getIndexHtml());
+    }
     return res.status(500).json({ error: 'Internal Server Error', details: e.message });
   }
   } catch (globalErr: any) {
     console.error(`[SEO Handler Global Error]`, globalErr);
+    const isHtmlReq = req.headers?.accept?.includes("text/html") || req.query?.action === "render" || !req.query?.action;
+    if (isHtmlReq) {
+      return res.status(200).send(getIndexHtml());
+    }
     return res.status(500).json({ error: 'Internal Server Error', details: globalErr.message });
   }
 }

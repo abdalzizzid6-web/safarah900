@@ -44,14 +44,35 @@ export function isFirebaseQuotaError(err: any): boolean {
 // Proxy Firestore to block calls when quota is exceeded, with a fallback target to prevent TypeError if rawFirestore is undefined during module load
 console.log(`[DIAGNOSTIC-LOG] [Module Loading] [collections.ts] Module loading started. rawFirestore exists: ${!!rawFirestore}, isFirebaseAdminReady: ${isFirebaseAdminReady}`);
 
+const createDummyMock = () => {
+  const dummyQuery: any = (...args: any[]): any => dummyQuery;
+  dummyQuery.where = () => dummyQuery;
+  dummyQuery.orderBy = () => dummyQuery;
+  dummyQuery.limit = () => dummyQuery;
+  dummyQuery.select = () => dummyQuery;
+  dummyQuery.startAfter = () => dummyQuery;
+  dummyQuery.endAt = () => dummyQuery;
+  dummyQuery.get = () => Promise.resolve({ docs: [], forEach: (cb: any) => {}, size: 0, empty: true });
+  dummyQuery.set = () => Promise.resolve();
+  dummyQuery.update = () => Promise.resolve();
+  dummyQuery.delete = () => Promise.resolve();
+  dummyQuery.doc = (docId?: string) => ({
+    get: () => Promise.resolve({ exists: false, id: docId || 'mock-id', data: () => undefined }),
+    set: () => Promise.resolve(),
+    update: () => Promise.resolve(),
+    delete: () => Promise.resolve(),
+    collection: () => dummyQuery,
+  });
+  dummyQuery.collection = () => dummyQuery;
+  return dummyQuery;
+};
+
 const firestore = new Proxy({} as any, {
   get(target, prop, receiver) {
-    console.log(`[DIAGNOSTIC-LOG] [collections.ts Proxy] Property accessed on firestore: "${String(prop)}". rawFirestore exists: ${!!rawFirestore}`);
     if (!rawFirestore) {
       if (prop === 'collection' || prop === 'doc' || prop === 'batch' || prop === 'runTransaction') {
-        const err = new Error('[Firestore Error] Firestore raw client is not initialized or credentials are missing.');
-        console.error(`[DIAGNOSTIC-LOG] [collections.ts Proxy] [CRITICAL-ERROR] Property "${String(prop)}" accessed but rawFirestore is undefined. Throwing error.`);
-        throw err;
+        console.warn(`[collections.ts Proxy] Property "${String(prop)}" accessed but rawFirestore is not ready. Returning safe mock.`);
+        return createDummyMock();
       }
       return undefined;
     }
@@ -61,19 +82,7 @@ const firestore = new Proxy({} as any, {
     // Only intercept top-level methods that interact with Firestore collections/docs
     if (isFirestoreQuotaExceeded && (prop === 'collection' || prop === 'doc' || prop === 'batch' || prop === 'runTransaction')) {
       console.warn(`[DIAGNOSTIC-LOG] [collections.ts Proxy] Firestore blocked due to exceeded quota during property: "${String(prop)}". Returning mock.`);
-      // Return a mock object/function that simulates Firestore to prevent crashes
-      const mockOp = (...args: any[]): any => ({
-          where: () => ({ get: () => Promise.resolve({ docs: [], forEach: (cb: any) => {}, size: 0 }) }),
-          get: () => Promise.resolve({ docs: [], forEach: (cb: any) => {}, size: 0, exists: false, data: () => ({}) }),
-          set: () => Promise.resolve(),
-          update: () => Promise.resolve(),
-          doc: () => ({
-              get: () => Promise.resolve({ exists: false, data: () => ({}) }),
-              set: () => Promise.resolve(),
-              update: () => Promise.resolve(),
-          })
-      });
-      return mockOp;
+      return createDummyMock();
     }
     
     // Bind functions to rawFirestore to ensure 'this' is correct

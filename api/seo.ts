@@ -1,6 +1,15 @@
 import { Request, Response } from "express";
 import path from "path";
 import fs from "fs";
+import { 
+  generateSitemapXml, 
+  generateSitemapIndexXml, 
+  generateNewsSitemapXml, 
+  generateImageSitemapXml 
+} from "../server/utils/seoHelpers";
+import { normalizeMatch, normalizeLeague, normalizeTeam, normalizeNews } from "../server/utils/normalizer";
+import { createSlugPath, getIdFromSlug } from "../src/utils/slugify";
+import { collections, firestore, isFirebaseAdminReady } from "../server/firestore/collections";
 // --- CACHING & CONFIGURATION ---
 const getBaseUrl = (req: Request) => "https://korea90.xyz";
 
@@ -267,33 +276,6 @@ import { wrapSeoHandler } from "./seo-render";
 async function handler(req: Request, res: Response) {
   // Global Error Capture
   try {
-    // Lazy imports
-    console.log('[MODULE LOAD START] Loading modules');
-    let collections, firestore, isFirebaseAdminReady, generateSitemapIndexXml, generateSitemapXml, generateNewsSitemapXml, generateImageSitemapXml, normalizeMatch, normalizeLeague, normalizeTeam, normalizeNews, createSlugPath, getIdFromSlug;
-    try {
-      const collectionsMod = await import("../server/firestore/collections");
-      collections = collectionsMod.collections;
-      firestore = collectionsMod.firestore;
-      isFirebaseAdminReady = collectionsMod.isFirebaseAdminReady;
-      const seoHelpersMod = await import("../server/utils/seoHelpers");
-      generateSitemapIndexXml = seoHelpersMod.generateSitemapIndexXml;
-      generateSitemapXml = seoHelpersMod.generateSitemapXml;
-      generateNewsSitemapXml = seoHelpersMod.generateNewsSitemapXml;
-      generateImageSitemapXml = seoHelpersMod.generateImageSitemapXml;
-      const normalizerMod = await import("../server/utils/normalizer");
-      normalizeMatch = normalizerMod.normalizeMatch;
-      normalizeLeague = normalizerMod.normalizeLeague;
-      normalizeTeam = normalizerMod.normalizeTeam;
-      normalizeNews = normalizerMod.normalizeNews;
-      const slugifyMod = await import("../src/utils/slugify");
-      createSlugPath = slugifyMod.createSlugPath;
-      getIdFromSlug = slugifyMod.getIdFromSlug;
-      console.log('[MODULE LOAD SUCCESS] Modules loaded');
-    } catch (e: any) {
-      console.error('[MODULE LOAD FAILED] Modules failed to load', e);
-      throw e;
-    }
-
     const action = req.query.action as string;
     const requestId = Math.random().toString(36).substring(7);
 
@@ -574,8 +556,7 @@ Sitemap: https://korea90.xyz/sitemap.xml`);
   res.setHeader("Content-Type", "text/html; charset=utf-8");
   res.setHeader("Cache-Control", "public, max-age=60, s-maxage=60, stale-while-revalidate=600");
 
-  try {
-    if (pathname.startsWith("/match/")) {
+  if (pathname.startsWith("/match/")) {
       const slug = pathname.split("/")[2] || "";
       const matchId = getIdFromSlug(slug);
       
@@ -826,21 +807,41 @@ Sitemap: https://korea90.xyz/sitemap.xml`);
     }
 
     return res.status(200).send(html);
-  } catch (e: any) {
-    console.error(`[SEO Serverless Error] Failed to process meta:`, e);
-    const isHtmlReq = req.headers?.accept?.includes("text/html") || req.query?.action === "render" || !req.query?.action;
-    if (isHtmlReq) {
-      return res.status(200).send(getIndexHtml());
-    }
-    return res.status(500).json({ error: 'Internal Server Error', details: e.message });
-  }
   } catch (globalErr: any) {
     console.error(`[SEO Handler Global Error]`, globalErr);
-    const isHtmlReq = req.headers?.accept?.includes("text/html") || req.query?.action === "render" || !req.query?.action;
-    if (isHtmlReq) {
-      return res.status(200).send(getIndexHtml());
+    const reqUrl = req.url || "";
+    const action = req.query?.action as string;
+    const type = req.query?.type as string;
+
+    if (action === "sitemap" || reqUrl.includes("sitemap") || reqUrl.endsWith(".xml")) {
+      res.setHeader("Content-Type", "application/xml; charset=utf-8");
+      if (type === "news") {
+        return res.status(200).send(generateNewsSitemapXml([]));
+      } else if (type === "images") {
+        return res.status(200).send(generateImageSitemapXml([]));
+      } else if (!type || type === "index") {
+        const host = getBaseUrl(req);
+        return res.status(200).send(generateSitemapIndexXml([
+          `${host}/sitemap-main.xml`,
+          `${host}/sitemap-matches.xml`,
+          `${host}/sitemap-leagues.xml`,
+          `${host}/sitemap-teams.xml`,
+          `${host}/sitemap-players.xml`,
+          `${host}/sitemap-news.xml`,
+          `${host}/sitemap-images.xml`
+        ]));
+      } else {
+        return res.status(200).send(generateSitemapXml([]));
+      }
     }
-    return res.status(500).json({ error: 'Internal Server Error', details: globalErr.message });
+
+    if (action === "robots" || reqUrl.includes("robots.txt")) {
+      res.setHeader("Content-Type", "text/plain; charset=utf-8");
+      return res.status(200).send(`User-agent: *\nAllow: /\nDisallow: /admin/\nDisallow: /api/\n\nSitemap: https://korea90.xyz/sitemap.xml`);
+    }
+
+    res.setHeader("Content-Type", "text/html; charset=utf-8");
+    return res.status(200).send(getIndexHtml());
   }
 }
 

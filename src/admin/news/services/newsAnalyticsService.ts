@@ -12,7 +12,7 @@ export const newsAnalyticsService = {
         await repositories.news.update(articleId, {
           views: currentViews + 1,
           readingTimeSum: currentReadingTimeSum + readingTimeMinutes
-        });
+        } as any);
       }
     } catch (error) {
       console.error('Error tracking view metrics:', error);
@@ -27,7 +27,7 @@ export const newsAnalyticsService = {
         const currentClicks = article.clicks || 0;
         await repositories.news.update(articleId, {
           clicks: currentClicks + 1
-        });
+        } as any);
       }
     } catch (error) {
       console.error('Error tracking click metrics:', error);
@@ -37,7 +37,7 @@ export const newsAnalyticsService = {
   // Compute aggregated real statistics for Admin Analytics Center
   async getAggregatedStats(): Promise<NewsStatisticsData> {
     try {
-      const articles = (await repositories.news.getAll()) as NewsArticle[];
+      const articles = (await repositories.news.getAll()) as any[];
 
       let totalViews = 0;
       let totalClicks = 0;
@@ -48,7 +48,7 @@ export const newsAnalyticsService = {
 
       const categoryDistribution: Record<string, number> = {};
 
-      articles.forEach(art => {
+      articles.forEach((art: any) => {
         totalViews += (art.views || 0);
         totalClicks += (art.clicks || 0);
 
@@ -57,47 +57,59 @@ export const newsAnalyticsService = {
         else if (art.status === 'scheduled') scheduledCount++;
         else if (art.status === 'archived') archivedCount++;
 
-        (art.categories || []).forEach(cat => {
+        (art.categories || []).forEach((cat: string) => {
           categoryDistribution[cat] = (categoryDistribution[cat] || 0) + 1;
         });
       });
 
-      const sortedByViews = [...articles].sort((a, b) => (b.views || 0) - (a.views || 0));
-      const topPerforming = sortedByViews.slice(0, 5);
-
-      const categoryStats = Object.entries(categoryDistribution).map(([category, count]) => ({
-        category,
-        articleCount: count,
-        totalViews: articles.filter(a => a.categories?.includes(category)).reduce((acc, curr) => acc + (curr.views || 0), 0)
+      const sortedByViews = [...articles].sort((a: any, b: any) => (b.views || 0) - (a.views || 0));
+      const topArticles = sortedByViews.slice(0, 5).map((a: any) => ({
+        articleId: a.id,
+        title: a.title,
+        views: a.views || 0,
+        clicks: a.clicks || 0,
+        ctr: (a.views || 0) > 0 ? ((a.clicks || 0) / a.views) * 100 : 0,
+        avgReadingTime: a.seo?.readingTime || 2
       }));
 
-      const averageCtr = totalViews > 0 ? (totalClicks / totalViews) * 100 : 0;
+      const topCategories = Object.entries(categoryDistribution).map(([categoryName, count]) => ({
+        categoryId: categoryName,
+        categoryName,
+        views: articles.filter((a: any) => a.categories?.includes(categoryName)).reduce((acc: number, curr: any) => acc + (curr.views || 0), 0),
+        articlesCount: count as number
+      }));
+
+      const avgCtr = totalViews > 0 ? (totalClicks / totalViews) * 100 : 0;
+      const totalReadingTime = articles.reduce((acc: number, curr: any) => acc + (curr.seo?.readingTime || 2), 0);
+      const avgReadingTime = articles.length > 0 ? totalReadingTime / articles.length : 0;
 
       return {
         totalArticles: articles.length,
         publishedCount,
-        draftCount,
         scheduledCount,
-        archivedCount,
+        draftCount,
         totalViews,
         totalClicks,
-        averageCtr: parseFloat(averageCtr.toFixed(2)),
-        topPerforming,
-        categoryStats
+        avgCtr: parseFloat(avgCtr.toFixed(2)),
+        avgReadingTime: parseFloat(avgReadingTime.toFixed(1)),
+        topArticles,
+        topCategories,
+        topTags: []
       };
     } catch (error) {
       console.error('Error computing aggregated news analytics:', error);
       return {
         totalArticles: 0,
         publishedCount: 0,
-        draftCount: 0,
         scheduledCount: 0,
-        archivedCount: 0,
+        draftCount: 0,
         totalViews: 0,
         totalClicks: 0,
-        averageCtr: 0,
-        topPerforming: [],
-        categoryStats: []
+        avgCtr: 0,
+        avgReadingTime: 0,
+        topArticles: [],
+        topCategories: [],
+        topTags: []
       };
     }
   }

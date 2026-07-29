@@ -41,8 +41,10 @@ export abstract class BaseRepository<T> {
       CacheLayer.set(cacheKey, results, 5); // 5 mins cache
       return results;
     } catch (e: any) {
-      if (e.message?.includes('quota') || e.code === 'resource-exhausted') {
+      if (e.message?.includes('quota') || e.code === 'resource-exhausted' || e.message?.includes('RESOURCE_EXHAUSTED')) {
         telemetry.setFirestoreQuotaExceeded(true);
+        console.warn(`[BaseRepository] Quota exceeded on getAll for ${this.collectionName}. Returning empty fallback.`);
+        return [];
       }
       throw e;
     }
@@ -64,8 +66,10 @@ export abstract class BaseRepository<T> {
       if (result) CacheLayer.set(cacheKey, result, 10); // 10 mins cache for specific docs
       return result;
     } catch (e: any) {
-      if (e.message?.includes('quota') || e.code === 'resource-exhausted') {
+      if (e.message?.includes('quota') || e.code === 'resource-exhausted' || e.message?.includes('RESOURCE_EXHAUSTED')) {
         telemetry.setFirestoreQuotaExceeded(true);
+        console.warn(`[BaseRepository] Quota exceeded on getById for ${this.collectionName}/${id}. Returning null.`);
+        return null;
       }
       throw e;
     }

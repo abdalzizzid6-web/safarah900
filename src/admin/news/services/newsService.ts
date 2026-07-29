@@ -14,20 +14,20 @@ export const newsService = {
   } = {}): Promise<{ articles: NewsArticle[]; lastVisible: any }> {
     try {
       const { status, category, tag, search, limitSize = 20 } = filters;
-      let articles = (await repositories.news.getAll()) as NewsArticle[];
+      let articles = (await repositories.news.getAll()) as any[];
 
       if (status) {
-        articles = articles.filter(a => a.status === status);
+        articles = articles.filter((a: any) => a.status === status);
       }
       if (category) {
-        articles = articles.filter(a => a.categories?.includes(category));
+        articles = articles.filter((a: any) => a.categories?.includes(category));
       }
       if (tag) {
-        articles = articles.filter(a => a.tags?.includes(tag));
+        articles = articles.filter((a: any) => a.tags?.includes(tag));
       }
       if (search) {
         const lowerSearch = search.toLowerCase();
-        articles = articles.filter(a => 
+        articles = articles.filter((a: any) => 
           a.title?.toLowerCase().includes(lowerSearch) || 
           (typeof a.content === 'string' ? a.content : a.content?.fullText)?.toLowerCase().includes(lowerSearch)
         );
@@ -36,7 +36,7 @@ export const newsService = {
       articles = articles.slice(0, limitSize);
 
       return {
-        articles,
+        articles: articles as NewsArticle[],
         lastVisible: null
       };
     } catch (error) {
@@ -48,7 +48,7 @@ export const newsService = {
   // Get article by ID
   async getArticleById(id: string): Promise<NewsArticle | null> {
     try {
-      const data = await repositories.news.getById(id);
+      const data = await repositories.news.getById(id) as any;
       if (data) {
         return { id, ...data } as NewsArticle;
       }
@@ -66,13 +66,13 @@ export const newsService = {
     // Automatically pre-fill SEO
     const seo: NewsSeo = data.seo || newsSeoService.generateDefaultSeo(
       data.title, 
-      typeof data.content === 'string' ? data.content : data.content?.fullText || '', 
+      typeof data.content === 'string' ? data.content : (data.content as any)?.fullText || '', 
       data.categories, 
       data.tags
     );
 
     // Compute reading time
-    seo.readingTime = newsSeoService.calculateReadingTime(typeof data.content === 'string' ? data.content : data.content?.fullText || '');
+    seo.readingTime = newsSeoService.calculateReadingTime(typeof data.content === 'string' ? data.content : (data.content as any)?.fullText || '');
 
     const newArticle: Omit<NewsArticle, 'id'> = {
       ...data,
@@ -83,7 +83,7 @@ export const newsService = {
       createdAt: timestamp,
       updatedAt: timestamp,
       history: []
-    };
+    } as any;
 
     // Auto append structured NewsArticle data
     const finalArticleObj = {
@@ -95,7 +95,7 @@ export const newsService = {
     };
 
     const docId = `news_${Date.now()}`;
-    await repositories.news.setById(docId, finalArticleObj);
+    await repositories.news.setById(docId, finalArticleObj as any);
     return {
       id: docId,
       ...finalArticleObj
@@ -117,7 +117,7 @@ export const newsService = {
       updatedAt: existing.updatedAt || timestamp,
       updatedBy: existing.author?.name || 'محرر مجهول',
       title: existing.title,
-      content: typeof existing.content === 'string' ? existing.content : existing.content?.fullText || '',
+      content: typeof existing.content === 'string' ? existing.content : (existing.content as any)?.fullText || '',
       status: existing.status
     };
 
@@ -126,7 +126,7 @@ export const newsService = {
     // Compute read time if content is updated
     if (updates.content) {
       if (!updates.seo) updates.seo = existing.seo;
-      const contentStr = typeof updates.content === 'string' ? updates.content : updates.content?.fullText || '';
+      const contentStr = typeof updates.content === 'string' ? updates.content : (updates.content as any)?.fullText || '';
       updates.seo.readingTime = newsSeoService.calculateReadingTime(contentStr);
     }
 
@@ -137,7 +137,7 @@ export const newsService = {
       history: mergedHistory
     };
 
-    await repositories.news.update(id, finalUpdates);
+    await repositories.news.update(id, finalUpdates as any);
   },
 
   // Delete / Remove completely

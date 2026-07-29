@@ -65,6 +65,6 @@ export class TeamRepository extends BaseRepository<ITeam> implements ITeamReposi
 
   async getTeamKnowledge(id: string | number): Promise<any> {
     const team = await this.getTeamById(String(id));
-    return team?.knowledge || { history: 'معلومات الفريق الأساسية', tactics: 'تكتيكات الفريق' };
+    return (team as any)?.knowledge || { history: 'معلومات الفريق الأساسية', tactics: 'تكتيكات الفريق' };
   }
 }

@@ -1,5 +1,5 @@
-import { firestore } from "../firestore/collections";
-import { generateContentWithRetry } from "./aiService";
+import { firestore } from "../firestore/collections.js";
+import { generateContentWithRetry } from "./aiService.js";
 import { Type } from "@google/genai";
 
 // Cache lifetime constants

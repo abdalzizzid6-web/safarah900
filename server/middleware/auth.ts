@@ -1,5 +1,5 @@
 
-import { auth, firestore, isFirebaseAdminReady, isFirestoreQuotaExceeded, setFirestoreQuotaExceeded, isFirebaseQuotaError } from '../firestore/collections';
+import { auth, firestore, isFirebaseAdminReady, isFirestoreQuotaExceeded, setFirestoreQuotaExceeded, isFirebaseQuotaError } from '../firestore/collections.js';
 
 export const ROLE_WEIGHTS: Record<string, number> = {
   'super_admin': 100,

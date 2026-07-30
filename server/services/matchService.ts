@@ -1,7 +1,7 @@
 
-import { firestore, FieldValue } from "../firestore/collections";
-import { sendPushNotification } from "./notificationService";
-import { notifyGoogleIndexing } from "../../src/utils/googleIndexing";
+import { firestore, FieldValue } from "../firestore/collections.js";
+import { sendPushNotification } from "./notificationService.js";
+import { notifyGoogleIndexing } from "../../src/utils/googleIndexing.js";
 
 export const adminProcessMatchResult = async (matchId: string, actualScore: { home: number, away: number }) => {
     const predictionsSnap = await firestore.collection('predictions').where('matchId', '==', matchId).get();

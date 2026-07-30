@@ -1,7 +1,7 @@
 
 import express from 'express';
-import { firestore } from '../firestore/collections';
-import { getAi, generateContentWithRetry } from '../services/aiService';
+import { firestore } from '../firestore/collections.js';
+import { getAi, generateContentWithRetry } from '../services/aiService.js';
 
 const router = express.Router();
 

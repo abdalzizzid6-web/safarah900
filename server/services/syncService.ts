@@ -1,6 +1,6 @@
-import { firestore, isFirebaseAdminReady } from "../firestore/collections";
-import { generateAndWriteCacheFiles } from "../firestore/cache";
-import { matchRepository } from "../compositionRoot";
+import { firestore, isFirebaseAdminReady } from "../firestore/collections.js";
+import { generateAndWriteCacheFiles } from "../firestore/cache.js";
+import { matchRepository } from "../compositionRoot.js";
 
 export async function syncMatchesFromAPI() {
     if (!isFirebaseAdminReady) return { success: false, message: "Firebase not ready" };

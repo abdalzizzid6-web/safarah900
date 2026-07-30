@@ -1,6 +1,6 @@
 import express from "express";
-import { firestore } from "../firestore/collections";
-import { authMiddleware } from "../middleware/auth";
+import { firestore } from "../firestore/collections.js";
+import { authMiddleware } from "../middleware/auth.js";
 import { FieldValue } from "firebase-admin/firestore";
 
 const router = express.Router();

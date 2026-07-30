@@ -1,4 +1,4 @@
-import { Match } from '../../domain/entities/Match';
+import { Match } from '../../domain/entities/Match.js';
 
 export interface IProvider {
   name: string;

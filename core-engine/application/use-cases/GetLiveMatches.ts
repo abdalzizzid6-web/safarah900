@@ -1,5 +1,5 @@
-import { IMatchRepository } from '../../contracts/repositories/IMatchRepository';
-import { Match } from '../../domain/entities/Match';
+import { IMatchRepository } from '../../contracts/repositories/IMatchRepository.js';
+import { Match } from '../../domain/entities/Match.js';
 
 export class GetLiveMatches {
   constructor(private matchRepository: IMatchRepository) {}

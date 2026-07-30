@@ -1,8 +1,8 @@
-import { IMatchRepository } from '../../contracts/repositories/IMatchRepository';
-import { Match } from '../../domain/entities/Match';
-import { IProvider } from '../../contracts/providers/IProvider';
-import { CacheManager } from '../cache/CacheManager';
-import { MatchNormalizer } from '../normalization/MatchNormalizer';
+import { IMatchRepository } from '../../contracts/repositories/IMatchRepository.js';
+import { Match } from '../../domain/entities/Match.js';
+import { IProvider } from '../../contracts/providers/IProvider.js';
+import { CacheManager } from '../cache/CacheManager.js';
+import { MatchNormalizer } from '../normalization/MatchNormalizer.js';
 
 export class MatchRepository implements IMatchRepository {
   constructor(

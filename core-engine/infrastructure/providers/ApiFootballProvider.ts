@@ -1,6 +1,6 @@
-import { IProvider } from '../../contracts/providers/IProvider';
-import { Match } from '../../domain/entities/Match';
-import { ConfigManager } from '../configuration/ConfigManager';
+import { IProvider } from '../../contracts/providers/IProvider.js';
+import { Match } from '../../domain/entities/Match.js';
+import { ConfigManager } from '../configuration/ConfigManager.js';
 
 export class ApiFootballRealProvider implements IProvider {
   name = 'ApiFootball';

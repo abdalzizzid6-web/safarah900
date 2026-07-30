@@ -1,5 +1,5 @@
-import { firestore, isFirestoreQuotaExceeded, setFirestoreQuotaExceeded, isFirebaseQuotaError } from "../firestore/collections";
-import { syncRssProvider } from "../services/rssService";
+import { firestore, isFirestoreQuotaExceeded, setFirestoreQuotaExceeded, isFirebaseQuotaError } from "../firestore/collections.js";
+import { syncRssProvider } from "../services/rssService.js";
 
 let pollingInterval: NodeJS.Timeout | null = null;
 let rssSourcesCache: any[] | null = null;

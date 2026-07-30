@@ -1,6 +1,6 @@
-import { firestore } from '../firestore/collections';
+import { firestore } from '../firestore/collections.js';
 import { getAuth } from 'firebase-admin/auth';
-import { IApiConfigProvider, ApiProviderConfig } from '../../core-engine/contracts/infrastructure/IApiConfigProvider';
+import { IApiConfigProvider, ApiProviderConfig } from '../../core-engine/contracts/infrastructure/IApiConfigProvider.js';
 
 export interface ApiProviderDoc extends ApiProviderConfig {
   id: string;

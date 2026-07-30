@@ -1,6 +1,6 @@
 
 import { z } from "zod";
-import { logSecurityAudit } from "./auth";
+import { logSecurityAudit } from "./auth.js";
 
 export const validateBody = (schema: z.ZodTypeAny) => {
   return (req: any, res: any, next: any) => {

@@ -1,5 +1,5 @@
 import express from "express";
-import { generateContentWithRetry } from "../services/aiService";
+import { generateContentWithRetry } from "../services/aiService.js";
 import { Type } from "@google/genai";
 
 const router = express.Router();

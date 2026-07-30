@@ -112,12 +112,27 @@ import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 import { useLocation } from 'react-router-dom';
 import { logEvent } from '@/services/analyticsService';
+import { trackScreenRenderTime } from '@/core/monitoring/performance';
 
 function PageTracker() {
   const location = useLocation();
+
   useEffect(() => {
+    const startTime = performance.now();
     logEvent('page_view', { path: location.pathname });
+
+    // Measure screen paint rendering completion time
+    const rafId = requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        const renderDuration = performance.now() - startTime;
+        const screenName = location.pathname.replace(/^\//, '').replace(/\//g, '_') || 'home';
+        trackScreenRenderTime(screenName, renderDuration);
+      });
+    });
+
+    return () => cancelAnimationFrame(rafId);
   }, [location]);
+
   return null;
 }
 

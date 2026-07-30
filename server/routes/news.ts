@@ -1,7 +1,7 @@
 
 import express from "express";
-import { firestore, isFirestoreQuotaExceeded, setFirestoreQuotaExceeded, isFirebaseQuotaError } from "../firestore/collections";
-import { serverCache } from "../utils/cache";
+import { firestore, isFirestoreQuotaExceeded, setFirestoreQuotaExceeded, isFirebaseQuotaError } from "../firestore/collections.js";
+import { serverCache } from "../utils/cache.js";
 
 const router = express.Router();
 

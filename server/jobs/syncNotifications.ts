@@ -1,6 +1,6 @@
 
-import { syncMatchesForNotifications } from "../services/matchService";
-import { isFirestoreQuotaExceeded } from "../firestore/collections";
+import { syncMatchesForNotifications } from "../services/matchService.js";
+import { isFirestoreQuotaExceeded } from "../firestore/collections.js";
 
 export function startNotificationJob() {
   

@@ -1,6 +1,6 @@
-import { getAi, generateContentWithRetry } from "./aiService";
+import { getAi, generateContentWithRetry } from "./aiService.js";
 import { Type } from "@google/genai";
-import { firestore, isFirebaseQuotaError, setFirestoreQuotaExceeded } from "../firestore/collections";
+import { firestore, isFirebaseQuotaError, setFirestoreQuotaExceeded } from "../firestore/collections.js";
 
 function checkIsMatchFinished(match: any): boolean {
   if (!match) return false;

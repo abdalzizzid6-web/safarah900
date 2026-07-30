@@ -1,4 +1,4 @@
-import { firestore, isFirestoreQuotaExceeded, setFirestoreQuotaExceeded, isFirebaseQuotaError } from "../firestore/collections";
+import { firestore, isFirestoreQuotaExceeded, setFirestoreQuotaExceeded, isFirebaseQuotaError } from "../firestore/collections.js";
 import crypto from "crypto";
 
 export const knownGuids = new Set<string>();

@@ -1,6 +1,6 @@
-import { generateContentWithRetry } from "./aiService";
+import { generateContentWithRetry } from "./aiService.js";
 import { Type } from "@google/genai";
-import { searchMediaLibrary } from "./rssScraper";
+import { searchMediaLibrary } from "./rssScraper.js";
 
 // Simple Levenshtein distance to detect title similarity
 export function getTitleSimilarity(s1: string, s2: string): number {

@@ -1,5 +1,5 @@
-import { IProvider } from '../../contracts/providers/IProvider';
-import { Match } from '../../domain/entities/Match';
+import { IProvider } from '../../contracts/providers/IProvider.js';
+import { Match } from '../../domain/entities/Match.js';
 
 export class ProviderManager {
   private providers: IProvider[] = [];

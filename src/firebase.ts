@@ -26,6 +26,7 @@ import {
   getDocs 
 } from 'firebase/firestore';
 import { getMessaging, getToken, onMessage, isSupported } from 'firebase/messaging';
+import { getPerformance, trace as firebaseTrace, PerformanceTrace } from 'firebase/performance';
 import { telemetry } from './core/monitoring/telemetry';
 import firebaseConfig from '../firebase-applet-config.json';
 
@@ -57,8 +58,16 @@ export const db = initializeFirestore(app, {
 
 export const auth = getAuth(app);
 export let messaging: any = null;
+export let perf: ReturnType<typeof getPerformance> | null = null;
 
 if (typeof window !== 'undefined') {
+  try {
+    perf = getPerformance(app);
+    console.log('[Firebase Performance] Performance Monitoring initialized successfully.');
+  } catch (e) {
+    console.warn('[Firebase Performance] Could not initialize Performance Monitoring:', e);
+  }
+
   isSupported().then(supported => {
     if (supported) {
       messaging = getMessaging(app);
@@ -67,6 +76,23 @@ if (typeof window !== 'undefined') {
     console.warn("Firebase messaging is not supported in this browser environment.");
   });
 }
+
+/**
+ * Safely starts a custom Firebase Performance trace.
+ */
+export const startPerformanceTrace = (traceName: string): PerformanceTrace | null => {
+  if (!perf) return null;
+  try {
+    // Sanitize trace name: Firebase allows a-z, A-Z, 0-9, and _ (max 100 chars)
+    const sanitized = traceName.replace(/[^a-zA-Z0-9_]/g, '_').substring(0, 100);
+    const t = firebaseTrace(perf, sanitized);
+    t.start();
+    return t;
+  } catch (e) {
+    console.warn(`[Firebase Performance] Failed to start trace "${traceName}":`, e);
+    return null;
+  }
+};
 
 // تأمين بقاء المستخدم مسجلاً دخوله
 setPersistence(auth, browserLocalPersistence);

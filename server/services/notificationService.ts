@@ -1,5 +1,5 @@
 
-import { messaging, firestore } from "../firestore/collections";
+import { messaging, firestore } from "../firestore/collections.js";
 
 export async function sendPushNotification(title: string, body: string, link: string = '/#live', matchId: string = 'general', targetTopic: string = 'all_users') {
   if (!messaging) {

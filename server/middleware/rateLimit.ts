@@ -1,6 +1,6 @@
 
 import rateLimit from "express-rate-limit";
-import { logSecurityAudit } from "./auth";
+import { logSecurityAudit } from "./auth.js";
 
 export const authAbuseLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,

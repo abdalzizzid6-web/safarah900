@@ -1,8 +1,8 @@
 import express from "express";
-import { collections } from "../firestore/collections";
-import { generateSitemapIndexXml, generateSitemapXml, generateNewsSitemapXml, generateImageSitemapXml } from "../utils/seoHelpers";
-import { normalizeMatch, normalizeLeague, normalizeTeam, normalizeNews } from "../utils/normalizer";
-import { createSlugPath } from "../utils/slugify";
+import { collections } from "../firestore/collections.js";
+import { generateSitemapIndexXml, generateSitemapXml, generateNewsSitemapXml, generateImageSitemapXml } from "../utils/seoHelpers.js";
+import { normalizeMatch, normalizeLeague, normalizeTeam, normalizeNews } from "../utils/normalizer.js";
+import { createSlugPath } from "../utils/slugify.js";
 
 const router = express.Router();
 

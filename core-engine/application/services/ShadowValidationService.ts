@@ -1,10 +1,10 @@
-import { Match } from '../../domain/entities/Match';
-import { MatchRepository } from '../../infrastructure/repositories/MatchRepository';
-import { ApiManagerAdapter } from '../../infrastructure/adapters/ApiManagerAdapter';
-import { CacheManager } from '../../infrastructure/cache/CacheManager';
-import { MatchNormalizer } from '../../infrastructure/normalization/MatchNormalizer';
-import { NormalizedMatch } from '../../../server/utils/normalizer';
-import { apiManager } from '../../../server/services/apiManager';
+import { Match } from '../../domain/entities/Match.js';
+import { MatchRepository } from '../../infrastructure/repositories/MatchRepository.js';
+import { ApiManagerAdapter } from '../../infrastructure/adapters/ApiManagerAdapter.js';
+import { CacheManager } from '../../infrastructure/cache/CacheManager.js';
+import { MatchNormalizer } from '../../infrastructure/normalization/MatchNormalizer.js';
+import { NormalizedMatch } from '../../../server/utils/normalizer.js';
+import { apiManager } from '../../../server/services/apiManager.js';
 
 export class ShadowValidationService {
   constructor(private repo: MatchRepository) {}

@@ -1,8 +1,8 @@
 import express from 'express';
 import crypto from 'crypto';
-import { firestore, isFirestoreQuotaExceeded, isFirebaseQuotaError, setFirestoreQuotaExceeded } from '../firestore/collections';
-import { encrypt, decrypt } from '../utils/crypto';
-import { authMiddleware } from '../middleware/auth';
+import { firestore, isFirestoreQuotaExceeded, isFirebaseQuotaError, setFirestoreQuotaExceeded } from '../firestore/collections.js';
+import { encrypt, decrypt } from '../utils/crypto.js';
+import { authMiddleware } from '../middleware/auth.js';
 
 const router = express.Router();
 

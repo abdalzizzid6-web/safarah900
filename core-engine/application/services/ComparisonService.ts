@@ -1,9 +1,9 @@
-import { MatchRepository } from '../../infrastructure/repositories/MatchRepository';
-import { ProviderManager } from '../../infrastructure/providers/ProviderManager';
-import { CacheManager } from '../../infrastructure/cache/CacheManager';
-import { MatchNormalizer } from '../../infrastructure/normalization/MatchNormalizer';
-import { ConfigManager } from '../../infrastructure/configuration/ConfigManager';
-import { ApiFootballRealProvider } from '../../infrastructure/providers/ApiFootballProvider';
+import { MatchRepository } from '../../infrastructure/repositories/MatchRepository.js';
+import { ProviderManager } from '../../infrastructure/providers/ProviderManager.js';
+import { CacheManager } from '../../infrastructure/cache/CacheManager.js';
+import { MatchNormalizer } from '../../infrastructure/normalization/MatchNormalizer.js';
+import { ConfigManager } from '../../infrastructure/configuration/ConfigManager.js';
+import { ApiFootballRealProvider } from '../../infrastructure/providers/ApiFootballProvider.js';
 
 export class ComparisonService {
   async compare() {

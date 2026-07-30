@@ -1,13 +1,13 @@
 
 import express from "express";
-import { firestore, isFirebaseQuotaError, isFirestoreQuotaExceeded, setFirestoreQuotaExceeded } from "../firestore/collections";
-import { getDocWithFallback } from "../firestore/withFallback";
-import { authMiddleware } from "../middleware/auth";
-import { validateBody, MatchStatsSchema } from "../middleware/admin";
-import { proxyCache } from "../firestore/cache";
-import { serverCache } from "../utils/cache";
-import { generateMatchContent, generateLineupAnalysis } from "../services/aiContentService";
-import { normalizeMatch } from "../utils/normalizer";
+import { firestore, isFirebaseQuotaError, isFirestoreQuotaExceeded, setFirestoreQuotaExceeded } from "../firestore/collections.js";
+import { getDocWithFallback } from "../firestore/withFallback.js";
+import { authMiddleware } from "../middleware/auth.js";
+import { validateBody, MatchStatsSchema } from "../middleware/admin.js";
+import { proxyCache } from "../firestore/cache.js";
+import { serverCache } from "../utils/cache.js";
+import { generateMatchContent, generateLineupAnalysis } from "../services/aiContentService.js";
+import { normalizeMatch } from "../utils/normalizer.js";
 
 const router = express.Router();
 

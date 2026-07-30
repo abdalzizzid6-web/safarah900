@@ -1,14 +1,14 @@
 import express from "express";
-import { firestore, isFirestoreQuotaExceeded, setFirestoreQuotaExceeded, isFirebaseQuotaError, handleFirestoreError } from "../firestore/collections";
-import { authMiddleware } from "../middleware/auth";
-import { serverCache } from "../utils/cache";
+import { firestore, isFirestoreQuotaExceeded, setFirestoreQuotaExceeded, isFirebaseQuotaError, handleFirestoreError } from "../firestore/collections.js";
+import { authMiddleware } from "../middleware/auth.js";
+import { serverCache } from "../utils/cache.js";
 import {
   syncRssProvider,
   syncAllRssProviders,
   transitionImportedArticleStatus,
   classifyArticleWithAi,
   runSeedArabicLogic
-} from "../services/rssService";
+} from "../services/rssService.js";
 
 const router = express.Router();
 

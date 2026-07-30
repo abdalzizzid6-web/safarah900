@@ -1,7 +1,7 @@
 import RSSParser from "rss-parser";
 import crypto from "crypto";
-import { isUrlSafe } from "../utils/slugify";
-import { firestore, isFirestoreQuotaExceeded, setFirestoreQuotaExceeded, isFirebaseQuotaError } from "../firestore/collections";
+import { isUrlSafe } from "../utils/slugify.js";
+import { firestore, isFirestoreQuotaExceeded, setFirestoreQuotaExceeded, isFirebaseQuotaError } from "../firestore/collections.js";
 
 // Import modular sub-services
 import { 
@@ -11,16 +11,16 @@ import {
   recentArticlesCache, 
   ensureRssCache, 
   setCachedLiveMatches 
-} from "./rssCache";
-import { findSmartLinks } from "./rssSmartLinking";
+} from "./rssCache.js";
+import { findSmartLinks } from "./rssSmartLinking.js";
 import { 
   rssHeaders, 
   getHeadersForUrl, 
   downloadAndCacheImage, 
   fetchFullArticleScrapedData, 
   fetchFullArticleText 
-} from "./rssScraper";
-import { getTitleSimilarity, classifyArticleWithAi } from "./rssClassifier";
+} from "./rssScraper.js";
+import { getTitleSimilarity, classifyArticleWithAi } from "./rssClassifier.js";
 
 // Re-export variables and functions to maintain absolute compatibility with any existing imports
 export { rssHeaders, fetchFullArticleScrapedData, fetchFullArticleText, classifyArticleWithAi };

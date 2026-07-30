@@ -1,4 +1,4 @@
-import { firestore, isFirestoreQuotaExceeded, setFirestoreQuotaExceeded, isFirebaseQuotaError } from "../firestore/collections";
+import { firestore, isFirestoreQuotaExceeded, setFirestoreQuotaExceeded, isFirebaseQuotaError } from "../firestore/collections.js";
 import { 
   getCachedTeamsAndPlayers, 
   getCachedLeagues, 
@@ -6,7 +6,7 @@ import {
   lastLiveMatchesFetch, 
   LIVE_MATCHES_TTL,
   setCachedLiveMatches
-} from "./rssCache";
+} from "./rssCache.js";
 
 export async function findSmartLinks(detected: { teams: string[]; players: string[]; league: string }) {
   const links: { matchId?: string; teamIds: string[]; playerIds: string[]; competitionId?: string; worldCupPageLinked?: boolean } = {

@@ -1,8 +1,8 @@
 
 import fs from "fs";
 import path from "path";
-import { firestore, isFirestoreQuotaExceeded, setFirestoreQuotaExceeded, isFirebaseQuotaError } from "./collections";
-import { normalizeMatch } from "../utils/normalizer";
+import { firestore, isFirestoreQuotaExceeded, setFirestoreQuotaExceeded, isFirebaseQuotaError } from "./collections.js";
+import { normalizeMatch } from "../utils/normalizer.js";
 
 export const proxyCache: Record<string, { data: any; expiry: number }> = {};
 

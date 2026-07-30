@@ -1,11 +1,11 @@
 
 import express from "express";
-import { firestore, isFirestoreQuotaExceeded, setFirestoreQuotaExceeded, isFirebaseQuotaError } from "../firestore/collections";
-import { authMiddleware } from "../middleware/auth";
-import { getSecurityEvents } from "../middleware/auth";
-import { generateContentWithRetry } from "../services/aiService";
+import { firestore, isFirestoreQuotaExceeded, setFirestoreQuotaExceeded, isFirebaseQuotaError } from "../firestore/collections.js";
+import { authMiddleware } from "../middleware/auth.js";
+import { getSecurityEvents } from "../middleware/auth.js";
+import { generateContentWithRetry } from "../services/aiService.js";
 import { Type } from "@google/genai";
-import { apiManager } from "../services/apiManager";
+import { apiManager } from "../services/apiManager.js";
 
 const router = express.Router();
 

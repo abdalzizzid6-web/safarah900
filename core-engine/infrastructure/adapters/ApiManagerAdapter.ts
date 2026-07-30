@@ -1,7 +1,7 @@
-import { IProvider } from '../../contracts/providers/IProvider';
-import { Match } from '../../domain/entities/Match';
-import { MatchNormalizer } from '../normalization/MatchNormalizer';
-import { IApiConfigProvider } from '../../contracts/infrastructure/IApiConfigProvider';
+import { IProvider } from '../../contracts/providers/IProvider.js';
+import { Match } from '../../domain/entities/Match.js';
+import { MatchNormalizer } from '../normalization/MatchNormalizer.js';
+import { IApiConfigProvider } from '../../contracts/infrastructure/IApiConfigProvider.js';
 
 export class ApiManagerAdapter implements IProvider {
   name = 'ApiManagerAdapter';

@@ -284,19 +284,46 @@ const injectSeo = (html: string, options: {
   return result;
 };
 
-import { wrapSeoHandler } from "./seo-render";
+import { wrapSeoHandler } from "./seo-render.js";
 
 // --- CORE UNIFIED HANDLER ---
 async function handler(req: Request, res: Response) {
   // Global Error Capture
   try {
-    const action = req.query.action as string;
+    let query: Record<string, string> = {};
+    if (req.query && typeof req.query === "object") {
+      for (const [k, v] of Object.entries(req.query)) {
+        if (typeof v === "string") query[k] = v;
+      }
+    }
+    const rawUrl = req.url || "";
+    if (rawUrl.includes("?")) {
+      try {
+        const parsedUrl = new URL(rawUrl, "https://korea90.xyz");
+        parsedUrl.searchParams.forEach((v, k) => {
+          if (!query[k]) query[k] = v;
+        });
+      } catch (e) {}
+    }
+    if (!query.action) {
+      if (rawUrl.includes("robots.txt")) query.action = "robots";
+      else if (rawUrl.includes("sitemap")) {
+        query.action = "sitemap";
+        if (rawUrl.includes("sitemap-main")) query.type = "main";
+        else if (rawUrl.includes("sitemap-matches")) query.type = "matches";
+        else if (rawUrl.includes("sitemap-leagues")) query.type = "leagues";
+        else if (rawUrl.includes("sitemap-teams")) query.type = "teams";
+        else if (rawUrl.includes("sitemap-players")) query.type = "players";
+        else if (rawUrl.includes("sitemap-news")) query.type = "news";
+        else if (rawUrl.includes("sitemap-images")) query.type = "images";
+      }
+    }
+
+    const action = query.action;
+    const type = query.type;
     const requestId = Math.random().toString(36).substring(7);
 
     console.log(`[FORENSIC-AUDIT] [${requestId}] ---> REQUEST ENTRY <---`);
-    // ... rest of the handler logic (I need to be careful with the context here, I will retain original logic but using the dynamically imported modules)
-    // Actually, this is too big for a single edit_file if I have to include the whole body.
-    // Let me rethink the strategy.
   if (action === "robots") {
     console.log(`[FORENSIC-AUDIT] [${requestId}] Handling robots.txt request`);
     res.setHeader("Content-Type", "text/plain");
@@ -314,7 +341,6 @@ Sitemap: https://korea90.xyz/sitemap.xml`);
 
   // 2. --- SITEMAP XML ROUTE ---
   if (action === "sitemap") {
-    const type = req.query.type as string;
     const host = getBaseUrl(req);
     console.log(`[FORENSIC-AUDIT] [${requestId}] Sitemap Route Entered. Type: ${type || "index"}, Host: ${host}`);
 

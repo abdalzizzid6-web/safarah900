@@ -1,11 +1,11 @@
 import express from "express";
-import { firestore } from "../firestore/collections";
+import { firestore } from "../firestore/collections.js";
 import {
   performSemanticSearch,
   getOrGeneratePlayerKnowledge,
   getOrGenerateTeamKnowledgeGraph,
   getOrGenerateMatchKnowledge
-} from "../services/knowledgeGraphService";
+} from "../services/knowledgeGraphService.js";
 
 const router = express.Router();
 

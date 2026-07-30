@@ -1,5 +1,5 @@
-import { firestore, isFirebaseQuotaError, setFirestoreQuotaExceeded } from "../firestore/collections";
-import { serverCache } from "../utils/cache";
+import { firestore, isFirebaseQuotaError, setFirestoreQuotaExceeded } from "../firestore/collections.js";
+import { serverCache } from "../utils/cache.js";
 
 export async function getDocWithFallback(
   collectionName: string,

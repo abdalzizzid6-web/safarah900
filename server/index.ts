@@ -1112,17 +1112,19 @@ export async function bootstrap() {
     });
   }
 
-  const server = app.listen(PORT, "0.0.0.0", () => {
-    console.log(`[Server] Listening on http://0.0.0.0:${PORT}`);
-  });
-
   if (!process.env.VERCEL) {
+    const server = app.listen(PORT, "0.0.0.0", () => {
+      console.log(`[Server] Listening on http://0.0.0.0:${PORT}`);
+    });
+
     try {
       initSocket(server);
       console.log("[WebSocket] Socket.io initialized successfully.");
     } catch (err) {
       console.error("[WebSocket] Failed to initialize Socket.io:", err);
     }
+  } else {
+    console.log("[Vercel Serverless] Skipping app.listen and socket initialization in serverless environment.");
   }
 }
 

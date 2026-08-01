@@ -149,6 +149,39 @@
 
 ---
 
+## الخامس عشر: Vercel Production Compatibility Audit (تدقيق التوافق الإنتاجي مع Vercel)
+
+تم إجراء فحص دقيق لجميع أجزاء مشروع **SAFARA 90** لمطابقتها مع بيئة التشغيل السحابية (Vercel Serverless Platform):
+
+### 1. تحليل الملفات والتكوينات المكتشفة:
+- **`vercel.json`**:
+  - يتضمن توجيهات المسارات (`rewrites`) ومسارات السيو مثل `/sitemap.xml` إلى `/api/seo`.
+  - خاصية `"functions": { "api/**/*.ts": { "includeFiles": "dist/**", "maxDuration": 30 } }` مؤمنة لتضمن الوصول لملفات `dist/index.html`.
+- **`vite.config.ts` & `package.json`**:
+  - عمليات البناء تُنتج كلاً من الملفات الثابتة لـ React بـ `dist/` وحزمة الخادم المجمعة `dist/server.cjs`.
+- **مجلد `server/` وخادم Express**:
+  - **العمليات المتكررة المستمرة (`setInterval`)**: ملفات مثل `startNotificationJob()` و `startRssJobs()` تعتمد على مؤقتات زمنية تتوقف في بيئات Serverless بمجرد إرسال الاستجابة.
+  - **اتصالات الـ WebSockets (`initSocket`)**: لا تدعم بيئة Serverless الاتصالات الدائمة TCP/WebSocket.
+  - **الكاش المحلي في الذاكرة (`matchSsoCache`)**: الذاكرة المؤقتة محلية وتزول بين الاستدعاءات المختلفة للدوال السحابية.
+  - **كتابة الملفات على القرص (`generateAndWriteCacheFiles`)**: نظام الملفات في Vercel للقراءة فقط (Read-Only) باستثناء `/tmp`.
+- **مجلد `api/` (Serverless Handlers)**:
+  - الاعتماد على `api/index.ts` لاستيراد تطبيق Express الكامل يسبب زيادة في زمن الإقلاع البارد (Cold Start).
+
+---
+
+## خطة إعادة الهيكلة المقترحة دون كسر المشروع (Dual-Mode Restructuring)
+
+1. **تفعيل نمط التشغيل المزدوج (Environment Aware Architecture)**:
+   - إضافة شرط `if (!process.env.VERCEL)` لحماية وظائف الـ WebSockets والمؤقتات المستمرة من التشغيل في بيئة Vercel، مع تركها تعمل بكفاءة على Cloud Run / Docker.
+2. **الاعتماد على Vercel Crons للمهام المجدولة**:
+   - تحويل المهام المجدولة (جلب RSS والتنبيهات) إلى `"crons"` في `vercel.json` لتستدعي `/api/matches?action=cron` و `/api/rss?action=sync` بشكل دوري بدلاً من `setInterval`.
+3. **الكاش السحابي برؤوس HTTP (CDN Edge Caching)**:
+   - الاستفادة من رؤوس `Cache-Control: public, s-maxage=300, stale-while-revalidate=86400` لمنح Vercel Edge Network القدرة على كاش الاستجابات بدون كتابة ملفات محلياً.
+4. **دعم Firestore Client-Side Listening**:
+   - استخدام `onSnapshot` من الواجهة الأمامية كبديل لسوكيت البث المباشر عند التشغيل على Vercel.
+
+---
+
 ## 4. القرار الهندسي النهائي والتوصية الفنية (Definitive Engineering Decision)
 
 * **المنصة الإنتاجية الموصى بها كلياً:** **Google Cloud Run**

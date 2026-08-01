@@ -202,7 +202,14 @@ export function ErrorProvider({ children }: { children: React.ReactNode }) {
 export function useError() {
   const context = useContext(ErrorContext);
   if (context === undefined) {
-    throw new Error('useError must be used within an ErrorProvider');
+    return {
+      showToast: (message: string, type?: ToastType) => {
+        console.log(`[Toast ${type || 'info'}]: ${message}`);
+      },
+      showError: (error: any) => {
+        console.error('[Error]:', error);
+      }
+    };
   }
   return context;
 }

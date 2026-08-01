@@ -30,7 +30,7 @@ import { useAuth } from '../../context/AuthContext';
 import WcNews from '../../components/worldcup/WcNews';
 import WcBracket from '../../components/worldcup/WcBracket';
 import WcStats from '../../components/worldcup/WcStats';
-import WcAdmin from '../../components/worldcup/WcAdmin';
+import WcAdmin from '../../features/world-cup/components/WcAdmin';
 import SEO from '../../components/SEO';
 
 export default function WorldCupCenter() {

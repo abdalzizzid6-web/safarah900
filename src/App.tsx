@@ -87,7 +87,7 @@ const ApiSettings = lazy(() => import('@/admin/shared/ApiSettings'));
 const ApiManagementCenter = lazy(() => import('@/admin/pages/ApiManagementCenter'));
 const SystemHealthPage = lazy(() => import('@/admin/pages/SystemHealthPage'));
 const RouteDiagnosticsPage = lazy(() => import('@/admin/pages/RouteDiagnosticsPage'));
-const SeoDiagnosticsPage = lazy(() => import('@/admin/pages/SeoDiagnosticsPage'));
+const SeoDiagnosticsPage = lazy(() => import('@/admin/seo/SeoDiagnosticsPage'));
 const SecurityDashboardPage = lazy(() => import('@/admin/security/SecurityDashboardPage'));
 const NewsDashboardPage = lazy(() => import('@/admin/news/pages/NewsDashboardPage').then(m => ({ default: m.NewsDashboardPage })));
 const HomepageManager = lazy(() => import('@/admin/homepage/pages/HomepageManager'));

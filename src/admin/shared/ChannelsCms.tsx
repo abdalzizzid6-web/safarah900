@@ -1,21 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { cmsService, ChannelServerSettings, LeagueSettings } from '../../services/cmsService';
+import { cmsService } from '../../services/cmsService';
+import type { ChannelServerSettings, LeagueSettings } from '../../core/compatibility/cmsService';
 import { leagueService } from '../../services/leagueService';
 import { matchesRepositoryV2 } from '../../core/repository/MatchesRepositoryV2';
 import { Radio, Plus, Trash2, Sliders, Server, Link, AlertCircle, ToggleLeft, ToggleRight, Info } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useError } from '../../context/ErrorContext';
-import { Match } from '../../types';
+import type { Match } from '../../types';
 
 export default function ChannelsCms() {
   const { showToast } = useError();
   const [servers, setServers] = useState<ChannelServerSettings[]>([]);
   const [leagues, setLeagues] = useState<any[]>([]);
   const [matches, setMatches] = useState<Match[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState<boolean>(true);
 
   // Form State
-  const [name, setName] = useState('');
+  const [name, setName] = useState<string>('');
   const [priority, setPriority] = useState<number>(1);
   const [assignedLeagues, setAssignedLeagues] = useState<string[]>([]);
   const [assignedMatches, setAssignedMatches] = useState<string[]>([]);
@@ -24,9 +25,11 @@ export default function ChannelsCms() {
   const [isEditing, setIsEditing] = useState<string | null>(null);
 
   useEffect(() => {
+    let isMounted = true;
+
     async function loadData() {
       try {
-        setLoading(true);
+        if (isMounted) setLoading(true);
         // Load custom channels/servers from CMS Settings
         const sList = await cmsService.getChannelServerSettingsList();
         
@@ -43,16 +46,24 @@ export default function ChannelsCms() {
         // Load recent Matches list via repository
         const allMatches = await matchesRepositoryV2.getMatches();
 
-        setServers(sList);
-        setLeagues(allLeagues);
-        setMatches(allMatches);
+        if (isMounted) {
+          setServers(sList || []);
+          setLeagues(allLeagues || []);
+          setMatches(allMatches || []);
+        }
       } catch (e) {
         console.error("Error loading channel servers data", e);
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     }
+
     loadData();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const handleCreateOrUpdate = async (e: React.FormEvent) => {

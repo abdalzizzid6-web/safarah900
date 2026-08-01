@@ -1,12 +1,11 @@
 import { Request, Response } from "express";
+import ImageKit from "imagekit";
 
 export default async function handler(req: Request, res: Response) {
   const method = req.method;
   const action = req.query.action as string;
 
   try {
-    const { default: ImageKit } = await import("imagekit");
-    
     let imagekitInstance: any = null;
 
     function getImageKit(): any {

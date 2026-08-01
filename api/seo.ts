@@ -103,48 +103,83 @@ const getCachedOrGenerate = async (
 const getIndexHtml = () => {
   if (cachedIndexHtml && process.env.NODE_ENV === "production") return cachedIndexHtml;
   
-  const possiblePaths = [
+  // 1. Prioritize compiled dist/index.html locations ONLY
+  const distPaths = [
     path.join(process.cwd(), "dist", "index.html"),
-    path.join(process.cwd(), "index.html"),
     path.resolve("./dist/index.html"),
-    path.resolve("./index.html"),
     path.join(__dirname, "dist", "index.html"),
     path.join(__dirname, "..", "dist", "index.html"),
-    path.join(__dirname, "../..", "dist", "index.html"),
-    path.join(__dirname, "..", "index.html"),
-    path.join(__dirname, "index.html")
+    path.join(__dirname, "../..", "dist", "index.html")
   ];
 
-  for (const p of possiblePaths) {
+  for (const p of distPaths) {
     try {
       if (fs.existsSync(p)) {
-        cachedIndexHtml = fs.readFileSync(p, "utf-8");
-        if (cachedIndexHtml && cachedIndexHtml.includes("id=\"root\"")) {
+        const content = fs.readFileSync(p, "utf-8");
+        if (content && content.includes("id=\"root\"") && !content.includes("/src/main.tsx")) {
+          cachedIndexHtml = content;
           return cachedIndexHtml;
         }
       }
     } catch (_) {}
   }
 
-  // Fallback: try to locate main JS bundle script from dist/assets
-  let assetScript = "";
-  try {
-    const assetsDir = path.join(process.cwd(), "dist", "assets");
-    if (fs.existsSync(assetsDir)) {
-      const files = fs.readdirSync(assetsDir);
-      const mainJs = files.find(f => f.startsWith("index") && f.endsWith(".js"));
-      const mainCss = files.find(f => f.startsWith("index") && f.endsWith(".css"));
-      if (mainJs) {
-        assetScript += `  <script type="module" crossorigin src="/assets/${mainJs}"></script>\n`;
-      }
-      if (mainCss) {
-        assetScript += `  <link rel="stylesheet" crossorigin href="/assets/${mainCss}">\n`;
-      }
-    }
-  } catch (_) {}
+  // 2. Find main built JS/CSS bundle in dist/assets if dist/index.html wasn't directly found
+  let mainJsFile = "";
+  let mainCssFile = "";
+  const possibleAssetDirs = [
+    path.join(process.cwd(), "dist", "assets"),
+    path.resolve("./dist/assets"),
+    path.join(__dirname, "..", "dist", "assets"),
+    path.join(__dirname, "dist", "assets")
+  ];
 
-  if (!assetScript) {
-    assetScript = `  <script type="module" src="/src/main.tsx"></script>\n`;
+  for (const dir of possibleAssetDirs) {
+    try {
+      if (fs.existsSync(dir)) {
+        const files = fs.readdirSync(dir);
+        if (!mainJsFile) mainJsFile = files.find(f => f.startsWith("index-") && f.endsWith(".js")) || "";
+        if (!mainCssFile) mainCssFile = files.find(f => f.startsWith("index-") && f.endsWith(".css")) || "";
+        if (mainJsFile) break;
+      }
+    } catch (_) {}
+  }
+
+  // 3. Check root index.html, BUT replace /src/main.tsx with compiled JS asset
+  const rootPaths = [
+    path.join(process.cwd(), "index.html"),
+    path.resolve("./index.html"),
+    path.join(__dirname, "..", "index.html")
+  ];
+
+  for (const p of rootPaths) {
+    try {
+      if (fs.existsSync(p)) {
+        let content = fs.readFileSync(p, "utf-8");
+        if (content && content.includes("id=\"root\"")) {
+          if (content.includes("/src/main.tsx")) {
+            if (mainJsFile) {
+              let replaceTag = `<script type="module" crossorigin src="/assets/${mainJsFile}"></script>`;
+              if (mainCssFile) {
+                replaceTag += `\n    <link rel="stylesheet" crossorigin href="/assets/${mainCssFile}">`;
+              }
+              content = content.replace(/<script\s+type=["']module["']\s+src=["']\/src\/main\.tsx["']><\/script>/gi, replaceTag);
+            }
+          }
+          cachedIndexHtml = content;
+          return cachedIndexHtml;
+        }
+      }
+    } catch (_) {}
+  }
+
+  // 4. Fallback template
+  let assetScript = "";
+  if (mainJsFile) {
+    assetScript += `  <script type="module" crossorigin src="/assets/${mainJsFile}"></script>\n`;
+  }
+  if (mainCssFile) {
+    assetScript += `  <link rel="stylesheet" crossorigin href="/assets/${mainCssFile}">\n`;
   }
 
   cachedIndexHtml = `<!doctype html>
@@ -153,7 +188,7 @@ const getIndexHtml = () => {
     <meta charset="UTF-8" />
     <link rel="icon" type="image/png" href="/logo-master.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>صافرة 90 | أهم أخبار ونتائج مباريات كرة القدم</title>
+    <title>Safara 90 | كل المباريات .. لحظة بلحظة</title>
 ${assetScript}  </head>
   <body class="bg-[#0F0F10] text-white min-h-screen">
     <div id="root"></div>

@@ -3,9 +3,12 @@ import { Link, useLocation } from 'react-router-dom';
 import { Home, Calendar, Trophy, Menu } from 'lucide-react';
 import { motion } from 'motion/react';
 import { triggerHapticVibration } from '../../../utils/haptics';
+import { useLiveMatches } from '../../../hooks/useMatchesV2';
 
 export default function PremiumBottomNavigation() {
   const location = useLocation();
+  const { data: liveMatches } = useLiveMatches();
+  const hasLiveMatches = Array.isArray(liveMatches) && liveMatches.length > 0;
 
   const navItems = [
     { name: 'الرئيسية', path: '/', icon: Home },
@@ -19,6 +22,7 @@ export default function PremiumBottomNavigation() {
       <div className="glass-premium border border-border rounded-[2rem] p-2 flex items-center justify-around shadow-dropdown backdrop-blur-2xl bg-surface/80">
         {navItems.map((item) => {
           const isActive = location.pathname === item.path || (item.path.includes('#') && location.pathname + location.hash === item.path);
+          const isScheduleTab = item.path === '/schedule';
           const Icon = item.icon;
           
           return (
@@ -37,9 +41,23 @@ export default function PremiumBottomNavigation() {
                   }}
                   className="relative z-10 p-2 rounded-xl transition-all duration-300"
                 >
+                  {/* Live Match Pulsing Badge Indicator */}
+                  {isScheduleTab && hasLiveMatches && (
+                    <span className="absolute top-0.5 right-0.5 flex h-3 w-3 z-20">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-3 w-3 bg-red-600 border border-surface shadow-sm"></span>
+                    </span>
+                  )}
+
                   <Icon 
                     strokeWidth={isActive ? 2.5 : 1.75}
-                    className={`w-6 h-6 transition-colors duration-300 ${isActive ? 'text-black' : 'text-text-secondary group-hover:text-text'}`} 
+                    className={`w-6 h-6 transition-colors duration-300 ${
+                      isActive 
+                        ? 'text-black' 
+                        : isScheduleTab && hasLiveMatches 
+                          ? 'text-red-500 animate-pulse' 
+                          : 'text-text-secondary group-hover:text-text'
+                    }`} 
                   />
                 </motion.div>
                 {isActive && (
@@ -49,8 +67,13 @@ export default function PremiumBottomNavigation() {
                     transition={{ type: "spring", stiffness: 300, damping: 25 }}
                   />
                 )}
-                <span className={`text-[10px] font-bold tracking-tighter ${isActive ? 'text-primary' : 'text-text-secondary'} md:block transition-colors`}>
+                <span className={`text-[10px] font-bold tracking-tighter flex items-center gap-1 ${
+                  isActive ? 'text-primary' : isScheduleTab && hasLiveMatches ? 'text-red-400 font-black animate-pulse' : 'text-text-secondary'
+                } md:block transition-colors`}>
                   {item.name}
+                  {isScheduleTab && hasLiveMatches && (
+                    <span className="inline-block w-1 h-1 rounded-full bg-red-500 animate-ping" />
+                  )}
                 </span>
               </Link>
             </li>

@@ -12,6 +12,7 @@ import { useNotifications } from '../context/NotificationContext';
 import { useError } from '../context/ErrorContext';
 import { TranslatedText } from './TranslatedText';
 import ImageResolver from './ui/ImageResolver';
+import MatchCountdown from './MatchCountdown';
 const MotionImageResolver = motion.create(ImageResolver as any);;
 
 interface MatchCardProps {
@@ -83,9 +84,10 @@ interface ScoreDisplayProps {
   homeScore: number | undefined | null;
   awayScore: number | undefined | null;
   status: string;
+  startTime?: string | Date | null;
 }
 
-function ScoreDisplay({ homeScore, awayScore, status }: ScoreDisplayProps) {
+function ScoreDisplay({ homeScore, awayScore, status, startTime }: ScoreDisplayProps) {
   const [homeFlash, setHomeFlash] = useState(false);
   const [awayFlash, setAwayFlash] = useState(false);
   const [scoreChanged, setScoreChanged] = useState(false);
@@ -129,8 +131,11 @@ function ScoreDisplay({ homeScore, awayScore, status }: ScoreDisplayProps) {
 
   if (status === 'UPCOMING') {
     return (
-      <div className="text-xl md:text-3xl font-black text-gray-500 bg-gray-500/5 px-4 py-1.5 rounded-2xl border border-gray-500/10">
-        VS
+      <div className="flex flex-col items-center gap-2">
+        <div className="text-xl md:text-2xl font-black text-gray-400 bg-white/5 px-4 py-1 rounded-2xl border border-white/10">
+          VS
+        </div>
+        <MatchCountdown startTime={startTime} variant="badge" size="xs" />
       </div>
     );
   }
@@ -402,12 +407,7 @@ export default React.memo(function MatchCard({ match }: MatchCardProps) {
             ) : match.status === 'FINISHED' ? (
               <span className="text-[10px] font-bold text-gray-500 bg-gray-500/10 px-2 py-0.5 rounded-full border border-gray-500/10">منتهية</span>
             ) : (
-              <div className="flex items-center gap-1 text-primary bg-primary/10 px-2 py-0.5 rounded-full border border-primary/20 animate-pulse">
-                <Timer size={10} className="text-primary" />
-                <span className="text-[10px] font-bold tabular-nums">
-                  {timeLeft || formatTime(match.startTime)}
-                </span>
-              </div>
+              <MatchCountdown startTime={match.startTime || match.utcDate} variant="badge" size="xs" />
             )}
           </div>
         </div>
@@ -444,6 +444,7 @@ export default React.memo(function MatchCard({ match }: MatchCardProps) {
               homeScore={match.homeScore} 
               awayScore={match.awayScore} 
               status={match.status} 
+              startTime={match.startTime || match.utcDate}
             />
           </div>
 

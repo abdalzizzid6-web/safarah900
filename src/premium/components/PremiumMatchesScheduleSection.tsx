@@ -7,54 +7,7 @@ import { ar } from 'date-fns/locale';
 import { Calendar, Timer } from 'lucide-react';
 import { BlockType, Match } from '../../types';
 import { ScoreFlash } from './shared';
-
-function MatchCountdown({ startTime }: { startTime: string }) {
-  const [timeLeft, setTimeLeft] = React.useState('');
-
-  React.useEffect(() => {
-    const targetDate = new Date(startTime).getTime();
-    if (isNaN(targetDate)) return;
-
-    const updateCountdown = () => {
-      const now = new Date().getTime();
-      const difference = targetDate - now;
-
-      if (difference <= 0) {
-        setTimeLeft('تبدأ الآن');
-        return;
-      }
-
-      const days = Math.floor(difference / (1000 * 60 * 60 * 24));
-      const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-      const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((difference % (1000 * 60)) / 1000);
-
-      if (days > 0) {
-        setTimeLeft(`بعد ${days} يوم و ${hours} ساعة`);
-      } else if (hours > 0) {
-        setTimeLeft(`بعد ${hours} ساعة و ${minutes} دقيقة`);
-      } else if (minutes > 0) {
-        setTimeLeft(`بعد ${minutes} دقيقة و ${seconds} ثانية`);
-      } else {
-        setTimeLeft(`بعد ${seconds} ثانية`);
-      }
-    };
-
-    updateCountdown();
-    const intervalId = setInterval(updateCountdown, 1000);
-
-    return () => clearInterval(intervalId);
-  }, [startTime]);
-
-  if (!timeLeft) return null;
-
-  return (
-    <div className="flex items-center gap-1.5 mt-2.5 bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/20 w-fit mx-auto justify-center">
-      <Timer size={12} className="text-amber-500" />
-      <span className="text-[10px] font-bold text-amber-500 tracking-wide" dir="rtl">{timeLeft}</span>
-    </div>
-  );
-}
+import MatchCountdown from '../../components/MatchCountdown';
 
 interface Props {
   title?: string;

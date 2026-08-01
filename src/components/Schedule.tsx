@@ -36,6 +36,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Match } from '../types';
 import MatchCard from './MatchCard';
+import MatchCountdown from './MatchCountdown';
 import WeekMatchesCalendar from './WeekMatchesCalendar';
 import AdBanner from './AdBanner';
 import { filterMatchesByCustomLeagues } from '../utils/leagueFilter';
@@ -410,9 +411,16 @@ const Schedule = React.memo(function Schedule() {
           >
             {tab === 'TODAY' && 'جدول المباريات'}
             {tab === 'LIVE' && (
-              <span className="flex items-center justify-center gap-1.5">
+              <span className="flex items-center justify-center gap-1.5 relative">
                 <span>مباشر الآن</span>
-                <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                {Array.isArray(liveMatchesQuery.data) && liveMatchesQuery.data.length > 0 ? (
+                  <span className="relative flex h-2.5 w-2.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span>
+                  </span>
+                ) : (
+                  <span className="w-1.5 h-1.5 rounded-full bg-red-500/60" />
+                )}
               </span>
             )}
             {tab === 'CALENDAR' && 'تقويم الأسبوع'}
@@ -813,11 +821,18 @@ const Schedule = React.memo(function Schedule() {
                                     </div>
 
                                     {/* Central Scores panel */}
-                                    <div className="flex flex-col items-center justify-center shrink-0 min-w-[70px]">
+                                    <div className="flex flex-col items-center justify-center shrink-0 min-w-[90px]">
                                       {match.status === 'UPCOMING' ? (
-                                        <span className="text-[11px] font-black bg-white/5 border border-white/5 text-gray-300 px-3 py-1 rounded-lg">
-                                          VS
-                                        </span>
+                                        <div className="flex flex-col items-center gap-1">
+                                          <span className="text-[11px] font-black bg-white/5 border border-white/5 text-gray-300 px-3 py-0.5 rounded-lg">
+                                            VS
+                                          </span>
+                                          <MatchCountdown 
+                                            startTime={match.startTime || match.utcDate} 
+                                            variant="badge" 
+                                            size="xs" 
+                                          />
+                                        </div>
                                       ) : (
                                         <div className={cn(
                                           "flex items-center gap-1.5 px-3 py-1 rounded-xl border transition-all duration-300",

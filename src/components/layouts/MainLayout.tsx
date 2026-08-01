@@ -23,6 +23,7 @@ import { auth } from '../../firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import NotificationCenter from '../NotificationCenter';
 import { triggerHapticVibration } from '../../utils/haptics';
+import { useLiveMatches } from '../../hooks/useMatchesV2';
 import WhistleIcon from '../ui/WhistleIcon';
 import SearchModal from '../SearchModal';
 import Sidebar from '../Sidebar';
@@ -40,6 +41,8 @@ export default function MainLayout({ children }: MainLayoutProps) {
   const { settings } = useSettings();
   const [user] = useAuthState(auth);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const { data: liveMatches } = useLiveMatches();
+  const hasLiveMatches = Array.isArray(liveMatches) && liveMatches.length > 0;
   
   const navItems = [
     { name: 'الرئيسية', path: '/', icon: Home },
@@ -231,6 +234,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
         <div className="glass-premium border border-white/10 rounded-[2rem] p-2 flex items-center justify-around shadow-[0_20px_50px_rgba(0,0,0,0.45)]">
           {navItems.map((item) => {
             const isActive = location.pathname === item.path || (item.path.includes('#') && location.pathname + location.hash === item.path);
+            const isScheduleTab = item.path === '/schedule';
             const Icon = item.icon;
             
             return (
@@ -247,15 +251,37 @@ export default function MainLayout({ children }: MainLayoutProps) {
                       x: [0, -1.5, 1.5, -1.5, 1.5, 0],
                       transition: { duration: 0.25 }
                     }}
-                    className={`relative p-2 rounded-xl transition-all duration-300 ${isActive ? 'bg-primary text-black scale-110 shadow-lg shadow-primary/30' : 'text-gray-400 group-hover:text-gray-200'}`}
+                    className={`relative p-2 rounded-xl transition-all duration-300 ${
+                      isActive 
+                        ? 'bg-primary text-black scale-110 shadow-lg shadow-primary/30' 
+                        : isScheduleTab && hasLiveMatches 
+                          ? 'text-red-500 bg-red-500/10 border border-red-500/30' 
+                          : 'text-gray-400 group-hover:text-gray-200'
+                    }`}
                   >
+                    {isScheduleTab && hasLiveMatches && (
+                      <span className="absolute -top-1 -right-1 flex h-3 w-3 z-20">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-3 w-3 bg-red-600 border border-black shadow-sm"></span>
+                      </span>
+                    )}
+
                     <Icon 
                       strokeWidth={isActive ? 2.5 : 1.75}
-                      className="w-5 h-5" 
+                      className={`w-5 h-5 ${isScheduleTab && hasLiveMatches && !isActive ? 'animate-pulse text-red-500' : ''}`} 
                     />
                   </motion.div>
-                  <span className={`text-[10px] font-black tracking-tighter ${isActive ? 'text-primary' : 'text-gray-500'} md:block transition-colors`}>
+                  <span className={`text-[10px] font-black tracking-tighter flex items-center gap-1 ${
+                    isActive 
+                      ? 'text-primary' 
+                      : isScheduleTab && hasLiveMatches 
+                        ? 'text-red-400 animate-pulse' 
+                        : 'text-gray-500'
+                  } md:block transition-colors`}>
                     {item.name}
+                    {isScheduleTab && hasLiveMatches && (
+                      <span className="w-1 h-1 rounded-full bg-red-500 animate-ping inline-block" />
+                    )}
                   </span>
                 </Link>
               </li>

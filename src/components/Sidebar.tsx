@@ -34,6 +34,7 @@ import { auth } from '../firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import InstallAppButton from './InstallAppButton';
 import { triggerHapticVibration } from '../utils/haptics';
+import { useLiveMatches } from '../hooks/useMatchesV2';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -44,6 +45,8 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const location = useLocation();
   const [user] = useAuthState(auth);
   const [activeSection, setActiveSection] = useState<string | null>('main');
+  const { data: liveMatches } = useLiveMatches();
+  const hasLiveMatches = Array.isArray(liveMatches) && liveMatches.length > 0;
 
   // Hardcoded for now as per app convention or check from metadata/firebase if needed
   // Typically we'd check user claims, but for this app it might be email based or just a flag
@@ -170,6 +173,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                   <div className="grid gap-1">
                     {section.items.map((item) => {
                       const isActive = location.pathname === item.path || (location.pathname + location.search === item.path);
+                      const isMatchItem = item.path === '/schedule' || item.path.includes('tab=LIVE');
                       
                       return (
                         <div key={item.name}>
@@ -220,14 +224,38 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                                 }`}
                               >
                                 <div className="flex items-center gap-4">
-                                  <item.icon 
-                                    size={20} 
-                                    strokeWidth={isActive ? 2.5 : 1.75}
-                                    className={isActive ? 'text-primary' : 'group-hover:text-primary transition-colors'} 
-                                  />
-                                  <span className="text-sm font-bold">{item.name}</span>
+                                  <div className="relative">
+                                    <item.icon 
+                                      size={20} 
+                                      strokeWidth={isActive ? 2.5 : 1.75}
+                                      className={
+                                        isActive 
+                                          ? 'text-primary' 
+                                          : isMatchItem && hasLiveMatches 
+                                            ? 'text-red-500 animate-pulse' 
+                                            : 'group-hover:text-primary transition-colors'
+                                      } 
+                                    />
+                                    {isMatchItem && hasLiveMatches && (
+                                      <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
+                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                        <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span>
+                                      </span>
+                                    )}
+                                  </div>
+                                  <span className="text-sm font-bold flex items-center gap-2">
+                                    <span>{item.name}</span>
+                                    {isMatchItem && hasLiveMatches && (
+                                      <span className="w-2 h-2 rounded-full bg-red-500 animate-ping inline-block" />
+                                    )}
+                                  </span>
                                 </div>
                                 {isActive && <div className="w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_8px_var(--color-primary)]" />}
+                                {!isActive && isMatchItem && hasLiveMatches && (
+                                  <span className="text-[10px] font-black text-white bg-red-600 px-2 py-0.5 rounded-full animate-pulse">
+                                    مباشر
+                                  </span>
+                                )}
                               </motion.div>
                             </Link>
                           )}

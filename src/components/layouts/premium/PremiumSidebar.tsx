@@ -6,6 +6,7 @@ import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth } from '../../../firebase';
 import { useSettings } from '../../../context/SettingsContext';
 import { triggerHapticVibration } from '../../../utils/haptics';
+import { useLiveMatches } from '../../../hooks/useMatchesV2';
 
 interface PremiumSidebarProps {
   isOpen: boolean;
@@ -25,6 +26,8 @@ export default function PremiumSidebar({ isOpen, onClose }: PremiumSidebarProps)
   const [user] = useAuthState(auth);
   const location = useLocation();
   const { settings } = useSettings();
+  const { data: liveMatches } = useLiveMatches();
+  const hasLiveMatches = Array.isArray(liveMatches) && liveMatches.length > 0;
   
   const isAdmin = user?.email === 'abdalziz2022@gmail.com' || user?.email === 'admin@safara90.com';
 
@@ -67,6 +70,7 @@ export default function PremiumSidebar({ isOpen, onClose }: PremiumSidebarProps)
             <div className="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-1">
               {menuItems.map((item) => {
                 const isActive = location.pathname === item.path;
+                const isScheduleTab = item.path === '/schedule';
                 const Icon = item.icon;
                 return (
                   <Link
@@ -91,12 +95,34 @@ export default function PremiumSidebar({ isOpen, onClose }: PremiumSidebarProps)
                           : 'text-text hover:bg-surface-hover border border-transparent'
                       }`}
                     >
-                      <Icon 
-                        size={20} 
-                        strokeWidth={isActive ? 2.5 : 1.75}
-                        className={isActive ? 'text-primary' : 'text-text-secondary group-hover:text-text transition-colors'} 
-                      />
-                      <span className="font-medium">{item.label}</span>
+                      <div className="relative">
+                        <Icon 
+                          size={20} 
+                          strokeWidth={isActive ? 2.5 : 1.75}
+                          className={`${
+                            isActive 
+                              ? 'text-primary' 
+                              : isScheduleTab && hasLiveMatches 
+                                ? 'text-red-500 animate-pulse' 
+                                : 'text-text-secondary group-hover:text-text transition-colors'
+                          }`} 
+                        />
+                        {isScheduleTab && hasLiveMatches && (
+                          <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span>
+                          </span>
+                        )}
+                      </div>
+                      <span className="font-medium flex-1 flex items-center justify-between">
+                        <span>{item.label}</span>
+                        {isScheduleTab && hasLiveMatches && (
+                          <span className="text-[10px] font-black text-white bg-red-600/90 px-2 py-0.5 rounded-full animate-pulse flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping inline-block" />
+                            مباشر ({liveMatches.length})
+                          </span>
+                        )}
+                      </span>
                       {isActive && (
                         <motion.div layoutId="active-sidebar-pill" className="absolute left-4 w-1.5 h-6 bg-primary rounded-full" />
                       )}

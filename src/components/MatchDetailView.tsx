@@ -15,6 +15,7 @@ import { translationService } from '../services/translationService';
 import MatchKnowledgeGraph from './match/MatchKnowledgeGraph';
 import MatchHighlights from './MatchHighlights';
 import H2HTab from './match/H2HTab';
+import ShareButton from './ShareButton';
 
 export default function MatchDetailView() {
     const { id } = useParams<{ id: string }>();
@@ -231,29 +232,41 @@ export default function MatchDetailView() {
                 </div>
             </section>
 
-            {/* Tactical Capsule Switching Tabs */}
-            <div className="bg-[#0f172a]/40 border border-white/10 rounded-[1.5rem] p-2 flex overflow-x-auto gap-2 whitespace-nowrap scrollbar-none mt-8 select-none">
-                {[
-                    { id: 'timeline', label: 'الخط الزمني المباشر', icon: <Activity size={16} /> },
-                    { id: 'lineups', label: 'التشكيلات والخطط', icon: <Users size={16} /> },
-                    { id: 'stats', label: 'إحصائيات اللقاء', icon: <BarChart3 size={16} /> },
-                    { id: 'highlights', label: 'أهداف وملخصات', icon: <PlayCircle size={16} /> },
-                    { id: 'h2h', label: 'المواجهات المباشرة', icon: <History size={16} /> },
-                    { id: 'knowledge', label: 'الشبكة المعرفية (AI)', icon: <Sparkles size={16} /> }
-                ].map((tab) => (
-                    <button
-                        key={tab.id}
-                        onClick={() => setActiveTab(tab.id as any)}
-                        className={`flex items-center gap-2 py-3 px-5 sm:px-6 rounded-xl font-black text-xs sm:text-sm transition-all min-h-[44px] cursor-pointer shrink-0 ${
-                            activeTab === tab.id 
-                            ? 'bg-gradient-to-r from-primary to-amber-500 text-black shadow-[0_10px_25px_rgba(251,191,36,0.3)] scale-[1.02]' 
-                            : 'text-gray-400 hover:text-white hover:bg-white/5'
-                        }`}
-                    >
-                        {tab.icon}
-                        <span>{tab.label}</span>
-                    </button>
-                ))}
+            {/* Tactical Capsule Switching Tabs & Share Control */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mt-8">
+                <div className="bg-[#0f172a]/40 border border-white/10 rounded-[1.5rem] p-2 flex overflow-x-auto gap-2 whitespace-nowrap scrollbar-none flex-1 select-none">
+                    {[
+                        { id: 'timeline', label: 'الخط الزمني المباشر', icon: <Activity size={16} /> },
+                        { id: 'lineups', label: 'التشكيلات والخطط', icon: <Users size={16} /> },
+                        { id: 'stats', label: 'إحصائيات اللقاء', icon: <BarChart3 size={16} /> },
+                        { id: 'highlights', label: 'أهداف وملخصات', icon: <PlayCircle size={16} /> },
+                        { id: 'h2h', label: 'المواجهات المباشرة', icon: <History size={16} /> },
+                        { id: 'knowledge', label: 'الشبكة المعرفية (AI)', icon: <Sparkles size={16} /> }
+                    ].map((tab) => (
+                        <button
+                            key={tab.id}
+                            onClick={() => setActiveTab(tab.id as any)}
+                            className={`flex items-center gap-2 py-3 px-5 sm:px-6 rounded-xl font-black text-xs sm:text-sm transition-all min-h-[44px] cursor-pointer shrink-0 ${
+                                activeTab === tab.id 
+                                ? 'bg-gradient-to-r from-primary to-amber-500 text-black shadow-[0_10px_25px_rgba(251,191,36,0.3)] scale-[1.02]' 
+                                : 'text-gray-400 hover:text-white hover:bg-white/5'
+                            }`}
+                        >
+                            {tab.icon}
+                            <span>{tab.label}</span>
+                        </button>
+                    ))}
+                </div>
+
+                <div className="shrink-0 flex items-center justify-end">
+                    <ShareButton 
+                        variant="dropdown"
+                        align="left"
+                        url={typeof window !== 'undefined' ? window.location.href : undefined}
+                        title={`مباراة ${homeName} ضد ${awayName}`}
+                        text={`شاهد إحصائيات وتفاصيل مباراة ${homeName} ضد ${awayName} على صافرة 90! ⚽`}
+                    />
+                </div>
             </div>
 
             {/* Content Area wrapped in a Premium Sports Card */}

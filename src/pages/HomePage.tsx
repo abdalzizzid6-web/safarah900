@@ -4,7 +4,6 @@ import SEO from '../components/SEO';
 import InstallFloatingWidget from '../components/InstallFloatingWidget';
 import PullToRefresh from '../components/ui/PullToRefresh';
 import PremiumHomePage from '../premium/screens/PremiumHomePage';
-import MatchSchedule from '../components/MatchSchedule';
 
 export default function HomePage() {
   const queryClient = useQueryClient();
@@ -24,7 +23,7 @@ export default function HomePage() {
   }, [queryClient]);
 
   return (
-    <div className="bg-[#080808] font-sans" dir="rtl">
+    <div className="bg-[#080808] font-sans min-h-screen" dir="rtl">
       <SEO 
         title="Safara 90 | مباريات اليوم، نتائج فورية، وأخبار كرة القدم" 
         description="Safara 90 - بوابتك الرياضية الأولى لمتابعة مباريات اليوم، نتائج المباريات الحية، أخبار المنتخبات، وتقارير كأس العالم."
@@ -32,7 +31,6 @@ export default function HomePage() {
       <InstallFloatingWidget />
       <PullToRefresh onRefresh={handlePullToRefresh}>
         <PremiumHomePage />
-        <MatchSchedule />
       </PullToRefresh>
     </div>
   );

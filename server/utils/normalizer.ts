@@ -117,20 +117,40 @@ export const normalizeMatch = (data: any): NormalizedMatch => {
   const awaySlug = sanitizeSlugPart(awayName);
   const slug = data.slug || `${homeSlug}-vs-${awaySlug}-${data.id || 'match'}`;
 
-  // Temporal normalization (Handle Firestore Timestamps)
-  const normalizeDate = (d: any) => {
-    if (!d) return new Date().toISOString();
-    if (typeof d === 'object') {
-      if (d._seconds !== undefined) return new Date(d._seconds * 1000).toISOString();
-      if (typeof d.toDate === 'function') return d.toDate().toISOString();
-      if (d instanceof Date) return d.toISOString();
-      // Try to construct from object if it has year/month etc (unlikely but safe)
-      try { return new Date(d).toISOString(); } catch (e) {}
+  // Temporal normalization (Handle Firestore Timestamps and Unix timestamps)
+  const normalizeDate = (d: any): string => {
+    if (d === null || d === undefined) return new Date().toISOString();
+    if (d instanceof Date) return isNaN(d.getTime()) ? new Date().toISOString() : d.toISOString();
+    if (typeof d === 'object' && typeof d.toDate === 'function') {
+      try {
+        const parsed = d.toDate();
+        return isNaN(parsed.getTime()) ? new Date().toISOString() : parsed.toISOString();
+      } catch (e) {}
     }
-    return String(d);
+    if (typeof d === 'object' && d !== null) {
+      const sec = d._seconds ?? d.seconds;
+      if (typeof sec === 'number') {
+        return new Date(sec * 1000).toISOString();
+      }
+    }
+    if (typeof d === 'number') {
+      const ms = d < 1e11 ? d * 1000 : d;
+      return new Date(ms).toISOString();
+    }
+    if (typeof d === 'string') {
+      const trimmed = d.trim();
+      if (/^\d+$/.test(trimmed)) {
+        const num = Number(trimmed);
+        const ms = num < 1e11 ? num * 1000 : num;
+        return new Date(ms).toISOString();
+      }
+      const parsed = new Date(trimmed);
+      return isNaN(parsed.getTime()) ? new Date().toISOString() : parsed.toISOString();
+    }
+    return new Date().toISOString();
   };
 
-  const dateValue = normalizeDate(data.utcDate || data.startTime);
+  const dateValue = normalizeDate(data.startTime || data.utcDate);
 
   return {
     id: String(data.id || ''),
@@ -146,7 +166,7 @@ export const normalizeMatch = (data: any): NormalizedMatch => {
     utcDate: dateValue,
     slug: slug,
     isHidden: isInvalid,
-    startTime: data.startTime || data.utcDate || null,
+    startTime: dateValue,
     isLive: data.isLive || data.status === 'LIVE' || data.status === 'IN_PLAY' || ['1H', '2H', 'HT', 'ET', 'P'].includes(data.status),
     metadata: {
       ...data.metadata,

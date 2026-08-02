@@ -151,6 +151,106 @@ export class CmsRepositoryV2 extends BaseRepository<any> {
   // Homepage Blocks (Layout Builder)
   async getHomepageBlocks(): Promise<HomepageBlock[]> {
     telemetry.logApiCall('CmsRepositoryV2.getHomepageBlocks');
+    
+    const defaultBlocks: HomepageBlock[] = [
+      {
+        id: 'default_hero',
+        type: 'HERO' as any,
+        title: 'المباراة البارزة',
+        displayOrder: 1,
+        enabled: true,
+        dataConfig: {}
+      },
+      {
+        id: 'default_live',
+        type: 'LIVE_MATCHES' as any,
+        title: 'مباريات مباشرة',
+        displayOrder: 2,
+        enabled: true,
+        dataConfig: { maxItems: 3 }
+      },
+      {
+        id: 'default_today',
+        type: 'TODAY_MATCHES' as any,
+        title: 'مباريات اليوم',
+        displayOrder: 3,
+        enabled: true,
+        dataConfig: { maxItems: 6 }
+      },
+      {
+        id: 'default_upcoming',
+        type: 'TOMORROW_MATCHES' as any,
+        title: 'المباريات القادمة',
+        displayOrder: 4,
+        enabled: true,
+        dataConfig: { maxItems: 6 }
+      },
+      {
+        id: 'default_results',
+        type: 'FINISHED_MATCHES' as any,
+        title: 'أحدث النتائج',
+        displayOrder: 5,
+        enabled: true,
+        dataConfig: { maxItems: 4 }
+      },
+      {
+        id: 'default_leagues',
+        type: 'LEAGUES' as any,
+        title: 'البطولات الشهيرة والعربية',
+        displayOrder: 6,
+        enabled: true,
+        dataConfig: {}
+      },
+      {
+        id: 'default_news',
+        type: 'TRENDING_NEWS' as any,
+        title: 'الأخبار الشائعة والرياضية',
+        displayOrder: 7,
+        enabled: true,
+        dataConfig: { maxItems: 6 }
+      },
+      {
+        id: 'default_videos',
+        type: 'VIDEOS' as any,
+        title: 'الفيديوهات المميزة والملخصات',
+        displayOrder: 8,
+        enabled: true,
+        dataConfig: {}
+      },
+      {
+        id: 'default_top_players',
+        type: 'TOP_PLAYERS' as any,
+        title: 'أبرز اللاعبين والتصنيفات',
+        displayOrder: 9,
+        enabled: true,
+        dataConfig: {}
+      },
+      {
+        id: 'default_standings',
+        type: 'LEAGUE_STANDINGS' as any,
+        title: 'جدول ترتيب الدوري',
+        displayOrder: 10,
+        enabled: true,
+        dataConfig: { leagueId: 39, leagueName: 'الدوري الإنجليزي الممتاز' }
+      },
+      {
+        id: 'default_predictions',
+        type: 'PREDICTIONS' as any,
+        title: 'توقعات وترشيحات الذكاء الاصطناعي',
+        displayOrder: 11,
+        enabled: true,
+        dataConfig: {}
+      },
+      {
+        id: 'default_footer',
+        type: 'FOOTER' as any,
+        title: '',
+        displayOrder: 12,
+        enabled: true,
+        dataConfig: {}
+      }
+    ] as unknown as HomepageBlock[];
+
     try {
       const cacheKey = 'cms_homepage_blocks';
       const cached = cacheManager.get(cacheKey);
@@ -165,79 +265,13 @@ export class CmsRepositoryV2 extends BaseRepository<any> {
       );
       const snap = await getDocs(q);
       const list = snap.docs.map(d => ({ id: d.id, ...d.data() } as HomepageBlock));
+      const resultList = list.length > 0 ? list : defaultBlocks;
       
-      cacheManager.set(cacheKey, { data: list, timestamp: Date.now() }, CACHE_TTL, false);
-      return list;
+      cacheManager.set(cacheKey, { data: resultList, timestamp: Date.now() }, CACHE_TTL, false);
+      return resultList;
     } catch (e) {
       telemetry.logError('CMS_GET_HOMEPAGE_BLOCKS_FAILURE', e);
       console.warn('[CmsRepositoryV2] Firestore layout failed or quota exceeded. Returning static layout fallback.');
-      
-      const defaultBlocks: HomepageBlock[] = [
-        {
-          id: 'default_hero',
-          type: 'HERO' as any,
-          title: 'المباراة البارزة',
-          displayOrder: 1,
-          enabled: true,
-          dataConfig: {}
-        },
-        {
-          id: 'default_live',
-          type: 'LIVE_MATCHES' as any,
-          title: 'مباريات مباشرة',
-          displayOrder: 2,
-          enabled: true,
-          dataConfig: { maxItems: 3 }
-        },
-        {
-          id: 'default_bento',
-          type: 'BENTO_ACTIONS' as any,
-          title: 'قصص ومقاطع',
-          displayOrder: 3,
-          enabled: true,
-          dataConfig: {}
-        },
-        {
-          id: 'default_today',
-          type: 'TODAY_MATCHES' as any,
-          title: 'مباريات اليوم',
-          displayOrder: 4,
-          enabled: true,
-          dataConfig: { maxItems: 6 }
-        },
-        {
-          id: 'default_tomorrow',
-          type: 'TOMORROW_MATCHES' as any,
-          title: 'مباريات الغد',
-          displayOrder: 5,
-          enabled: true,
-          dataConfig: { maxItems: 4 }
-        },
-        {
-          id: 'default_news',
-          type: 'LATEST_NEWS' as any,
-          title: 'آخر الأخبار الرياضية',
-          displayOrder: 6,
-          enabled: true,
-          dataConfig: { maxItems: 6 }
-        },
-        {
-          id: 'default_leagues',
-          type: 'LEAGUES' as any,
-          title: 'البطولات الشهيرة',
-          displayOrder: 7,
-          enabled: true,
-          dataConfig: {}
-        },
-        {
-          id: 'default_top_players',
-          type: 'TOP_PLAYERS' as any,
-          title: 'أفضل اللاعبين',
-          displayOrder: 8,
-          enabled: true,
-          dataConfig: {}
-        }
-      ] as unknown as HomepageBlock[];
       return defaultBlocks;
     }
   }

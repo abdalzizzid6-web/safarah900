@@ -11,6 +11,7 @@ import MatchCountdown from './MatchCountdown';
 import { translationService } from '../services/translationService';
 import ImageResolver from './ui/ImageResolver';
 import LivePulse from './ui/LivePulse';
+import LiveMatchIndicator from './ui/LiveMatchIndicator';
 
 interface MatchHeaderProps {
   match?: Match;
@@ -117,7 +118,8 @@ export default function MatchHeader({ match: propMatch }: MatchHeaderProps) {
             <FollowMatchButton matchId={String(match.id)} />
           )}
           <ShareButton 
-            variant="icon"
+            variant="dropdown"
+            align="left"
             url={typeof window !== 'undefined' ? window.location.href : undefined}
             title={`مباراة ${homeName} ضد ${awayName}`}
             text={`النتيجة الآن: ${match.homeScore} - ${match.awayScore} | تابع لقاء ${homeName} ضد ${awayName} مباشرة على صافرة 90! ⚽`}
@@ -192,14 +194,17 @@ export default function MatchHeader({ match: propMatch }: MatchHeaderProps) {
 
           {/* Central Score and Time Panel */}
           <div className="col-span-4 flex flex-col items-center justify-center text-center space-y-4">
+            {/* Dynamic Visual Match Status Badge */}
+            <LiveMatchIndicator
+              status={match.status || (isLive ? '1H' : isFinished ? 'FT' : 'NS')}
+              isLiveProp={isLive}
+              minute={match.minute}
+              startTime={match.startTime}
+              size="md"
+            />
+
             {isLive ? (
               <div className="flex flex-col items-center gap-2">
-                {/* Live Minute badge */}
-                <span className="flex items-center gap-1.5 bg-red-600/15 border border-red-500/30 px-3.5 py-1.5 rounded-full text-red-500 text-[10px] sm:text-xs font-black shadow-[0_0_15px_rgba(239,68,68,0.25)]">
-                  <LivePulse size="sm" color="bg-red-500" />
-                  مباشر • {match.minute}'
-                </span>
-                
                 {/* Real-time score display */}
                 <motion.div 
                   key={`live-score-${match.homeScore}-${match.awayScore}`}
@@ -330,9 +335,9 @@ export default function MatchHeader({ match: propMatch }: MatchHeaderProps) {
         )}
       </div>
  
-      {/* Match Meta Information Drawer Footer: Stadium, Referee, etc. */}
-      {(match.stadium || match.commentator || match.channel) && (
-        <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3 border-t border-white/10 bg-white/[0.01] px-6 py-4 text-xs text-gray-400 font-bold">
+      {/* Match Meta Information Footer: Stadium, Referee, Channel & Quick Share */}
+      <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-t border-white/10 bg-white/[0.01] px-6 py-4 text-xs text-gray-400 font-bold">
+        <div className="flex flex-wrap items-center gap-3">
           {match.stadium && (
             <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-xl border border-white/5">
               <MapPin size={13} className="text-emerald-400" />
@@ -352,7 +357,17 @@ export default function MatchHeader({ match: propMatch }: MatchHeaderProps) {
             </div>
           )}
         </div>
-      )}
+
+        <div className="flex items-center gap-2 mr-auto" id="match-details-share-container">
+          <span className="text-[11px] text-gray-400 font-extrabold hidden sm:inline-block">مشاركة المباراة:</span>
+          <ShareButton 
+            variant="inline"
+            url={typeof window !== 'undefined' ? window.location.href : undefined}
+            title={`مباراة ${homeName} ضد ${awayName}`}
+            text={`مباراة ${homeName} ضد ${awayName} | النتيجة: ${match.homeScore} - ${match.awayScore} | التغطية الحصرية على صافرة 90! ⚽`}
+          />
+        </div>
+      </div>
     </motion.div>
   );
 }

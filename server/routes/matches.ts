@@ -84,6 +84,37 @@ const aiContentCache: Record<string, { data: any; expiry: number }> = {};
 const TIME_7_DAYS = 7 * 24 * 60 * 60 * 1000;
 const TIME_30_DAYS = 30 * 24 * 60 * 60 * 1000;
 
+// Helper to parse dates safely from any format (Firestore, epoch, string, Date)
+function parseServerDate(raw: any): Date | null {
+  if (raw === null || raw === undefined) return null;
+  if (raw instanceof Date) return isNaN(raw.getTime()) ? null : raw;
+  if (typeof raw === 'object' && typeof raw.toDate === 'function') {
+    try { const d = raw.toDate(); return isNaN(d.getTime()) ? null : d; } catch(e){}
+  }
+  if (typeof raw === 'object' && raw !== null) {
+    const sec = raw._seconds ?? raw.seconds;
+    if (typeof sec === 'number') return new Date(sec * 1000);
+  }
+  if (typeof raw === 'number') {
+    const ms = raw < 1e11 ? raw * 1000 : raw;
+    const d = new Date(ms);
+    return isNaN(d.getTime()) ? null : d;
+  }
+  if (typeof raw === 'string') {
+    const trimmed = raw.trim();
+    if (!trimmed) return null;
+    if (/^\d+$/.test(trimmed)) {
+      const num = Number(trimmed);
+      const ms = num < 1e11 ? num * 1000 : num;
+      const d = new Date(ms);
+      return isNaN(d.getTime()) ? null : d;
+    }
+    const d = new Date(trimmed);
+    return isNaN(d.getTime()) ? null : d;
+  }
+  return null;
+}
+
 // ----- CORE MATCHES ENDPOINTS TO PREVENT FIRESTORE FALLBACK SPAM ----- //
 
 router.get("/", async (req, res) => {
@@ -120,30 +151,27 @@ router.get("/", async (req, res) => {
 
   // Sort matches by start time ascending
   matches.sort((a, b) => {
-    const aTime = new Date(a.startTime || a.utcDate || 0).getTime();
-    const bTime = new Date(b.startTime || b.utcDate || 0).getTime();
+    const aDate = parseServerDate(a.startTime || a.utcDate);
+    const bDate = parseServerDate(b.startTime || b.utcDate);
+    const aTime = aDate ? aDate.getTime() : 0;
+    const bTime = bDate ? bDate.getTime() : 0;
     return aTime - bTime;
   });
 
-  // Filter by date if provided
-  if (date && typeof date === 'string') {
-    matches = matches.filter(m => {
-      const rawDate = m.utcDate || m.startTime;
-      if (!rawDate) return false;
-      
-      let dateStr = '';
-      if (typeof rawDate === 'string') {
-        dateStr = rawDate.split('T')[0];
-      } else if (rawDate && typeof rawDate === 'object') {
-        if ('toDate' in rawDate) {
-          dateStr = rawDate.toDate().toISOString().split('T')[0];
-        } else if (rawDate instanceof Date) {
-          dateStr = rawDate.toISOString().split('T')[0];
-        }
-      }
-      
-      return dateStr === date;
-    });
+  // Filter by date if provided (Range comparison 00:00:00 to 23:59:59 UTC)
+  if (date && typeof date === 'string' && date.trim()) {
+    const targetDate = date.trim();
+    const startOfDay = new Date(`${targetDate}T00:00:00.000Z`).getTime();
+    const endOfDay = new Date(`${targetDate}T23:59:59.999Z`).getTime();
+
+    if (!isNaN(startOfDay) && !isNaN(endOfDay)) {
+      matches = matches.filter(m => {
+        const mDate = parseServerDate(m.startTime || m.utcDate);
+        if (!mDate) return false;
+        const mTime = mDate.getTime();
+        return mTime >= startOfDay && mTime <= endOfDay;
+      });
+    }
   }
 
   // Filter by status if provided

@@ -76,37 +76,37 @@ export default function PremiumHomePage() {
 
   if (layoutLoading || matchesLoading) {
     return (
-      <div className="min-h-screen bg-[#080808] flex items-center justify-center">
-        <div className="w-10 h-10 border-4 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
+      <div className="min-h-screen bg-[#080808] text-white p-4 max-w-7xl mx-auto space-y-6 animate-pulse">
+        {/* Skeleton Hero */}
+        <div className="w-full h-64 bg-white/5 rounded-2xl border border-white/5" />
+        {/* Skeleton Live Matches */}
+        <div className="space-y-3">
+          <div className="h-6 w-36 bg-white/10 rounded" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="h-32 bg-white/5 rounded-xl" />
+            <div className="h-32 bg-white/5 rounded-xl" />
+            <div className="h-32 bg-white/5 rounded-xl" />
+          </div>
+        </div>
+        {/* Skeleton Schedule */}
+        <div className="space-y-3">
+          <div className="h-6 w-48 bg-white/10 rounded" />
+          <div className="space-y-2">
+            <div className="h-20 bg-white/5 rounded-xl" />
+            <div className="h-20 bg-white/5 rounded-xl" />
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
     <motion.div 
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="min-h-screen bg-[#080808] text-white"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="min-h-screen bg-[#080808] text-white pt-4 pb-12"
     >
-      <div className="max-w-7xl mx-auto px-4 pt-6 space-y-6">
-        <LiveMatchesCarousel />
-        <MatchCarousel />
-      </div>
-      
-      {featureFlags.useHomepageCMS ? (
-        <HomePageRenderer blocks={blocks} featuredMatch={featuredMatch} />
-      ) : (
-        <main className="px-4 space-y-8 max-w-7xl mx-auto">
-            {blocks.length > 0 ? (
-              blocks.map(block => <BlockRenderer key={block.id} block={block} featuredMatch={featuredMatch} />)
-            ) : (
-              <div className="text-center py-20 text-gray-500">
-                لا توجد أقسام معروضة حالياً. يرجى تهيئة الصفحة من لوحة الإدارة.
-              </div>
-            )}
-        </main>
-      )}
-
+      <HomePageRenderer blocks={blocks} featuredMatch={featuredMatch} />
     </motion.div>
   );
 }

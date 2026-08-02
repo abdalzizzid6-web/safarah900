@@ -4,9 +4,12 @@ import PremiumNewsSection from '../../premium/components/PremiumNewsSection';
 import PremiumHeroSection from '../../premium/matches/PremiumHeroSection';
 import PremiumLiveMatchesList from '../../premium/matches/PremiumLiveMatchesList';
 import PremiumMatchesScheduleSection from '../../premium/components/PremiumMatchesScheduleSection';
+import PremiumUpcomingMatchesSection from '../../premium/components/PremiumUpcomingMatchesSection';
 import PremiumCompetitionsSection from '../../premium/components/PremiumCompetitionsSection';
 import PremiumTopPlayersSection from '../../premium/components/PremiumTopPlayersSection';
 import PremiumStandingsPreview from '../../premium/components/PremiumStandingsPreview';
+import PremiumPredictionsSection from '../../premium/components/PremiumPredictionsSection';
+import PremiumFooter from '../../premium/components/PremiumFooter';
 import { BlockType, HomepageBlock, Match } from '../../types';
 
 export interface SectionProps {
@@ -26,7 +29,7 @@ export const SectionRegistry: Record<BlockType, React.FC<SectionProps>> = {
     <PremiumMatchesScheduleSection title={block.title} type={block.type} maxItems={(block.dataConfig as any)?.maxItems} excludeLive={excludeLive} />,
     
   [BlockType.TOMORROW_MATCHES]: ({ block }) => 
-    <PremiumMatchesScheduleSection title={block.title} type={block.type} maxItems={(block.dataConfig as any)?.maxItems} />,
+    <PremiumUpcomingMatchesSection title={block.title} />,
     
   [BlockType.FINISHED_MATCHES]: ({ block }) => 
     <PremiumMatchesScheduleSection title={block.title} type={block.type} maxItems={(block.dataConfig as any)?.maxItems} />,
@@ -58,6 +61,12 @@ export const SectionRegistry: Record<BlockType, React.FC<SectionProps>> = {
     
   [BlockType.TOP_PLAYERS]: ({ block }) => 
     <PremiumTopPlayersSection title={block.title} />,
+
+  [BlockType.PREDICTIONS]: ({ block }) => 
+    <PremiumPredictionsSection title={block.title} />,
+
+  [BlockType.FOOTER]: () => 
+    <PremiumFooter />,
     
   [BlockType.TOP_GOALSCORERS]: ({ block }) => 
     <div className="p-4 border border-white/10 rounded-xl text-center text-gray-400">كتلة أفضل هدافي الدوري (قريباً)</div>,
@@ -104,21 +113,21 @@ export const SectionRegistry: Record<BlockType, React.FC<SectionProps>> = {
     ];
     return (
       <div className="space-y-4">
-        {block.title && <h3 className="font-black text-sm text-white border-r-4 border-primary pr-2">{block.title}</h3>}
+        {block.title && <h3 className="font-black text-sm text-white border-r-4 border-amber-500 pr-2">{block.title}</h3>}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {videos.map(vid => (
-            <div key={vid.id} className="bg-[#0e1622] border border-white/5 rounded-2xl overflow-hidden group hover:border-white/10 transition duration-300">
+            <div key={vid.id} className="bg-[#0a0f18] border border-white/5 rounded-2xl overflow-hidden group hover:border-white/10 transition duration-300">
               <div className="relative aspect-video bg-black flex items-center justify-center">
-                <img src={vid.thumbnail} alt={vid.title} referrerPolicy="no-referrer" className="w-full h-full object-cover group-hover:scale-102 transition duration-500 opacity-80" />
+                <img src={vid.thumbnail} alt={vid.title} referrerPolicy="no-referrer" className="w-full h-full object-cover group-hover:scale-102 transition duration-500 opacity-80" loading="lazy" />
                 <div className="absolute inset-0 bg-black/35 flex items-center justify-center group-hover:bg-black/20 transition duration-300">
-                  <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-black shadow-lg shadow-primary/20 transform group-hover:scale-110 transition duration-300">
+                  <div className="w-12 h-12 rounded-full bg-amber-500 flex items-center justify-center text-black shadow-lg shadow-amber-500/20 transform group-hover:scale-110 transition duration-300">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" className="w-5 h-5 ml-0.5"><path d="M8 5v14l11-7z"/></svg>
                   </div>
                 </div>
                 <span className="absolute bottom-2.5 right-2.5 bg-black/70 text-[9px] font-mono text-white px-2 py-0.5 rounded border border-white/5">{vid.duration}</span>
               </div>
               <div className="p-3.5">
-                <h4 className="text-xs font-black text-white group-hover:text-primary transition line-clamp-2 leading-relaxed">{vid.title}</h4>
+                <h4 className="text-xs font-black text-white group-hover:text-amber-400 transition line-clamp-2 leading-relaxed">{vid.title}</h4>
               </div>
             </div>
           ))}

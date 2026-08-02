@@ -4,10 +4,11 @@ import { Link } from 'react-router-dom';
 import { useMatches, useFixtures, useResults } from '../../hooks/useMatchesV2';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
-import { Calendar, Timer } from 'lucide-react';
+import { Calendar, RefreshCw, AlertCircle } from 'lucide-react';
 import { BlockType, Match } from '../../types';
 import { ScoreFlash } from './shared';
 import MatchCountdown from '../../components/MatchCountdown';
+import { normalizeMatchDate, getMatchTimestamp } from '../../core/utils/matchNormalization';
 
 interface Props {
   title?: string;
@@ -25,32 +26,22 @@ export default function PremiumMatchesScheduleSection({ title = "جدول الم
   const tomorrowRes = useFixtures({ date: tomorrow });
   const resultsRes = useResults();
 
+  let activeRes = todayRes;
+  if (type === BlockType.TOMORROW_MATCHES) activeRes = tomorrowRes;
+  else if (type === BlockType.FINISHED_MATCHES) activeRes = resultsRes;
+
+  const loading = activeRes.isLoading;
+  const isError = activeRes.isError;
+  const rawMatches: Match[] = Array.isArray(activeRes.data) ? activeRes.data : [];
+
   let matches: Match[] = [];
-  let loading = false;
 
-  if (type === BlockType.TODAY_MATCHES) {
-    matches = Array.isArray(todayRes.data) ? todayRes.data : [];
-    loading = todayRes.isLoading;
-  } else if (type === BlockType.TOMORROW_MATCHES) {
-    matches = Array.isArray(tomorrowRes.data) ? tomorrowRes.data : [];
-    loading = tomorrowRes.isLoading;
-  } else if (type === BlockType.FINISHED_MATCHES) {
-    matches = Array.isArray(resultsRes.data) ? resultsRes.data : [];
-    loading = resultsRes.isLoading;
-  } else {
-    matches = Array.isArray(todayRes.data) ? todayRes.data : [];
-    loading = todayRes.isLoading;
-  }
-
-  if (!loading && matches.length > 0) {
-    // Filter very old matches (older than 3 days)
+  if (!loading && rawMatches.length > 0) {
     const threeDaysAgo = Date.now() - 3 * 24 * 60 * 60 * 1000;
-    
-    console.log(`[PremiumMatchesScheduleSection] Initial matches count: ${matches.length}`);
 
-    matches = [...matches].filter(m => {
-      const mTime = new Date(m.startTime || m.utcDate || 0).getTime();
-      if (mTime < threeDaysAgo) return false;
+    matches = [...rawMatches].filter(m => {
+      const mTime = getMatchTimestamp(m.startTime || m.utcDate);
+      if (mTime > 0 && mTime < threeDaysAgo) return false;
       
       if (excludeLive) {
         const isLive = m.isLive || ['LIVE', 'IN_PLAY', 'PAUSED'].includes(m.status);
@@ -58,9 +49,6 @@ export default function PremiumMatchesScheduleSection({ title = "جدول الم
       }
       return true;
     }).sort((a, b) => {
-      // Priority 1: LIVE
-      // Priority 2: SCHEDULED / UPCOMING
-      // Priority 3: FINISHED
       const getStatusPriority = (m: Match) => {
         if (m.isLive || ['LIVE', 'IN_PLAY', 'PAUSED'].includes(m.status)) return 3;
         if (['NS', 'SCHEDULED', 'TIMED'].includes(m.status)) return 2;
@@ -73,22 +61,16 @@ export default function PremiumMatchesScheduleSection({ title = "جدول الم
       
       if (pA !== pB) return pB - pA;
       
-      // If same priority, sort by time
-      const timeA = new Date(a.startTime || a.utcDate || 0).getTime();
-      const timeB = new Date(b.startTime || b.utcDate || 0).getTime();
+      const timeA = getMatchTimestamp(a.startTime || a.utcDate);
+      const timeB = getMatchTimestamp(b.startTime || b.utcDate);
       
       if (pA === 1) {
-        // Finished matches: newest first
         return timeB - timeA;
       }
       
-      // Live / Upcoming matches: soonest first
       return timeA - timeB;
     });
-    console.log(`[PremiumMatchesScheduleSection] Matches count after filtering: ${matches.length}`);
   }
-
-  if (loading || matches.length === 0) return null;
 
   const displayMatches = matches.slice(0, maxItems || 4);
 
@@ -103,103 +85,131 @@ export default function PremiumMatchesScheduleSection({ title = "جدول الم
         </div>
       )}
 
-      <div className="space-y-3">
-        {displayMatches.map((match, index) => {
-          const homeTeamName = typeof match.homeTeam === 'object' ? match.homeTeam.name : match.homeTeam;
-          const homeTeamLogo = typeof match.homeTeam === 'object' ? match.homeTeam.logo : '';
-          const awayTeamName = typeof match.awayTeam === 'object' ? match.awayTeam.name : match.awayTeam;
-          const awayTeamLogo = typeof match.awayTeam === 'object' ? match.awayTeam.logo : '';
-          const leagueName = typeof match.league === 'object' ? match.league.name : match.league;
-          const leagueLogo = typeof match.league === 'object' ? match.league.logo : '';
+      {loading ? (
+        <div className="space-y-3 animate-pulse">
+          {[1, 2, 3].map(i => (
+            <div key={i} className="h-24 bg-[#0a0f18] rounded-2xl border border-white/5 p-4 flex justify-between items-center">
+              <div className="w-1/3 h-8 bg-white/5 rounded-lg" />
+              <div className="w-1/4 h-8 bg-white/10 rounded-lg" />
+              <div className="w-1/3 h-8 bg-white/5 rounded-lg" />
+            </div>
+          ))}
+        </div>
+      ) : isError ? (
+        <div className="p-6 bg-[#0a0f18] rounded-2xl border border-red-500/20 text-center space-y-3">
+          <AlertCircle className="w-8 h-8 text-red-400 mx-auto" />
+          <p className="text-xs text-gray-400 font-medium">تعذر تحميل جدول المباريات حالياً</p>
+          <button 
+            onClick={() => activeRes.refetch()} 
+            className="px-4 py-2 bg-white/5 hover:bg-white/10 text-white text-xs rounded-xl font-bold flex items-center gap-2 mx-auto transition-colors"
+          >
+            <RefreshCw size={14} /> إعادة المحاولة
+          </button>
+        </div>
+      ) : displayMatches.length === 0 ? (
+        <div className="p-8 bg-[#0a0f18] rounded-2xl border border-white/5 text-center space-y-3">
+          <Calendar className="w-8 h-8 text-white/20 mx-auto" />
+          <p className="text-xs text-gray-400 font-medium">لا توجد مباريات مبرمجة في هذا القسم اليوم</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {displayMatches.map((match, index) => {
+            const homeTeamName = typeof match.homeTeam === 'object' ? match.homeTeam.name : match.homeTeam;
+            const homeTeamLogo = typeof match.homeTeam === 'object' ? match.homeTeam.logo : '';
+            const awayTeamName = typeof match.awayTeam === 'object' ? match.awayTeam.name : match.awayTeam;
+            const awayTeamLogo = typeof match.awayTeam === 'object' ? match.awayTeam.logo : '';
+            const leagueName = typeof match.league === 'object' ? match.league.name : match.league;
+            const matchDate = normalizeMatchDate(match.startTime || match.utcDate);
 
-          return (
-            <motion.div
-              key={match.id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-            >
-              <Link 
-                to={`/match/${match.id}`}
-                className="flex flex-col p-4 bg-[#0a0f18] rounded-2xl border border-white/5 hover:border-white/10 transition-colors shadow-lg"
+            return (
+              <motion.div
+                key={match.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.05 }}
               >
-                {/* League Header & Status Badge */}
-                <div className="flex items-center justify-between mb-4 pb-3 border-b border-white/5">
-                  <span className="text-[10px] font-bold text-white/50">{leagueName}</span>
-                  
-                  {/* Status Badge */}
-                  {(() => {
-                    const isLive = match.isLive || ['LIVE', 'IN_PLAY', 'PAUSED'].includes(match.status);
-                    const isFinished = ['FT', 'AET', 'PEN', 'FINISHED'].includes(match.status);
+                <Link 
+                  to={`/match/${match.id}`}
+                  className="flex flex-col p-4 bg-[#0a0f18] rounded-2xl border border-white/5 hover:border-white/10 transition-colors shadow-lg"
+                >
+                  {/* League Header & Status Badge */}
+                  <div className="flex items-center justify-between mb-4 pb-3 border-b border-white/5">
+                    <span className="text-[10px] font-bold text-white/50">{leagueName}</span>
                     
-                    if (isLive) {
+                    {/* Status Badge */}
+                    {(() => {
+                      const isLive = match.isLive || ['LIVE', 'IN_PLAY', 'PAUSED'].includes(match.status);
+                      const isFinished = ['FT', 'AET', 'PEN', 'FINISHED'].includes(match.status);
+                      
+                      if (isLive) {
+                        return (
+                          <div className="flex items-center gap-1.5 bg-green-500/10 px-2 py-0.5 rounded-md border border-green-500/20">
+                            <span className="relative flex h-1.5 w-1.5">
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-500 opacity-75"></span>
+                              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-green-500"></span>
+                            </span>
+                            <span className="text-[9px] font-bold text-green-500">جارية الآن</span>
+                          </div>
+                        );
+                      }
+                      if (isFinished) {
+                        return (
+                          <div className="flex items-center gap-1.5 bg-white/5 px-2 py-0.5 rounded-md border border-white/10">
+                            <span className="text-[9px] font-bold text-white/40">انتهت</span>
+                          </div>
+                        );
+                      }
                       return (
-                        <div className="flex items-center gap-1.5 bg-green-500/10 px-2 py-0.5 rounded-md border border-green-500/20">
-                          <span className="relative flex h-1.5 w-1.5">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-500 opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-green-500"></span>
+                        <div className="flex items-center gap-1.5 bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20">
+                          <span className="text-[9px] font-bold text-amber-500">قادمة</span>
+                        </div>
+                      );
+                    })()}
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    {/* Home Team */}
+                    <div className="flex items-center gap-3 w-1/3">
+                      {homeTeamLogo ? (
+                        <img src={homeTeamLogo} alt={homeTeamName} className="w-8 h-8 object-contain" loading="lazy" />
+                      ) : (
+                        <div className="w-8 h-8 rounded-full bg-white/10" />
+                      )}
+                      <span className="font-bold text-sm text-white truncate">{homeTeamName}</span>
+                    </div>
+
+                    {/* Score / Time */}
+                    <div className="flex flex-col items-center justify-center w-1/3">
+                      {match.status === 'FINISHED' || match.status === 'LIVE' || match.isLive ? (
+                        <ScoreFlash homeScore={match.homeScore ?? 0} awayScore={match.awayScore ?? 0} size="lg" />
+                      ) : (
+                        <div className="flex flex-col items-center">
+                          <span className="text-xs font-bold text-white/60 bg-white/5 px-3 py-1 rounded-full">
+                            {matchDate ? format(matchDate, 'hh:mm a', { locale: ar }) : '10:00 PM'}
                           </span>
-                          <span className="text-[9px] font-bold text-green-500">جارية الآن</span>
+                          {match.startTime && (
+                            <MatchCountdown startTime={match.startTime} />
+                          )}
                         </div>
-                      );
-                    }
-                    if (isFinished) {
-                      return (
-                        <div className="flex items-center gap-1.5 bg-white/5 px-2 py-0.5 rounded-md border border-white/10">
-                          <span className="text-[9px] font-bold text-white/40">انتهت</span>
-                        </div>
-                      );
-                    }
-                    return (
-                      <div className="flex items-center gap-1.5 bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20">
-                        <span className="text-[9px] font-bold text-amber-500">قادمة</span>
-                      </div>
-                    );
-                  })()}
-                </div>
+                      )}
+                    </div>
 
-                <div className="flex items-center justify-between">
-                  {/* Home Team */}
-                  <div className="flex items-center gap-3 w-1/3">
-                    {homeTeamLogo ? (
-                      <img src={homeTeamLogo} alt={homeTeamName} className="w-8 h-8 object-contain" />
-                    ) : (
-                      <div className="w-8 h-8 rounded-full bg-white/10" />
-                    )}
-                    <span className="font-bold text-sm text-white truncate">{homeTeamName}</span>
+                    {/* Away Team */}
+                    <div className="flex items-center justify-end gap-3 w-1/3">
+                      <span className="font-bold text-sm text-white truncate text-right">{awayTeamName}</span>
+                      {awayTeamLogo ? (
+                        <img src={awayTeamLogo} alt={awayTeamName} className="w-8 h-8 object-contain" loading="lazy" />
+                      ) : (
+                        <div className="w-8 h-8 rounded-full bg-white/10" />
+                      )}
+                    </div>
                   </div>
-
-                  {/* Score / Time */}
-                  <div className="flex flex-col items-center justify-center w-1/3">
-                    {match.status === 'FINISHED' || match.status === 'LIVE' || match.isLive ? (
-                      <ScoreFlash homeScore={match.homeScore ?? 0} awayScore={match.awayScore ?? 0} size="lg" />
-                    ) : (
-                      <div className="flex flex-col items-center">
-                        <span className="text-xs font-bold text-white/60 bg-white/5 px-3 py-1 rounded-full">
-                          {match.startTime ? format(new Date(match.startTime), 'hh:mm a', { locale: ar }) : '10:00 PM'}
-                        </span>
-                        {match.startTime && (
-                          <MatchCountdown startTime={match.startTime} />
-                        )}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Away Team */}
-                  <div className="flex items-center justify-end gap-3 w-1/3">
-                    <span className="font-bold text-sm text-white truncate text-right">{awayTeamName}</span>
-                    {awayTeamLogo ? (
-                      <img src={awayTeamLogo} alt={awayTeamName} className="w-8 h-8 object-contain" />
-                    ) : (
-                      <div className="w-8 h-8 rounded-full bg-white/10" />
-                    )}
-                  </div>
-                </div>
-              </Link>
-            </motion.div>
-          );
-        })}
-      </div>
+                </Link>
+              </motion.div>
+            );
+          })}
+        </div>
+      )}
     </section>
   );
 }

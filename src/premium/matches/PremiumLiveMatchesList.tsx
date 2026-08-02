@@ -1,10 +1,11 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, Radio } from 'lucide-react';
 import { useLiveMatches } from '../../hooks/useMatchesV2';
 import { Match } from '../../types';
 import { Link } from 'react-router-dom';
 import { ScoreFlash } from '../components/shared';
+import { getMatchTimestamp } from '../../core/utils/matchNormalization';
 
 interface Props {
   title?: string;
@@ -14,22 +15,44 @@ interface Props {
 export default function PremiumLiveMatchesList({ title = "مباريات مباشرة", maxItems = 3 }: Props) {
   const { data: liveMatchesData = [], isLoading } = useLiveMatches();
 
-  if (isLoading || !Array.isArray(liveMatchesData) || liveMatchesData.length === 0) return null;
+  if (isLoading) {
+    return (
+      <div className="space-y-3 animate-pulse">
+        <div className="h-6 w-32 bg-white/10 rounded" />
+        <div className="h-20 bg-[#0e0e0e] rounded-2xl border border-white/5" />
+      </div>
+    );
+  }
 
-  // Ensure live matches are also sorted by time and filtered for old matches just in case
+  const matchesList = Array.isArray(liveMatchesData) ? liveMatchesData : [];
   const threeDaysAgo = Date.now() - 3 * 24 * 60 * 60 * 1000;
-  const liveMatches = [...liveMatchesData]
+  
+  const liveMatches = [...matchesList]
     .filter(m => {
-      const mTime = new Date(m.startTime || m.utcDate || 0).getTime();
-      return mTime >= threeDaysAgo;
+      const mTime = getMatchTimestamp(m.startTime || m.utcDate);
+      return mTime === 0 || mTime >= threeDaysAgo;
     })
     .sort((a, b) => {
-      const timeA = new Date(a.startTime || a.utcDate || 0).getTime();
-      const timeB = new Date(b.startTime || b.utcDate || 0).getTime();
+      const timeA = getMatchTimestamp(a.startTime || a.utcDate);
+      const timeB = getMatchTimestamp(b.startTime || b.utcDate);
       return timeA - timeB;
     });
 
-  if (liveMatches.length === 0) return null;
+  if (liveMatches.length === 0) {
+    return (
+      <section className="space-y-3">
+        {title && title.trim() !== "" && (
+          <div className="flex items-center gap-2">
+            <Radio className="w-4 h-4 text-white/30" />
+            <h2 className="text-lg font-black text-white">{title}</h2>
+          </div>
+        )}
+        <div className="p-6 bg-[#0e0e0e] rounded-2xl border border-white/5 text-center">
+          <p className="text-xs text-gray-400 font-medium">لا توجد مباريات جارية حالياً</p>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="space-y-4">
@@ -37,8 +60,8 @@ export default function PremiumLiveMatchesList({ title = "مباريات مبا�
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-error opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-error"></span>
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
             </span>
             <h2 className="text-lg font-black text-white">{title}</h2>
           </div>
@@ -64,7 +87,7 @@ export default function PremiumLiveMatchesList({ title = "مباريات مبا�
                 {/* Home Team */}
                 <div className="flex items-center gap-3 w-1/3">
                   {homeTeamLogo ? (
-                    <img src={homeTeamLogo} alt={homeTeamName} className="w-8 h-8 object-contain" />
+                    <img src={homeTeamLogo} alt={homeTeamName} className="w-8 h-8 object-contain" loading="lazy" />
                   ) : (
                     <div className="w-8 h-8 rounded-full bg-white/10" />
                   )}
@@ -108,7 +131,7 @@ export default function PremiumLiveMatchesList({ title = "مباريات مبا�
                 <div className="flex items-center justify-end gap-3 w-1/3">
                   <span className="font-bold text-sm text-white truncate text-right">{awayTeamName}</span>
                   {awayTeamLogo ? (
-                    <img src={awayTeamLogo} alt={awayTeamName} className="w-8 h-8 object-contain" />
+                    <img src={awayTeamLogo} alt={awayTeamName} className="w-8 h-8 object-contain" loading="lazy" />
                   ) : (
                     <div className="w-8 h-8 rounded-full bg-white/10" />
                   )}

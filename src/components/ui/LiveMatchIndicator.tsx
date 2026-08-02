@@ -64,28 +64,43 @@ export default function LiveMatchIndicator({
   // 2. Select Arabic terminology for live phases, finished, etc.
   let displayLabel = '';
   if (isLive) {
-    if (statusCode === 'HT' || statusText.includes('بين الشوطين')) {
-      displayLabel = 'بين الشوطين';
+    if (statusCode === '1H' || statusCode === 'FIRST_HALF' || statusText.includes('شوط أول')) {
+      displayLabel = elapsed ? `شوط أول • ${elapsed}'` : 'شوط أول';
+    } else if (statusCode === '2H' || statusCode === 'SECOND_HALF' || statusText.includes('شوط ثاني')) {
+      displayLabel = elapsed ? `شوط ثاني • ${elapsed}'` : 'شوط ثاني';
+    } else if (statusCode === 'HT' || statusCode === 'HALF_TIME' || statusText.includes('استراحة') || statusText.includes('بين الشوطين')) {
+      displayLabel = 'استراحة';
+    } else if (statusCode === '1ET' || statusText.includes('إضافي أول')) {
+      displayLabel = elapsed ? `شوط إضافي أول • ${elapsed}'` : 'شوط إضافي أول';
+    } else if (statusCode === '2ET' || statusText.includes('إضافي ثاني')) {
+      displayLabel = elapsed ? `شوط إضافي ثاني • ${elapsed}'` : 'شوط إضافي ثاني';
     } else if (statusCode === 'ET' || statusText.includes('إضافي')) {
-      displayLabel = 'شوط إضافي';
-    } else if (statusCode === 'P' || statusText.includes('ترجيح')) {
-      displayLabel = 'ركلات ترجيحية';
+      displayLabel = elapsed ? `شوط إضافي • ${elapsed}'` : 'شوط إضافي';
+    } else if (statusCode === 'P' || statusCode === 'PEN' || statusText.includes('ترجيح')) {
+      displayLabel = 'ركلات ترجيح';
     } else {
-      displayLabel = elapsed ? `مباشر ${elapsed}'` : 'مباشر';
+      displayLabel = elapsed ? `مباشر • ${elapsed}'` : 'بدأت (مباشر)';
     }
   } else if (isFinished) {
-    displayLabel = 'انتهت';
+    if (statusCode === 'AET' || statusText.includes('إضافي')) {
+      displayLabel = 'انتهت (وقت إضافي)';
+    } else if (statusCode === 'PEN' || statusCode === 'FT_PEN' || statusText.includes('ترجيح')) {
+      displayLabel = 'انتهت (ركلات ترجيح)';
+    } else {
+      displayLabel = 'انتهت';
+    }
   } else {
     // Upcoming
     if (startTime) {
       try {
         const d = new Date(startTime);
-        displayLabel = d.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit', hour12: false });
+        const timeStr = d.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit', hour12: true });
+        displayLabel = `لم تبدأ • ${timeStr}`;
       } catch (e) {
-        displayLabel = 'قريباً';
+        displayLabel = 'لم تبدأ';
       }
     } else {
-      displayLabel = 'قادمة';
+      displayLabel = 'لم تبدأ';
     }
   }
 

@@ -3,20 +3,84 @@ import { translateTeamName, translateLeagueName } from '../../utils/arabicTeamNa
 import { getTeamLogoUrl } from '../../utils/teamUtils';
 
 /**
- * Validates match data and returns a robust ISO string, or null if invalid.
+ * Universal date normalizer for Safara 90.
+ * Safely handles:
+ * - Firestore Timestamp object ({ toDate: () => Date })
+ * - Firestore JSON map ({ _seconds: number } or { seconds: number })
+ * - ISO date string
+ * - Unix timestamp in seconds (e.g. 1785367800)
+ * - Unix timestamp in milliseconds
+ * - Native JS Date object
  */
-function parseValidDate(dateData: any): string | null {
-  if (!dateData) return null;
-  
-  // If it's a Firestore Timestamp-like object
-  if (typeof dateData === 'object' && 'toDate' in dateData) {
-      dateData = dateData.toDate();
+export function normalizeMatchDate(dateData: any): Date | null {
+  if (dateData === null || dateData === undefined) return null;
+
+  // Native JS Date
+  if (dateData instanceof Date) {
+    return isNaN(dateData.getTime()) ? null : dateData;
   }
 
-  const d = new Date(dateData);
-  if (isNaN(d.getTime())) return null;
-  
-  return d.toISOString();
+  // Firestore Timestamp with toDate() method
+  if (typeof dateData === 'object' && typeof dateData.toDate === 'function') {
+    try {
+      const d = dateData.toDate();
+      return isNaN(d.getTime()) ? null : d;
+    } catch (e) {
+      // Fall through if toDate throws
+    }
+  }
+
+  // Firestore serialized object {_seconds, _nanoseconds} or {seconds, nanoseconds}
+  if (typeof dateData === 'object' && dateData !== null) {
+    const sec = dateData._seconds ?? dateData.seconds;
+    if (typeof sec === 'number') {
+      return new Date(sec * 1000);
+    }
+  }
+
+  // Number: Unix timestamp (seconds or milliseconds)
+  if (typeof dateData === 'number') {
+    if (isNaN(dateData)) return null;
+    // If less than 10^11, it's in seconds, otherwise milliseconds
+    const ms = dateData < 1e11 ? dateData * 1000 : dateData;
+    const d = new Date(ms);
+    return isNaN(d.getTime()) ? null : d;
+  }
+
+  // String (ISO or numeric string)
+  if (typeof dateData === 'string') {
+    const trimmed = dateData.trim();
+    if (!trimmed) return null;
+    
+    // Numeric string check
+    if (/^\d+$/.test(trimmed)) {
+      const num = Number(trimmed);
+      const ms = num < 1e11 ? num * 1000 : num;
+      const d = new Date(ms);
+      return isNaN(d.getTime()) ? null : d;
+    }
+    
+    const d = new Date(trimmed);
+    return isNaN(d.getTime()) ? null : d;
+  }
+
+  return null;
+}
+
+/**
+ * Validates match data and returns a robust ISO string, or null if invalid.
+ */
+export function parseValidDate(dateData: any): string | null {
+  const d = normalizeMatchDate(dateData);
+  return d ? d.toISOString() : null;
+}
+
+/**
+ * Helper to get timestamp in milliseconds safely from any match date input.
+ */
+export function getMatchTimestamp(dateData: any): number {
+  const d = normalizeMatchDate(dateData);
+  return d ? d.getTime() : 0;
 }
 
 /**
@@ -32,10 +96,9 @@ export function isValidMatch(data: any): data is Match {
  * Normalizes any match-like object into the canonical Safara 90 Match format.
  */
 export function normalizeMatch(id: string, data: any): Match | null {
+  const isoDate = parseValidDate(data.startTime || data.utcDate || data.date || data.fixture?.date);
   
-  const startTime = parseValidDate(data.startTime || data.utcDate || data.date || data.fixture?.date);
-  
-  if (!id || id === 'undefined' || id === 'null' || !startTime) {
+  if (!id || id === 'undefined' || id === 'null' || !isoDate) {
     console.debug(`[MatchNormalizer] Rejected Match ${id}: Missing ID or Invalid Date`, { id, data });
     return null;
   }
@@ -134,8 +197,8 @@ export function normalizeMatch(id: string, data: any): Match | null {
     id,
     homeTeam,
     awayTeam,
-    startTime: startTime || '',
-    utcDate: startTime || '',
+    startTime: isoDate || '',
+    utcDate: isoDate || '',
     minute,
     status,
     league: {

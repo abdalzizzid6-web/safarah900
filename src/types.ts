@@ -718,6 +718,8 @@ export enum BlockType {
   POLLS = 'POLLS',
   ADS = 'ADS',
   VIDEOS = 'VIDEOS',
+  PREDICTIONS = 'PREDICTIONS',
+  FOOTER = 'FOOTER',
   CUSTOM_WIDGETS = 'CUSTOM_WIDGETS'
 }
 

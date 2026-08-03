@@ -1,10 +1,13 @@
 export default {
-  async withRetry<T>(fn: () => Promise<T>, retries = 3): Promise<T> {
+  async withRetry<T>(fn: () => Promise<T>, retries = 1, delayMs = 300): Promise<T> {
     try {
       return await fn();
-    } catch (error) {
+    } catch (error: any) {
       if (retries > 0) {
-        return this.withRetry(fn, retries - 1);
+        if (delayMs > 0) {
+          await new Promise(resolve => setTimeout(resolve, delayMs));
+        }
+        return this.withRetry(fn, retries - 1, delayMs * 2);
       }
       throw error;
     }

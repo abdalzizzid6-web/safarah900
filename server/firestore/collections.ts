@@ -7,13 +7,13 @@ let resetTimer: NodeJS.Timeout | null = null;
 export function setFirestoreQuotaExceeded(val: boolean) {
   isFirestoreQuotaExceeded = val;
   if (val) {
-    console.warn('[Firestore Quota Protection] Global isFirestoreQuotaExceeded flag set to true. Server-side will run in localized cache-only mode.');
+    console.info('[Firestore Quota Protection] Global isFirestoreQuotaExceeded flag set to true. Server-side will run in localized cache-only mode.');
     
     // Automatically reset after 1 hour to retry Firestore connectivity
     if (resetTimer) clearTimeout(resetTimer);
     resetTimer = setTimeout(() => {
         isFirestoreQuotaExceeded = false;
-        console.warn('[Firestore Quota Protection] Quota exceeded flag reset. Retrying Firestore connectivity.');
+        console.info('[Firestore Quota Protection] Quota exceeded flag reset. Retrying Firestore connectivity.');
     }, 60 * 60 * 1000); // 1 hour
   } else {
     if (resetTimer) clearTimeout(resetTimer);
@@ -127,7 +127,7 @@ function wrapQuery(queryObj: any): any {
           } catch (err) {
             if (isFirebaseQuotaError(err)) {
               setFirestoreQuotaExceeded(true);
-              console.warn('[Firestore Quota Protection] Intercepted quota error during query .get(). Falling back to empty result.');
+              console.info('[Firestore Quota Protection] Intercepted quota error during query .get(). Falling back to empty result.');
               return { docs: [], forEach: (cb: any) => {}, size: 0, empty: true };
             }
             throw err;
@@ -204,7 +204,7 @@ function wrapDoc(docObj: any): any {
           } catch (err) {
             if (isFirebaseQuotaError(err)) {
               setFirestoreQuotaExceeded(true);
-              console.warn('[Firestore Quota Protection] Intercepted quota error during doc .get(). Falling back to non-existent doc.');
+              console.info('[Firestore Quota Protection] Intercepted quota error during doc .get(). Falling back to non-existent doc.');
               return { exists: false, id: target.id || 'mock-id', data: () => undefined };
             }
             throw err;
@@ -221,7 +221,7 @@ function wrapDoc(docObj: any): any {
           } catch (err) {
             if (isFirebaseQuotaError(err)) {
               setFirestoreQuotaExceeded(true);
-              console.warn(`[Firestore Quota Protection] Intercepted quota error during doc .${String(prop)}(). Skipping write operation.`);
+              console.info(`[Firestore Quota Protection] Intercepted quota error during doc .${String(prop)}(). Skipping write operation.`);
               return target;
             }
             throw err;
@@ -256,11 +256,11 @@ const firestore = new Proxy({} as any, {
   get(target, prop, receiver) {
     if (!rawFirestore || isFirestoreQuotaExceeded) {
       if (prop === 'batch') {
-        console.warn(`[collections.ts Proxy] Quota exceeded or rawFirestore not ready. Returning mock batch.`);
+        console.info(`[collections.ts Proxy] Quota exceeded or rawFirestore not ready. Returning mock batch.`);
         return () => createDummyBatch();
       }
       if (prop === 'runTransaction') {
-        console.warn(`[collections.ts Proxy] Quota exceeded or rawFirestore not ready. Returning mock transaction.`);
+        console.info(`[collections.ts Proxy] Quota exceeded or rawFirestore not ready. Returning mock transaction.`);
         return async (updateFunction: any) => updateFunction(createDummyTransaction());
       }
       if (prop === 'collection' || prop === 'doc') {
@@ -391,7 +391,7 @@ const firestore = new Proxy({} as any, {
               } catch (err) {
                 if (isFirebaseQuotaError(err)) {
                   setFirestoreQuotaExceeded(true);
-                  console.warn('[Firestore Quota Protection] Intercepted quota error during batch.commit(). Returning empty.');
+                  console.info('[Firestore Quota Protection] Intercepted quota error during batch.commit(). Returning empty.');
                   return [];
                 }
                 throw err;

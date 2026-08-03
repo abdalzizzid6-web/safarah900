@@ -10,7 +10,7 @@ const getBaseURL = () => {
 
 const apiClient = axios.create({
   baseURL: getBaseURL(),
-  timeout: 20000,
+  timeout: 8000,
 });
 
 // Register diagnostics

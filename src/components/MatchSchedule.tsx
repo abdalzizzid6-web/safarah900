@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'motion/react';
 import { useFixtures } from '../hooks/useMatchesV2';
 import { useLeagues } from '../hooks/useLeagues';
 import { useSettings } from '../context/SettingsContext';
@@ -35,10 +36,25 @@ export default function MatchSchedule() {
     return { myLeaguesMatches, otherMatches };
   }, [fixtures, selectedLeague, settings.favoriteLeagues]);
 
-  if (isLoading) return <div className="text-white text-center py-10">جاري تحميل المباريات...</div>;
+  if (isLoading) {
+    return (
+      <div className="space-y-4 p-4 animate-pulse">
+        <div className="h-8 w-64 bg-white/10 rounded-xl" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="h-32 bg-white/5 rounded-2xl" />
+          <div className="h-32 bg-white/5 rounded-2xl" />
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6 p-4">
+    <motion.div 
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35, ease: 'easeOut' }}
+      className="space-y-6 p-4"
+    >
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/5 pb-3">
         <h2 className="text-xl sm:text-2xl font-black text-white">جدول مباريات الأسبوع القادم</h2>
         <button
@@ -69,7 +85,13 @@ export default function MatchSchedule() {
       </div>
 
       {/* Matches List */}
-      <div className="space-y-4">
+      <motion.div 
+        key={selectedLeague}
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, ease: 'easeOut' }}
+        className="space-y-4"
+      >
         {myLeaguesMatches.length > 0 && (
             <>
                 <h3 className="text-lg font-bold text-primary">مباريات دورياتي</h3>
@@ -92,7 +114,7 @@ export default function MatchSchedule() {
             </div>
           ))}
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }

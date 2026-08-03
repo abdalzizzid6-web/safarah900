@@ -316,8 +316,8 @@ export class MatchesRepositoryV2 extends BaseRepository<Match> {
     try {
       telemetry.logApiCall(apiEndpoint);
       const fetchFn = () => apiClient.get<T>(apiEndpoint, { params: apiParams });
-      // Call with 2 retries (total 3 attempts)
-      const response = await retryManager.withRetry(fetchFn, 2);
+      // Call with 1 retry (total 2 attempts) to prevent long waiting times
+      const response = await retryManager.withRetry(fetchFn, 1);
       
       const responseData = response.data;
       cacheManager.set(cacheKey, responseData, ttlMs, true); // save with TTL and persistence
@@ -330,10 +330,20 @@ export class MatchesRepositoryV2 extends BaseRepository<Match> {
       
       return this.adjustMatchesData(responseData);
     } catch (apiError: any) {
-      telemetry.logError('API_CALL_FAILURE', apiError);
+      console.warn(`[MatchesRepositoryV2] API call failed for ${apiEndpoint}:`, apiError?.message || apiError);
       
       if (requestId) {
         networkDiagnostic.logError(requestId, apiError);
+      }
+
+      // Check if we have stale/cached data to fall back on immediately
+      const staleCached = cacheManager.get(cacheKey);
+      if (staleCached) {
+        try {
+          const parsed = typeof staleCached === 'string' ? JSON.parse(staleCached) : staleCached;
+          console.log(`[MatchesRepositoryV2] Using stale cache for ${cacheKey} after API failure.`);
+          return this.adjustMatchesData(parsed) as T;
+        } catch (e) {}
       }
       
       // If API fails, try Firestore fallback ONLY if quota is not already known to be exceeded
@@ -341,19 +351,18 @@ export class MatchesRepositoryV2 extends BaseRepository<Match> {
         try {
           console.log(`[MatchesRepositoryV2] API failed for ${apiEndpoint}, attempting Firestore fallback...`);
           const firestoreData = await firestoreFallbackFn();
-          if (firestoreData) {
+          if (firestoreData && (Array.isArray(firestoreData) ? firestoreData.length > 0 : true)) {
             return this.adjustMatchesData(firestoreData);
           }
         } catch (fError: any) {
-          telemetry.logError('FIRESTORE_FALLBACK_FAILURE', fError);
-          // Check if this error itself is a quota error
-          if (fError.message?.includes('quota') || fError.code === 'resource-exhausted') {
+          console.warn(`[MatchesRepositoryV2] Firestore fallback failed for ${apiEndpoint}:`, fError?.message || fError);
+          if (fError?.message?.includes('quota') || fError?.code === 'resource-exhausted') {
             telemetry.setFirestoreQuotaExceeded(true);
           }
         }
       }
 
-      console.warn(`[MatchesRepositoryV2] Both API and Firestore failed for ${apiEndpoint}. Returning empty/null.`);
+      console.warn(`[MatchesRepositoryV2] Both API and Firestore failed for ${apiEndpoint}. Returning default fallback.`);
       return (cacheKey.includes('matches') || cacheKey.includes('fixtures') || cacheKey.includes('results')) ? ([] as unknown as T) : (null as unknown as T);
     }
   }
@@ -401,26 +410,31 @@ export class MatchesRepositoryV2 extends BaseRepository<Match> {
   // 2. Get Live Matches
   async getLiveMatches(): Promise<Match[]> {
     try {
-      // Fetch some general recent/upcoming matches to check if any of them should dynamically be live
-      const allMatches = await this.getMatches({ limit: 50 });
-      
       const cacheKey = 'matches_live';
-      const standardLive = await this.executeWithFallback<Match[]>(
-        cacheKey,
-        '/api/matches/live',
-        {},
-        async () => {
-          telemetry.logFirestoreRead(this.collectionName);
-          const q = query(
-            collection(db, this.collectionName),
-            where('isLive', '==', true),
-            limit(50)
-          );
-          const snapshot = await getDocs(q);
-          return snapshot.docs.map(docSnap => this.mapFirestoreMatch(docSnap.id, docSnap.data())).filter(Boolean) as Match[];
-        },
-        30000 // 30 seconds TTL for live matches
-      );
+      
+      // Fetch general matches and live matches concurrently to prevent blocking network waterfalls
+      const [allMatchesResult, standardLiveResult] = await Promise.allSettled([
+        this.getMatches({ limit: 50 }),
+        this.executeWithFallback<Match[]>(
+          cacheKey,
+          '/api/matches/live',
+          {},
+          async () => {
+            telemetry.logFirestoreRead(this.collectionName);
+            const q = query(
+              collection(db, this.collectionName),
+              where('isLive', '==', true),
+              limit(50)
+            );
+            const snapshot = await getDocs(q);
+            return snapshot.docs.map(docSnap => this.mapFirestoreMatch(docSnap.id, docSnap.data())).filter(Boolean) as Match[];
+          },
+          30000 // 30 seconds TTL for live matches
+        )
+      ]);
+
+      const allMatches = allMatchesResult.status === 'fulfilled' ? allMatchesResult.value : [];
+      const standardLive = standardLiveResult.status === 'fulfilled' ? standardLiveResult.value : [];
 
       // Merge and align using a Map
       const mergedMap = new Map<string, Match>();
@@ -448,7 +462,7 @@ export class MatchesRepositoryV2 extends BaseRepository<Match> {
 
       return Array.from(mergedMap.values());
     } catch (e) {
-      console.error('[MatchesRepositoryV2] getLiveMatches dynamic computation error:', e);
+      console.warn('[MatchesRepositoryV2] getLiveMatches computation error:', e);
       return [];
     }
   }

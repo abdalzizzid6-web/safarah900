@@ -695,7 +695,13 @@ const Schedule = React.memo(function Schedule() {
             ))}
           </div>
         ) : uniqueLeagueNames.length > 0 ? (
-          <div className="space-y-4">
+          <motion.div 
+            key={`${activeTab}-${selectedDate}-${selectedLeague}-${searchQuery}`}
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35, ease: [0.25, 0.1, 0.25, 1] }}
+            className="space-y-4"
+          >
             {uniqueLeagueNames.map(leagueName => {
               const leagueGroup = groupedMatches[leagueName];
               const isCollapsed = collapsedLeagues[leagueName] || false;
@@ -761,13 +767,16 @@ const Schedule = React.memo(function Schedule() {
                         {viewMode === 'COMPACT' ? (
                           // 5a. Professional Compact Row View (FotMob Style Table list)
                           <div className="border border-white/5 rounded-2xl bg-surface divide-y divide-white/5 overflow-hidden">
-                            {leagueGroup.matches.map(match => {
+                            {leagueGroup.matches.map((match, matchIdx) => {
                               const isMatchLive = match.status === 'LIVE' || match.isLive;
                               const isMatchNotified = notifiedMatches.includes(match.id);
                               
                               return (
-                                <div
+                                <motion.div
                                   key={match.id}
+                                  initial={{ opacity: 0, y: 6 }}
+                                  animate={{ opacity: 1, y: 0 }}
+                                  transition={{ duration: 0.25, delay: Math.min(matchIdx * 0.03, 0.2) }}
                                   onClick={() => navigate(`/match/${createSlugPath(`${match.homeTeam ? (typeof match.homeTeam === 'object' ? (match.homeTeam as any).name : match.homeTeam) : ''} vs ${match.awayTeam ? (typeof match.awayTeam === 'object' ? (match.awayTeam as any).name : match.awayTeam) : ''}`, match.id)}`)}
                                   className="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 hover:bg-white/[0.01] transition-all cursor-pointer relative group/row gap-3"
                                   id={`compact-row-${match.id}`}
@@ -892,7 +901,7 @@ const Schedule = React.memo(function Schedule() {
                                     </div>
                                   </div>
 
-                                </div>
+                                </motion.div>
                               );
                             })}
                           </div>
@@ -913,7 +922,7 @@ const Schedule = React.memo(function Schedule() {
                 </div>
               );
             })}
-          </div>
+          </motion.div>
         ) : (
           <EmptyState 
             title="لا توجد مباريات مطابقة حالياً"

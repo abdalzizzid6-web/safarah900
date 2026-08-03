@@ -112,7 +112,13 @@ export default function PremiumMatchesScheduleSection({ title = "جدول الم
           <p className="text-xs text-gray-400 font-medium">لا توجد مباريات مبرمجة في هذا القسم اليوم</p>
         </div>
       ) : (
-        <div className="space-y-3">
+        <motion.div 
+          key={type}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35, ease: "easeOut" }}
+          className="space-y-3"
+        >
           {displayMatches.map((match, index) => {
             const homeTeamName = typeof match.homeTeam === 'object' ? match.homeTeam.name : match.homeTeam;
             const homeTeamLogo = typeof match.homeTeam === 'object' ? match.homeTeam.logo : '';
@@ -208,7 +214,7 @@ export default function PremiumMatchesScheduleSection({ title = "جدول الم
               </motion.div>
             );
           })}
-        </div>
+        </motion.div>
       )}
     </section>
   );

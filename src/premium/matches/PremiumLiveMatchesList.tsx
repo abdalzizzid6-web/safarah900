@@ -71,8 +71,13 @@ export default function PremiumLiveMatchesList({ title = "مباريات مبا�
         </div>
       )}
       
-      <div className="space-y-3">
-        {liveMatches.slice(0, maxItems).map((match: Match) => {
+      <motion.div 
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35, ease: "easeOut" }}
+        className="space-y-3"
+      >
+        {liveMatches.slice(0, maxItems).map((match: Match, index: number) => {
           const homeTeamName = typeof match.homeTeam === 'object' ? match.homeTeam.name : match.homeTeam;
           const homeTeamLogo = typeof match.homeTeam === 'object' ? match.homeTeam.logo : '';
           const awayTeamName = typeof match.awayTeam === 'object' ? match.awayTeam.name : match.awayTeam;
@@ -81,6 +86,9 @@ export default function PremiumLiveMatchesList({ title = "مباريات مبا�
           return (
             <Link key={match.id} to={`/match/${match.id}`}>
               <motion.div 
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.25, delay: index * 0.05 }}
                 whileHover={{ scale: 1.01 }}
                 className="flex items-center justify-between bg-[#0e0e0e] p-4 rounded-2xl border border-white/5 shadow-lg group hover:border-white/10 transition-colors"
               >
@@ -141,7 +149,7 @@ export default function PremiumLiveMatchesList({ title = "مباريات مبا�
             </Link>
           );
         })}
-      </div>
+      </motion.div>
     </section>
   );
 }

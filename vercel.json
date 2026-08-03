@@ -94,7 +94,7 @@
     },
     {
       "source": "/((?!api/|sitemap|robots\\.txt|manifest\\.json|ads\\.txt|.*\\.).*)",
-      "destination": "/api/seo?action=render"
+      "destination": "/index.html"
     }
   ],
   "headers": [

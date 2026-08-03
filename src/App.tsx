@@ -1,5 +1,33 @@
 import React, { useEffect, Suspense, lazy } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { HelmetProvider } from 'react-helmet-async';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { queryClient } from '@/lib/react-query';
+import { cmsService } from '@/services/cmsService';
+import { Capacitor } from '@capacitor/core';
+import { AdMob } from '@capacitor-community/admob';
+import MainLayout from '@/components/layouts/MainLayout';
+import PremiumLayout from '@/components/layouts/premium/PremiumLayout';
+import { ProtectedRoute } from '@/components/ProtectedRoute';
+import { UserRole } from '@/types';
+
+import HomePage from '@/pages/HomePage';
+import AnnouncementBar from '@/components/AnnouncementBar';
+import SplashScreen from '@/components/SplashScreen';
+import ScrollToHash from '@/components/ScrollToHash';
+import Footer from '@/components/Footer';
+import { SettingsProvider } from '@/context/SettingsContext';
+import { ErrorProvider } from '@/context/ErrorContext';
+import { BrandingProvider } from '@/contexts/BrandingContext';
+import { ThemeProvider } from '@/context/ThemeContext';
+import { NotificationProvider } from '@/context/NotificationContext';
+import { AuthProvider } from '@/context/AuthContext';
+import GoalNotifier from '@/components/GoalNotifier';
+import InstallHandler from '@/components/InstallHandler';
+import SEO from '@/components/SEO';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { logEvent } from '@/services/analyticsService';
+import { trackScreenRenderTime } from '@/core/monitoring/performance';
 
 console.log('[BOOT] Stage 3 OK: App.tsx executing');
 
@@ -28,22 +56,8 @@ function DownloadRedirect() {
   );
 }
 
-import { HelmetProvider } from 'react-helmet-async';
-import { QueryClientProvider } from '@tanstack/react-query';
-import { queryClient } from '@/lib/react-query';
-import { cmsService } from '@/services/cmsService';
-import { Capacitor } from '@capacitor/core';
-import { AdMob } from '@capacitor-community/admob';
-import MainLayout from '@/components/layouts/MainLayout';
-import PremiumLayout from '@/components/layouts/premium/PremiumLayout';
-import { ProtectedRoute } from '@/components/ProtectedRoute';
-import { UserRole } from '@/types';
-
 // CONSTANT TO TOGGLE BETWEEN OLD AND PREMIUM LAYOUT (Set to true for preview testing)
 const USE_PREMIUM_LAYOUT = true;
-
-// Eager import for primary entry HomePage to eliminate ChunkLoadError risk on initial load
-import HomePage from '@/pages/HomePage';
 const DashboardPage = lazy(() => import('@/pages/DashboardPage'));
 const WorldCupCenter = lazy(() => import('@/pages/worldcup/WorldCupCenter'));
 const StandingsPage = lazy(() => import('@/pages/StandingsPage'));
@@ -102,26 +116,6 @@ const NewsDashboardPage = lazy(() => import('@/admin/news/pages/NewsDashboardPag
 const HomepageManager = lazy(() => import('@/admin/homepage/pages/HomepageManager'));
 const SocialMediaCenter = lazy(() => import('@/admin/social/SocialMediaCenter'));
 const BackupManagerPage = lazy(() => import('@/admin/pages/BackupManagerPage'));
-
-import AnnouncementBar from '@/components/AnnouncementBar';
-import SplashScreen from '@/components/SplashScreen';
-import ScrollToHash from '@/components/ScrollToHash';
-import Footer from '@/components/Footer';
-import { SettingsProvider } from '@/context/SettingsContext';
-import { ErrorProvider } from '@/context/ErrorContext';
-import { BrandingProvider } from '@/contexts/BrandingContext';
-import { ThemeProvider } from '@/context/ThemeContext';
-import { NotificationProvider } from '@/context/NotificationContext';
-import { AuthProvider } from '@/context/AuthContext';
-import GoalNotifier from '@/components/GoalNotifier';
-import InstallHandler from '@/components/InstallHandler';
-import SEO from '@/components/SEO';
-
-import { ErrorBoundary } from '@/components/ErrorBoundary';
-
-import { useLocation } from 'react-router-dom';
-import { logEvent } from '@/services/analyticsService';
-import { trackScreenRenderTime } from '@/core/monitoring/performance';
 
 function PageTracker() {
   const location = useLocation();

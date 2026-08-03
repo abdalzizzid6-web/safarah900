@@ -23,9 +23,31 @@ const defaultTheme: UserTheme = {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
+  useEffect(() => {
+    console.log('[BOOT] Stage 4 OK: ThemeProvider mounted');
+  }, []);
+
   const [theme, setTheme] = useState<UserTheme>(() => {
-    const saved = localStorage.getItem('goaltime_theme');
-    return saved ? JSON.parse(saved) : defaultTheme;
+    try {
+      const saved = localStorage.getItem('goaltime_theme');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && typeof parsed === 'object' && typeof parsed.mode === 'string') {
+          return {
+            ...defaultTheme,
+            ...parsed,
+          };
+        }
+      }
+    } catch (e) {
+      console.warn('[ThemeContext] Corrupted saved theme in localStorage. Safely resetting to default.', e);
+      try {
+        localStorage.removeItem('goaltime_theme');
+      } catch (rmErr) {
+        // ignore storage removal errors
+      }
+    }
+    return defaultTheme;
   });
 
   const updateTheme = (newTheme: Partial<UserTheme>) => {

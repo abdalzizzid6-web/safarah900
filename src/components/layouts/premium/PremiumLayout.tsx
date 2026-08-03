@@ -14,6 +14,10 @@ interface PremiumLayoutProps {
 }
 
 export default function PremiumLayout({ children }: PremiumLayoutProps) {
+  React.useEffect(() => {
+    console.log('[BOOT] Stage 9 OK: MainLayout rendered');
+  }, []);
+
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { settings } = useSettings();
 

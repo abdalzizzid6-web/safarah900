@@ -1,3 +1,7 @@
+import { getApps } from 'firebase/app';
+
+console.log('[BOOT] Stage 2 OK: main.tsx executing');
+
 // Diagnostic log function recording the status of all essential dependencies before rendering
 function logDependencyStatus() {
   console.group('[Dependency Diagnostics]');
@@ -6,11 +10,15 @@ function logDependencyStatus() {
 
   // 1. Firebase Check
   try {
-    const authInstance = getAuth();
-    console.log('[Dependency Diagnostics] Firebase Auth status:', authInstance ? 'Initialized (OK)' : 'Not initialized');
-    console.log('[Dependency Diagnostics] Firebase Auth currentUser:', authInstance?.currentUser ? authInstance.currentUser.email : 'None / Not logged in');
+    if (getApps().length > 0) {
+      const authInstance = getAuth();
+      console.log('[Dependency Diagnostics] Firebase Auth status:', authInstance ? 'Initialized (OK)' : 'Not initialized');
+      console.log('[Dependency Diagnostics] Firebase Auth currentUser:', authInstance?.currentUser ? authInstance.currentUser.email : 'None / Not logged in');
+    } else {
+      console.log('[Dependency Diagnostics] Firebase App: Deferred initialization active');
+    }
   } catch (err) {
-    console.error('[Dependency Diagnostics] Firebase Auth check failed:', err);
+    console.warn('[Dependency Diagnostics] Firebase Auth check safely handled:', err);
   }
 
   try {

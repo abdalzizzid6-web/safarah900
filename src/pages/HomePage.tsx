@@ -6,6 +6,10 @@ import PullToRefresh from '../components/ui/PullToRefresh';
 import PremiumHomePage from '../premium/screens/PremiumHomePage';
 
 export default function HomePage() {
+  React.useEffect(() => {
+    console.log('[BOOT] Stage 10 OK: HomePage rendered');
+  }, []);
+
   const queryClient = useQueryClient();
 
   const handlePullToRefresh = useCallback(async () => {

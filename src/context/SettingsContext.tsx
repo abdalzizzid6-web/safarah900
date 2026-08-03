@@ -24,6 +24,10 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
       url: 'https://korea90.xyz'
     }
   });
+  useEffect(() => {
+    console.log('[BOOT] Stage 5 OK: SettingsProvider mounted');
+  }, []);
+
   const [loading, setLoading] = useState(true);
 
   const setLogo = (logoUrl: string) => {
@@ -111,6 +115,9 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
           setLoading(false); 
         } catch (e) {
           console.warn("[SettingsContext] Failed to parse cached settings:", e);
+          try {
+            localStorage.removeItem(CACHE_KEY);
+          } catch (rmErr) {}
         }
       }
 

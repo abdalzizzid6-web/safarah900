@@ -74,7 +74,8 @@ export default function PremiumHomePage() {
 
   const featuredMatch = useMemo(() => matches.find(m => m.isFeatured), [matches]);
 
-  if (layoutLoading || matchesLoading) {
+  // Show skeleton ONLY while initial CMS layout structure is loading
+  if (layoutLoading) {
     return (
       <div className="min-h-screen bg-[#080808] text-white p-4 max-w-7xl mx-auto space-y-6 animate-pulse">
         {/* Skeleton Hero */}

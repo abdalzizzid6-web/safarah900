@@ -1,6 +1,15 @@
 import React, { useEffect, Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 
+console.log('[BOOT] Stage 3 OK: App.tsx executing');
+
+function RouterBootLogger() {
+  useEffect(() => {
+    console.log('[BOOT] Stage 8 OK: Router mounted');
+  }, []);
+  return null;
+}
+
 function DownloadRedirect() {
   useEffect(() => {
     // Try to trigger the download directly without client routing
@@ -33,8 +42,8 @@ import { UserRole } from '@/types';
 // CONSTANT TO TOGGLE BETWEEN OLD AND PREMIUM LAYOUT (Set to true for preview testing)
 const USE_PREMIUM_LAYOUT = true;
 
-// Lazy loading pages for better performance
-const HomePage = lazy(() => import('@/pages/HomePage'));
+// Eager import for primary entry HomePage to eliminate ChunkLoadError risk on initial load
+import HomePage from '@/pages/HomePage';
 const DashboardPage = lazy(() => import('@/pages/DashboardPage'));
 const WorldCupCenter = lazy(() => import('@/pages/worldcup/WorldCupCenter'));
 const StandingsPage = lazy(() => import('@/pages/StandingsPage'));
@@ -223,6 +232,7 @@ export default function App() {
                     <InstallHandler>
                       <GoalNotifier />
                       <Router>
+                        <RouterBootLogger />
                         <Routes>
                           <Route path="/watch/:id" element={
                             <Suspense fallback={

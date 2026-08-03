@@ -8,11 +8,14 @@ export default function SplashScreen() {
   const { settings } = useSettings();
 
   useEffect(() => {
+    // Unconditionally hide splash screen after max 1.5 seconds regardless of network or state
     const timer = setTimeout(() => {
       setShow(false);
-    }, 2500); // Show for 2.5 seconds
+    }, 1500);
     return () => clearTimeout(timer);
   }, []);
+
+  if (!show) return null;
 
   return (
     <AnimatePresence>
@@ -20,8 +23,8 @@ export default function SplashScreen() {
         <motion.div
           initial={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.5 }}
-          className="fixed inset-0 z-[100] bg-background flex flex-col items-center justify-center space-y-8"
+          transition={{ duration: 0.4 }}
+          className="fixed inset-0 z-[100] bg-background flex flex-col items-center justify-center space-y-8 pointer-events-none"
         >
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}

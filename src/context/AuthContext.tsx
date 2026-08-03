@@ -26,6 +26,10 @@ const AuthContext = createContext<AuthContextType>({
 });
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  useEffect(() => {
+    console.log('[BOOT] Stage 7 OK: AuthProvider mounted');
+  }, []);
+
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserAccount | null>(null);
   const [loading, setLoading] = useState(true);

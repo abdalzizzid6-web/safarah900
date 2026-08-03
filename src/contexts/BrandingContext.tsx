@@ -58,6 +58,10 @@ const BrandingContext = createContext<BrandingSettings>(defaultBranding);
 export const useBranding = () => useContext(BrandingContext);
 
 export const BrandingProvider: React.FC<{children: React.ReactNode}> = ({ children }) => {
+  useEffect(() => {
+    console.log('[BOOT] Stage 6 OK: BrandingProvider mounted');
+  }, []);
+
   const [branding, setBranding] = useState<BrandingSettings>(defaultBranding);
   const [loading, setLoading] = useState(true);
 
@@ -88,10 +92,16 @@ export const BrandingProvider: React.FC<{children: React.ReactNode}> = ({ childr
         try {
           const cached = localStorage.getItem('safara90_cached_branding');
           if (cached) {
-            setBranding(JSON.parse(cached));
+            const parsed = JSON.parse(cached);
+            if (parsed && typeof parsed === 'object') {
+              setBranding(parsed);
+            }
           }
         } catch (cacheErr) {
           console.warn('[BrandingContext] Failed to load branding from local storage fallback:', cacheErr);
+          try {
+            localStorage.removeItem('safara90_cached_branding');
+          } catch (rmErr) {}
         }
       } finally {
         setLoading(false);

@@ -38,6 +38,9 @@ export default function MatchDetailView() {
             aiContentEngine.getMatchContent(match.id, match).then(content => {
                 setAiContent(content);
                 setLoadingAi(false);
+            }).catch(err => {
+                console.warn('Failed to get AI match content:', err);
+                setLoadingAi(false);
             });
         }
     }, [match]);

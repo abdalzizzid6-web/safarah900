@@ -136,6 +136,8 @@ export default function Profile() {
         import('../utils/UserPointTracker').then(({ calculateLevel, getRankTitle }) => {
           setUserLevel(calculateLevel(e.detail.points));
           setUserRank(getRankTitle(e.detail.points));
+        }).catch((err) => {
+          console.warn('Failed to load UserPointTracker:', err);
         });
       }
     };

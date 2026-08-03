@@ -290,11 +290,11 @@ export default function MatchesDashboard() {
     }
   };
 
-  const handleBulkApprove = () => bulkAction(selectedIds, 'approve').then(() => setSelectedIds([]));
-  const handleBulkFeature = () => bulkAction(selectedIds, 'approve').then(() => setSelectedIds([]));
-  const handleBulkHide = () => bulkAction(selectedIds, 'hide').then(() => setSelectedIds([]));
-  const handleBulkArchive = () => bulkAction(selectedIds, 'archive').then(() => setSelectedIds([]));
-  const handleBulkDelete = () => bulkAction(selectedIds, 'delete').then(() => setSelectedIds([]));
+  const handleBulkApprove = () => bulkAction(selectedIds, 'approve').then(() => setSelectedIds([])).catch(err => console.error(err));
+  const handleBulkFeature = () => bulkAction(selectedIds, 'approve').then(() => setSelectedIds([])).catch(err => console.error(err));
+  const handleBulkHide = () => bulkAction(selectedIds, 'hide').then(() => setSelectedIds([])).catch(err => console.error(err));
+  const handleBulkArchive = () => bulkAction(selectedIds, 'archive').then(() => setSelectedIds([])).catch(err => console.error(err));
+  const handleBulkDelete = () => bulkAction(selectedIds, 'delete').then(() => setSelectedIds([])).catch(err => console.error(err));
   
   const handleShowHistory = async (id: string) => {
     setHistoryMatchId(id);
@@ -331,7 +331,7 @@ export default function MatchesDashboard() {
     setSelectedIds([]);
   };
 
-  const handleBulkRestore = () => bulkAction(selectedIds, 'restore').then(() => setSelectedIds([]));
+  const handleBulkRestore = () => bulkAction(selectedIds, 'restore').then(() => setSelectedIds([])).catch(err => console.error(err));
   
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 font-sans" style={{ direction: 'rtl' }}>

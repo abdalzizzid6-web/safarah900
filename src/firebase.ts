@@ -95,7 +95,9 @@ export const startPerformanceTrace = (traceName: string): PerformanceTrace | nul
 };
 
 // تأمين بقاء المستخدم مسجلاً دخوله
-setPersistence(auth, browserLocalPersistence);
+setPersistence(auth, browserLocalPersistence).catch((err) => {
+  console.warn('[Auth Persistence] Local persistence set error safely handled:', err);
+});
 
 export const googleProvider = new GoogleAuthProvider();
 export const facebookProvider = new FacebookAuthProvider();

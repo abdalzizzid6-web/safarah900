@@ -140,8 +140,8 @@ export function MatchModal({
 
   useEffect(() => {
     if (showMatchModal) {
-      apiManagementRepository.teamRepository.getTeams().then(data => setTeams(data));
-      apiManagementRepository.leagueRepository.getLeagues().then(data => setLeagues(data));
+      apiManagementRepository.teamRepository.getTeams().then(data => setTeams(data)).catch(() => {});
+      apiManagementRepository.leagueRepository.getLeagues().then(data => setLeagues(data)).catch(() => {});
     }
   }, [showMatchModal]);
 

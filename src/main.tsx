@@ -176,6 +176,9 @@ if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
               if (unregistered) {
                 console.log('[Dev/Sandbox Clean SW] Unregistered active service worker:', registration.scope);
               }
+            })
+            .catch((err) => {
+              console.warn('[Dev/Sandbox Clean SW] Unregister failed:', err);
             });
         }
       })

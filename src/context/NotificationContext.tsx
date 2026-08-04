@@ -122,7 +122,9 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     }
 
     // Register push notifications
-    registerForPushNotifications(user.uid);
+    registerForPushNotifications(user.uid).catch((err) => {
+      console.warn('[NotificationProvider] Push notification registration handled:', err);
+    });
 
     const fetchPreferences = async () => {
       try {

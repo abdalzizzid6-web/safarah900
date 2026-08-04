@@ -253,6 +253,10 @@ async function testConnection() {
 // FCM Registration
 export const registerForPushNotifications = async (userId: string) => {
   if (!messaging) return;
+  if (typeof window === 'undefined' || typeof Notification === 'undefined' || !('Notification' in window)) {
+    console.info('[FCM] Notification API is not supported in this browser environment.');
+    return;
+  }
 
   const vapidKey = (import.meta.env.VITE_FCM_VAPID_KEY as string) || 'BPHr1zPz1...';
 

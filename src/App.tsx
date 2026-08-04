@@ -192,7 +192,9 @@ export default function App() {
         console.info("[Startup Audit Info] Server diagnostics check deferred safely:", err.message || err);
       }
     };
-    runStartupDiagnostics();
+    runStartupDiagnostics().catch((err) => {
+      console.info("[Startup Audit Info] Diagnostics promise handled:", err);
+    });
 
     // Warm up leagues cache to support smart filters immediately
     cmsService.getLeagueSettingsList().catch(err => {
@@ -211,7 +213,9 @@ export default function App() {
         }
       }
     };
-    initAdMob();
+    initAdMob().catch((err) => {
+      console.info("[AdMob Init] Bypassed or deferred:", err);
+    });
   }, []);
 
   return (

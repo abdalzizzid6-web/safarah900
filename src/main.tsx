@@ -40,7 +40,10 @@ if (typeof window !== 'undefined') {
   }, true);
 
   window.addEventListener('unhandledrejection', (event) => {
-    const message = event.reason?.message || '';
+    const reason = event.reason;
+    const message = reason?.message || (typeof reason === 'string' ? reason : '');
+    console.warn('[Global Unhandled Rejection Caught Safely]', message || reason);
+
     if (message.includes('Failed to fetch dynamically imported module') || message.includes('Importing a module script failed')) {
        console.warn('[Critical Repair] Promise rejection from failed chunk load.');
        const lastReload = sessionStorage.getItem('session_repair_reload');
@@ -50,6 +53,9 @@ if (typeof window !== 'undefined') {
         window.location.reload();
       }
     }
+
+    // Prevent default browser behavior so unhandled promise rejections do not crash the app container
+    event.preventDefault();
   });
 
   // 2. Axios Interceptor

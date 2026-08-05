@@ -40,7 +40,7 @@ export const registerMatchDiagnostics = (apiClient: AxiosInstance) => {
     },
     (error) => {
       if (error.config?.url?.includes('/api/matches/live')) {
-        console.error(`[Live Match Diagnostic] Request Failed:`, {
+        console.warn(`[Live Match Diagnostic] Request Failed:`, {
           status: error.response?.status,
           message: error.message,
           url: error.config.url

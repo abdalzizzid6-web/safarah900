@@ -44,9 +44,10 @@ export abstract class BaseRepository<T> {
       if (e.message?.includes('quota') || e.code === 'resource-exhausted' || e.message?.includes('RESOURCE_EXHAUSTED')) {
         telemetry.setFirestoreQuotaExceeded(true);
         console.warn(`[BaseRepository] Quota exceeded on getAll for ${this.collectionName}. Returning empty fallback.`);
-        return [];
+      } else {
+        console.warn(`[BaseRepository] Error on getAll for ${this.collectionName}:`, e?.message || e);
       }
-      throw e;
+      return [];
     }
   }
 
@@ -69,9 +70,10 @@ export abstract class BaseRepository<T> {
       if (e.message?.includes('quota') || e.code === 'resource-exhausted' || e.message?.includes('RESOURCE_EXHAUSTED')) {
         telemetry.setFirestoreQuotaExceeded(true);
         console.warn(`[BaseRepository] Quota exceeded on getById for ${this.collectionName}/${id}. Returning null.`);
-        return null;
+      } else {
+        console.warn(`[BaseRepository] Error on getById for ${this.collectionName}/${id}:`, e?.message || e);
       }
-      throw e;
+      return null;
     }
   }
 
@@ -197,10 +199,13 @@ export abstract class BaseRepository<T> {
       const querySnapshot = await getDocs(q);
       return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as T));
     } catch (e: any) {
-      if (e.message?.includes('quota') || e.code === 'resource-exhausted') {
+      if (e.message?.includes('quota') || e.code === 'resource-exhausted' || e.message?.includes('RESOURCE_EXHAUSTED')) {
         telemetry.setFirestoreQuotaExceeded(true);
+        console.warn(`[BaseRepository] Quota exceeded on query for ${this.collectionName}. Returning empty fallback.`);
+      } else {
+        console.warn(`[BaseRepository] Error on query for ${this.collectionName}:`, e?.message || e);
       }
-      throw e;
+      return [];
     }
   }
 }

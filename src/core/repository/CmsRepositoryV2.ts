@@ -54,7 +54,7 @@ export class CmsRepositoryV2 extends BaseRepository<any> {
       return sorted;
     } catch (e) {
       telemetry.logError('CMS_GET_TEAMS_FAILURE', e);
-      throw e;
+      return [];
     }
   }
 
@@ -94,7 +94,7 @@ export class CmsRepositoryV2 extends BaseRepository<any> {
       return sorted;
     } catch (e) {
       telemetry.logError('CMS_GET_CHANNELS_FAILURE', e);
-      throw e;
+      return [];
     }
   }
 
@@ -133,7 +133,7 @@ export class CmsRepositoryV2 extends BaseRepository<any> {
       };
     } catch (e) {
       telemetry.logError('CMS_GET_HOMEPAGE_CONFIG_FAILURE', e);
-      throw e;
+      return { featuredLeagues: [], featuredMatches: [], featuredTeams: [] };
     }
   }
   

@@ -1,4 +1,4 @@
-import { initializeApp } from 'firebase/app';
+import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
 import { 
   getAuth, 
   GoogleAuthProvider, 
@@ -10,10 +10,12 @@ import {
   browserLocalPersistence,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
-  sendPasswordResetEmail
+  sendPasswordResetEmail,
+  Auth
 } from 'firebase/auth';
 import { 
   initializeFirestore, 
+  getFirestore,
   persistentLocalCache, 
   persistentMultipleTabManager,
   memoryLocalCache,
@@ -23,58 +25,139 @@ import {
   addDoc, 
   query, 
   where, 
-  getDocs 
+  getDocs,
+  Firestore
 } from 'firebase/firestore';
+import { getStorage, FirebaseStorage } from 'firebase/storage';
 import { getMessaging, getToken, onMessage, isSupported } from 'firebase/messaging';
 import { getPerformance, trace as firebaseTrace, PerformanceTrace } from 'firebase/performance';
 import { telemetry } from './core/monitoring/telemetry';
-import firebaseConfig from '../firebase-applet-config.json';
+import firebaseConfigJson from '../firebase-applet-config.json';
 
-const app = initializeApp(firebaseConfig);
+// Safe environment variables & config assembly
+const activeConfig = {
+  apiKey: firebaseConfigJson?.apiKey || (import.meta.env?.VITE_FIREBASE_API_KEY as string) || '',
+  authDomain: firebaseConfigJson?.authDomain || (import.meta.env?.VITE_FIREBASE_AUTH_DOMAIN as string) || '',
+  projectId: firebaseConfigJson?.projectId || (import.meta.env?.VITE_FIREBASE_PROJECT_ID as string) || '',
+  storageBucket: firebaseConfigJson?.storageBucket || (import.meta.env?.VITE_FIREBASE_STORAGE_BUCKET as string) || '',
+  messagingSenderId: firebaseConfigJson?.messagingSenderId || (import.meta.env?.VITE_FIREBASE_MESSAGING_SENDER_ID as string) || '',
+  appId: firebaseConfigJson?.appId || (import.meta.env?.VITE_FIREBASE_APP_ID as string) || '',
+  measurementId: firebaseConfigJson?.measurementId || (import.meta.env?.VITE_FIREBASE_MEASUREMENT_ID as string) || '',
+  firestoreDatabaseId: firebaseConfigJson?.firestoreDatabaseId || (import.meta.env?.VITE_FIRESTORE_DATABASE_ID as string) || undefined
+};
 
-// تحديد نوع الكاش المناسب بشكل ديناميكي لتفادي أي تعليق أو فشل في الاتصال داخل الـ Iframe نتيجة لقيود المتصفح الأمنية للـ IndexedDB
-let localCacheSetting: any;
+export let app: FirebaseApp | null = null;
+export let isFirebaseInitialized = false;
+export let firebaseInitError: string | null = null;
+
 try {
-  const isIframe = typeof window !== 'undefined' && window !== window.top;
-  if (isIframe || typeof window === 'undefined' || !window.indexedDB) {
-    console.warn("DEBUG: Running inside an iframe or indexedDB is not available. Using memoryLocalCache to prevent Firestore connection timeouts.");
-    localCacheSetting = memoryLocalCache();
+  if (getApps().length > 0) {
+    app = getApp();
+    isFirebaseInitialized = true;
+  } else if (activeConfig.apiKey && activeConfig.projectId) {
+    app = initializeApp(activeConfig);
+    isFirebaseInitialized = true;
+  } else if (firebaseConfigJson && (firebaseConfigJson as any).projectId) {
+    app = initializeApp(firebaseConfigJson);
+    isFirebaseInitialized = true;
   } else {
-    localCacheSetting = persistentLocalCache({
-      tabManager: persistentMultipleTabManager()
-    });
+    firebaseInitError = 'Firebase environment variables or configuration file are missing.';
+    console.warn(`[Firebase Recovery] ${firebaseInitError} Firebase services running in safe fallback mode.`);
   }
-} catch (e) {
-  console.warn("DEBUG: IndexedDB access is blocked by browser security (e.g. inside sandboxed iframe). Falling back to memoryLocalCache.", e);
-  localCacheSetting = memoryLocalCache();
+} catch (err: any) {
+  firebaseInitError = err?.message || String(err);
+  console.error('[Firebase Startup Error] initializeApp failed:', err);
+  app = null;
+  isFirebaseInitialized = false;
 }
 
-// Initialize Firestore with the resilient cache choice
-console.log(`DEBUG: Initializing Firestore. Project: ${firebaseConfig.projectId}`);
-export const db = initializeFirestore(app, {
-  localCache: localCacheSetting,
-  experimentalForceLongPolling: true
-}, firebaseConfig.firestoreDatabaseId);
+// Resilient Firestore initialization
+let dbInstance: Firestore | null = null;
 
-export const auth = getAuth(app);
+if (app) {
+  try {
+    let localCacheSetting: any;
+    try {
+      const isIframe = typeof window !== 'undefined' && window !== window.top;
+      if (isIframe || typeof window === 'undefined' || !window.indexedDB) {
+        console.warn("[Firebase] Using memoryLocalCache to prevent Firestore connection timeouts.");
+        localCacheSetting = memoryLocalCache();
+      } else {
+        localCacheSetting = persistentLocalCache({
+          tabManager: persistentMultipleTabManager()
+        });
+      }
+    } catch (e) {
+      console.warn("[Firebase] Fallback to memoryLocalCache.", e);
+      localCacheSetting = memoryLocalCache();
+    }
+
+    dbInstance = initializeFirestore(app, {
+      localCache: localCacheSetting,
+      experimentalForceLongPolling: true
+    }, activeConfig.firestoreDatabaseId);
+  } catch (e) {
+    console.warn("[Firebase] initializeFirestore failed, attempting fallback getFirestore:", e);
+    try {
+      dbInstance = getFirestore(app);
+    } catch (err2) {
+      console.error("[Firebase] Firestore initialization failed completely:", err2);
+      dbInstance = null;
+    }
+  }
+}
+
+export const db: Firestore = dbInstance as any;
+
+// Resilient Auth initialization
+let authInstance: Auth | null = null;
+
+if (app) {
+  try {
+    authInstance = getAuth(app);
+    setPersistence(authInstance, browserLocalPersistence).catch(err => {
+      console.warn('[Firebase Auth] setPersistence warning:', err);
+    });
+  } catch (e) {
+    console.error('[Firebase Auth] getAuth failed:', e);
+    authInstance = null;
+  }
+}
+
+export const auth: Auth = authInstance as any;
+
+// Safe Storage initialization
+let storageInstance: FirebaseStorage | null = null;
+if (app) {
+  try {
+    storageInstance = getStorage(app);
+  } catch (e) {
+    console.warn('[Firebase Storage] Not available:', e);
+  }
+}
+export const storage: FirebaseStorage = storageInstance as any;
+
 export let messaging: any = null;
 export let perf: ReturnType<typeof getPerformance> | null = null;
 
-if (typeof window !== 'undefined') {
+if (typeof window !== 'undefined' && app) {
   try {
     perf = getPerformance(app);
-    console.log('[Firebase Performance] Performance Monitoring initialized successfully.');
   } catch (e) {
-    console.warn('[Firebase Performance] Could not initialize Performance Monitoring:', e);
+    console.warn('[Firebase Performance] Not available:', e);
   }
 
-  isSupported().then(supported => {
-    if (supported) {
-      messaging = getMessaging(app);
-    }
-  }).catch(() => {
-    console.warn("Firebase messaging is not supported in this browser environment.");
-  });
+  try {
+    isSupported().then(supported => {
+      if (supported && app) {
+        messaging = getMessaging(app);
+      }
+    }).catch(() => {
+      console.warn("Firebase messaging is not supported in this browser environment.");
+    });
+  } catch (e) {
+    console.warn("Firebase messaging check failed:", e);
+  }
 }
 
 /**
@@ -94,18 +177,33 @@ export const startPerformanceTrace = (traceName: string): PerformanceTrace | nul
   }
 };
 
-// تأمين بقاء المستخدم مسجلاً دخوله
-setPersistence(auth, browserLocalPersistence).catch((err) => {
-  console.warn('[Auth Persistence] Local persistence set error safely handled:', err);
-});
+// Guard persistence setup safely
+if (auth) {
+  try {
+    setPersistence(auth, browserLocalPersistence).catch(err => {
+      console.warn('[Firebase Auth Persistence] Warning:', err);
+    });
+  } catch (err) {
+    console.warn('[Firebase Auth Persistence] Catch:', err);
+  }
+}
 
 export const googleProvider = new GoogleAuthProvider();
 export const facebookProvider = new FacebookAuthProvider();
 
-// وظائف البريد الإلكتروني
-export const registerWithEmail = (email: string, pass: string) => createUserWithEmailAndPassword(auth, email, pass);
-export const loginWithEmail = (email: string, pass: string) => signInWithEmailAndPassword(auth, email, pass);
-export const resetPasswordWithEmail = (email: string) => sendPasswordResetEmail(auth, email);
+// Email Auth functions
+export const registerWithEmail = (email: string, pass: string) => {
+  if (!auth) throw new Error("Firebase Auth unavailable");
+  return createUserWithEmailAndPassword(auth, email, pass);
+};
+export const loginWithEmail = (email: string, pass: string) => {
+  if (!auth) throw new Error("Firebase Auth unavailable");
+  return signInWithEmailAndPassword(auth, email, pass);
+};
+export const resetPasswordWithEmail = (email: string) => {
+  if (!auth) throw new Error("Firebase Auth unavailable");
+  return sendPasswordResetEmail(auth, email);
+};
 
 // محاولة تسجيل الدخول عبر الطريقة المثلى (الاعتماد على signInWithPopup أولاً على الويب لتفادي مشاكل الـ Iframe والـ Redirect، ومعالجة ذكية للأجهزة والمتصفحات)
 export const signInWithGoogle = async () => {
@@ -177,7 +275,10 @@ export const signInWithFacebook = async () => {
 };
 
 // معالجة نتيجة تسجيل الدخول بعد العودة من Redirect
-export const handleRedirectResult = () => getRedirectResult(auth);
+export const handleRedirectResult = () => {
+  if (!auth) return Promise.resolve(null);
+  return getRedirectResult(auth);
+};
 
 export enum OperationType {
   CREATE = 'create',
@@ -253,10 +354,6 @@ async function testConnection() {
 // FCM Registration
 export const registerForPushNotifications = async (userId: string) => {
   if (!messaging) return;
-  if (typeof window === 'undefined' || typeof Notification === 'undefined' || !('Notification' in window)) {
-    console.info('[FCM] Notification API is not supported in this browser environment.');
-    return;
-  }
 
   const vapidKey = (import.meta.env.VITE_FCM_VAPID_KEY as string) || 'BPHr1zPz1...';
 

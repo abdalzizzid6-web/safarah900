@@ -29,7 +29,7 @@ export async function getDocWithFallback(
   // 2. Fallback to Firestore with 3s timeout
   try {
     const docRef = firestore.collection(collectionName).doc(docId);
-    const doc = await withTimeout(docRef.get(), 3000);
+    const doc: any = await withTimeout(docRef.get(), 3000);
     if (doc.exists) {
       return { id: doc.id, ...doc.data() };
     }

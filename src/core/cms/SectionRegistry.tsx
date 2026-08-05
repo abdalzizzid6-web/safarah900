@@ -18,9 +18,23 @@ export interface SectionProps {
   excludeLive?: boolean;
 }
 
+const FALLBACK_FEATURED_MATCH: Match = {
+  id: 'fallback_hero_match',
+  homeTeam: { id: 541, name: 'ريال مدريد', logo: 'https://media.api-sports.io/football/teams/541.png' },
+  awayTeam: { id: 529, name: 'برشلونة', logo: 'https://media.api-sports.io/football/teams/529.png' },
+  league: { id: 140, country: 'Spain', name: 'الدوري الإسباني - الكلاسيكو الممتاز', logo: 'https://media.api-sports.io/football/leagues/140.png' },
+  status: 'NS',
+  startTime: new Date(Date.now() + 3600000 * 4).toISOString(),
+  stadium: 'سانتياغو برنابيو',
+  channel: 'beIN Sports HD 1',
+  commentator: 'عصام الشوالي',
+  predictions: { homeWinPercent: 48, drawPercent: 26, awayWinPercent: 26 },
+  isFeatured: true
+};
+
 export const SectionRegistry: Record<BlockType, React.FC<SectionProps>> = {
   [BlockType.HERO]: ({ featuredMatch }) => 
-    featuredMatch ? <PremiumHeroSection match={featuredMatch} /> : null,
+    <PremiumHeroSection match={featuredMatch || FALLBACK_FEATURED_MATCH} />,
     
   [BlockType.LIVE_MATCHES]: ({ block }) => 
     <PremiumLiveMatchesList title={block.title} maxItems={(block.dataConfig as any)?.maxItems} />,

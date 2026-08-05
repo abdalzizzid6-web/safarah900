@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { getAuth, onAuthStateChanged, User, signOut, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { onAuthStateChanged, User, signOut, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { auth as firebaseAuth } from '../firebase';
 import { UserAccount, UserRole } from '../types';
 import { userService } from '../services/userService';
 
@@ -35,30 +36,69 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const auth = getAuth();
-    const unsubscribe = onAuthStateChanged(auth, async (u) => {
-      setUser(u);
-      if (u) {
-        try {
-          const userProfile = await userService.getOrCreateUserProfile(u);
-          setProfile(userProfile);
-          await userService.updateLastLogin(u.uid);
-        } catch (error) {
-          console.error('[AuthContext] Error loading profile:', error);
-        }
-      } else {
-        setProfile(null);
+    let isMounted = true;
+    
+    // Safety fallback timeout to guarantee loading becomes false within 3.5 seconds
+    const fallbackTimer = setTimeout(() => {
+      if (isMounted) {
+        setLoading(false);
       }
-      setLoading(false);
-    });
-    return () => unsubscribe();
+    }, 3500);
+
+    let unsubscribe = () => {};
+
+    try {
+      if (firebaseAuth) {
+        unsubscribe = onAuthStateChanged(firebaseAuth, async (u) => {
+          if (!isMounted) return;
+          setUser(u);
+          try {
+            if (u) {
+              const userProfile = await userService.getOrCreateUserProfile(u);
+              if (isMounted) setProfile(userProfile);
+              await userService.updateLastLogin(u.uid).catch(err => {
+                console.warn('[AuthContext] Non-critical error updating last login:', err);
+              });
+            } else {
+              if (isMounted) setProfile(null);
+            }
+          } catch (error) {
+            console.error('[AuthContext] Error loading profile:', error);
+          } finally {
+            if (isMounted) {
+              setLoading(false);
+              clearTimeout(fallbackTimer);
+            }
+          }
+        });
+      } else {
+        console.warn('[AuthContext] Firebase Auth is unavailable. Proceeding in guest mode.');
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    } catch (err) {
+      console.warn('[AuthContext] Auth subscription failed, using fallback:', err);
+      if (isMounted) {
+        setLoading(false);
+      }
+    }
+
+    return () => {
+      isMounted = false;
+      clearTimeout(fallbackTimer);
+      unsubscribe();
+    };
   }, []);
 
   const signInWithGoogle = async () => {
     try {
-      const auth = getAuth();
+      if (!firebaseAuth) {
+        console.warn('[AuthContext] Cannot sign in: Auth is unavailable.');
+        return;
+      }
       const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
+      await signInWithPopup(firebaseAuth, provider);
     } catch (e) {
       console.error(e);
     }
@@ -66,8 +106,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = async () => {
     try {
-      const auth = getAuth();
-      await signOut(auth);
+      if (!firebaseAuth) return;
+      await signOut(firebaseAuth);
     } catch (e) {
       console.error(e);
     }
@@ -79,8 +119,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const refreshProfile = async () => {
-    const auth = getAuth();
-    const u = auth.currentUser;
+    if (!firebaseAuth) return;
+    const u = firebaseAuth.currentUser;
     if (u) {
       setLoading(true);
       try {

@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { cn } from '../lib/utils';
 import { motion } from 'motion/react';
 import { Timer, Clock } from 'lucide-react';
+import { normalizeMatchDate } from '../core/utils/matchNormalization';
 
 interface MatchCountdownProps {
-  startTime: string | Date | null | undefined;
+  startTime: any;
   className?: string;
   size?: 'xs' | 'sm' | 'md' | 'lg';
   variant?: 'boxed' | 'badge' | 'compact';
@@ -28,7 +29,13 @@ export default function MatchCountdown({
       return;
     }
 
-    const startTimestamp = new Date(startTime).getTime();
+    const parsedDate = normalizeMatchDate(startTime);
+    if (!parsedDate) {
+      setTimeLeft(null);
+      return;
+    }
+
+    const startTimestamp = parsedDate.getTime();
     if (!startTimestamp || isNaN(startTimestamp)) return;
 
     const updateTimer = () => {

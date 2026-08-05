@@ -57,9 +57,7 @@ export function useWorldCup() {
   };
 
   useEffect(() => {
-    dataSourceService.getSettings().then(s => setProviderSettings(s)).catch(err => {
-      console.warn('Failed to fetch settings in useWorldCup:', err);
-    });
+    dataSourceService.getSettings().then(s => setProviderSettings(s));
     
     const logsUnsub = worldCupAdminRepository.subscribeToApiLogs((logs) => {
       setApiLogs(logs);

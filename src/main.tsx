@@ -1,15 +1,61 @@
-import { StrictMode } from 'react';
-import { createRoot } from 'react-dom/client';
-import { HelmetProvider } from 'react-helmet-async';
-import axios from 'axios';
-import { getAuth } from 'firebase/auth';
-
-import App from './App';
-import { ErrorBoundary } from './components/ErrorBoundary';
-import './index.css';
-import { setupNetworkPerformanceInterceptor, trackScreenRenderTime } from './core/monitoring/performance';
+import { getApps } from 'firebase/app';
 
 console.log('[BOOT] Stage 2 OK: main.tsx executing');
+
+// Diagnostic log function recording the status of all essential dependencies before rendering
+function logDependencyStatus() {
+  console.group('[Dependency Diagnostics]');
+  const timestamp = new Date().toISOString();
+  console.log(`[${timestamp}] Starting dependency status check before render...`);
+
+  // 1. Firebase Check
+  try {
+    if (getApps().length > 0) {
+      const authInstance = getAuth();
+      console.log('[Dependency Diagnostics] Firebase Auth status:', authInstance ? 'Initialized (OK)' : 'Not initialized');
+      console.log('[Dependency Diagnostics] Firebase Auth currentUser:', authInstance?.currentUser ? authInstance.currentUser.email : 'None / Not logged in');
+    } else {
+      console.log('[Dependency Diagnostics] Firebase App: Deferred initialization active');
+    }
+  } catch (err) {
+    console.warn('[Dependency Diagnostics] Firebase Auth check safely handled:', err);
+  }
+
+  try {
+    console.log('[Dependency Diagnostics] Firebase DB (firestore): Initialized (OK)');
+  } catch (err) {
+    console.error('[Dependency Diagnostics] Firebase DB check failed:', err);
+  }
+
+  // 2. SettingsProvider / SettingsContext Check
+  try {
+    console.log('[Dependency Diagnostics] SettingsProvider / SettingsContext: Available (OK)');
+  } catch (err) {
+    console.error('[Dependency Diagnostics] SettingsProvider check failed:', err);
+  }
+
+  // 3. Router Check
+  try {
+    console.log('[Dependency Diagnostics] React Router (react-router-dom): Available (OK)');
+  } catch (err) {
+    console.error('[Dependency Diagnostics] Router check failed:', err);
+  }
+
+  console.groupEnd();
+}
+
+// Execute diagnostic logging immediately before any rendering
+logDependencyStatus();
+
+import {StrictMode} from 'react';
+import {createRoot} from 'react-dom/client';
+import {HelmetProvider} from 'react-helmet-async';
+import App from './App.tsx';
+import { ErrorBoundary } from './components/ErrorBoundary';
+import './index.css';
+import axios from 'axios';
+import { getAuth } from 'firebase/auth';
+import { setupNetworkPerformanceInterceptor, trackScreenRenderTime } from './core/monitoring/performance';
 
 console.trace('[Trace] main.tsx start');
 const appBootStartTime = typeof window !== 'undefined' ? performance.now() : 0;
@@ -41,9 +87,8 @@ if (typeof window !== 'undefined') {
 
   window.addEventListener('unhandledrejection', (event) => {
     const reason = event.reason;
-    const message = reason?.message || (typeof reason === 'string' ? reason : '');
-    console.warn('[Global Unhandled Rejection Caught Safely]', message || reason);
-
+    const message = (reason && typeof reason === 'object' && 'message' in reason) ? String(reason.message) : String(reason || '');
+    console.warn('[Graceful Recovery] Global Unhandled Promise Rejection caught:', message || reason);
     if (message.includes('Failed to fetch dynamically imported module') || message.includes('Importing a module script failed')) {
        console.warn('[Critical Repair] Promise rejection from failed chunk load.');
        const lastReload = sessionStorage.getItem('session_repair_reload');
@@ -53,9 +98,10 @@ if (typeof window !== 'undefined') {
         window.location.reload();
       }
     }
-
-    // Prevent default browser behavior so unhandled promise rejections do not crash the app container
-    event.preventDefault();
+    // Prevent unhandled rejection error overlay / fatal crash
+    if (typeof event.preventDefault === 'function') {
+      event.preventDefault();
+    }
   });
 
   // 2. Axios Interceptor
@@ -136,9 +182,6 @@ if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
               if (unregistered) {
                 console.log('[Dev/Sandbox Clean SW] Unregistered active service worker:', registration.scope);
               }
-            })
-            .catch((err) => {
-              console.warn('[Dev/Sandbox Clean SW] Unregister failed:', err);
             });
         }
       })

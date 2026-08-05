@@ -30,7 +30,7 @@ async function getEnabledLeaguesCached(): Promise<Record<string, any>> {
   // Fallback to Firestore if static file is missing, but check quota
   if (!isFirestoreQuotaExceeded) {
     try {
-      const snap = await withTimeout(firestore.collection('cms_leagues').get(), 3000);
+      const snap: any = await withTimeout(firestore.collection('cms_leagues').get(), 3000);
       const map: Record<string, any> = {};
       snap.docs.forEach((doc: any) => {
         const data = doc.data();
@@ -133,7 +133,7 @@ router.get("/", async (req, res) => {
   if (!isFirestoreQuotaExceeded) {
     try {
       // Limit to 20 to strictly respect Rule 4
-      const snap = await withTimeout(firestore.collection('matches').orderBy('startTime', 'desc').limit(20).get(), 3000);
+      const snap: any = await withTimeout(firestore.collection('matches').orderBy('startTime', 'desc').limit(20).get(), 3000);
       const firestoreMatches = snap.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
       
       // Merge: prefer Firestore matches if ID exists in both
@@ -216,7 +216,7 @@ router.get("/live", async (req, res) => {
   if (!isFirestoreQuotaExceeded) {
     try {
       // Find matches where status is live/in-play
-      const snap = await withTimeout(
+      const snap: any = await withTimeout(
         firestore.collection('matches')
           .where('status', 'in', ['LIVE', 'IN_PLAY', '1H', '2H', 'HT', 'ET', 'P'])
           .limit(20) // Strict Rule 4

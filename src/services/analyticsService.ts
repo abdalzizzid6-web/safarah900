@@ -77,7 +77,7 @@ export const pingPresence = async () => {
 
 // Start heartbeats
 if (typeof window !== 'undefined') {
-  pingPresence().catch(() => {});
+  pingPresence();
 }
 
 let eventCounter = 0;

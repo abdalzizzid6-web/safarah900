@@ -90,8 +90,14 @@ export const BrandingProvider: React.FC<{children: React.ReactNode}> = ({ childr
         } catch (e) {}
 
         // Set a quick fallback timeout in case Firestore hangs
-        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Branding fetch timeout')), 2000));
-        const fetchPromise = repositories.settings.getById("branding");
+        let timer: any;
+        const timeoutPromise = new Promise((resolve) => {
+          timer = setTimeout(() => resolve(null), 2000);
+        });
+        const fetchPromise = repositories.settings.getById("branding").then((res) => {
+          if (timer) clearTimeout(timer);
+          return res;
+        }).catch(() => null);
         
         const data: any = await Promise.race([fetchPromise, timeoutPromise]);
         if (data) {

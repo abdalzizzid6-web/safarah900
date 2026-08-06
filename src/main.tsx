@@ -137,22 +137,50 @@ if (typeof window !== 'undefined') {
   });
 }
 
-// Register background Service Worker for Push Notifications (runs even when app is closed) in production only
+// Register background Service Worker for Push Notifications (runs even when app is closed)
 if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
   const isPreviewUrl = window.location.hostname.endsWith('run.app') || 
                       window.location.hostname.includes('localhost') || 
                       window.location.hostname.includes('127.0.0.1');
 
+  // Clear stale caches on boot
+  if ('caches' in window) {
+    caches.keys().then((names) => {
+      for (let name of names) {
+        if (!name.includes('safara-90-v2')) {
+          caches.delete(name);
+          console.log('[Cache Clean] Deleted legacy cache:', name);
+        }
+      }
+    });
+  }
+
   if (import.meta.env.PROD && !isPreviewUrl) {
     window.addEventListener('load', () => {
-      // Helper function for resilient registration to avoid 429 loops during asset sync
-      const registerResiliently = (script: string, label: string, delay: number = 60000, attempt: number = 1) => {
-        const MAX_ATTEMPTS = 1;
-        
-        // Delay registration significantly to allow primary assets to load first and avoid initial congestion
+      const registerResiliently = (script: string, label: string, delay: number = 5000, attempt: number = 1) => {
+        const MAX_ATTEMPTS = 2;
         setTimeout(() => {
           navigator.serviceWorker.register(script)
-            .then((reg) => console.log(`${label} registered:`, reg.scope))
+            .then((reg) => {
+              console.log(`${label} registered:`, reg.scope);
+              reg.onupdatefound = () => {
+                const installingWorker = reg.installing;
+                if (installingWorker) {
+                  installingWorker.onstatechange = () => {
+                    if (installingWorker.state === 'installed') {
+                      if (navigator.serviceWorker.controller) {
+                        console.log('[New SW] New content is available; please refresh.');
+                        const hasReloaded = sessionStorage.getItem('sw_refreshed_once');
+                        if (!hasReloaded) {
+                          sessionStorage.setItem('sw_refreshed_once', 'true');
+                          window.location.reload();
+                        }
+                      }
+                    }
+                  };
+                }
+              };
+            })
             .catch((err) => {
               const msg = err.message || '';
               if (msg.includes('429') && attempt <= MAX_ATTEMPTS) {
@@ -167,13 +195,13 @@ if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
       };
 
       // Register PWA Cache SW
-      registerResiliently('/sw.js', 'PWA SW', 60000);
+      registerResiliently('/sw.js', 'PWA SW', 5000);
 
       // Register FCM SW
-      registerResiliently('/firebase-messaging-sw.js', 'FCM SW', 120000);
+      registerResiliently('/firebase-messaging-sw.js', 'FCM SW', 10000);
     });
   } else {
-    // In development mode or AI Studio preview sandbox, clear all active service worker registrations to prevent them from intercepting dev asset loads and causing 429 rate limit issues
+    // In development mode or AI Studio preview sandbox, clear all active service worker registrations to prevent them from intercepting dev asset loads
     navigator.serviceWorker.getRegistrations()
       .then((registrations) => {
         for (const registration of registrations) {

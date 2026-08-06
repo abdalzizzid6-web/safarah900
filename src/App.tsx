@@ -116,6 +116,7 @@ import { AuthProvider } from '@/context/AuthContext';
 import GoalNotifier from '@/components/GoalNotifier';
 import InstallHandler from '@/components/InstallHandler';
 import SEO from '@/components/SEO';
+import GlobalRouteLoader from '@/components/GlobalRouteLoader';
 
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 
@@ -148,11 +149,13 @@ function PageTracker() {
 import LiveScoreWidget from '@/components/LiveScoreWidget';
 
 export default function App() {
+  console.log('[BOOT] Stage 4 OK: App rendered');
   const LayoutWrapper = ({ children }: { children: React.ReactNode }) => {
     return USE_PREMIUM_LAYOUT ? <PremiumLayout>{children}</PremiumLayout> : <MainLayout>{children}</MainLayout>;
   };
 
   useEffect(() => {
+    console.log('[BOOT] Stage 12 OK: First DOM rendered');
     // Run automated startup diagnostics check
     const runStartupDiagnostics = async () => {
       console.log("%c⚽ [Safara 90 V2 System Startup Check] Initializing audit...", "color: #10b981; font-weight: bold; font-size: 13px;");
@@ -235,11 +238,7 @@ export default function App() {
                         <RouterBootLogger />
                         <Routes>
                           <Route path="/watch/:id" element={
-                            <Suspense fallback={
-                              <div className="min-h-screen bg-[#060608] flex items-center justify-center">
-                                <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-                              </div>
-                            }>
+                            <Suspense fallback={<GlobalRouteLoader />}>
                               <LiveStreamPage />
                             </Suspense>
                           } />
@@ -248,11 +247,7 @@ export default function App() {
                             <LayoutWrapper>
                               <SplashScreen />
                               <ErrorBoundary>
-                                <Suspense fallback={
-                                  <div className="min-h-screen bg-[#0F0F10] flex items-center justify-center">
-                                    <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-                                  </div>
-                                }>
+                                <Suspense fallback={<GlobalRouteLoader />}>
                                   <Routes>
                                     <Route path="/admin/*" element={
                               <ProtectedRoute allowedRoles={[UserRole.ADMIN, UserRole.SUPER_ADMIN]}>

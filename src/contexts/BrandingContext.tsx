@@ -66,6 +66,15 @@ export const BrandingProvider: React.FC<{children: React.ReactNode}> = ({ childr
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const timer = setTimeout(() => {
+      if (loading) {
+        console.error('[Provider Timeout] BrandingProvider stayed loading more than 5 seconds!');
+      }
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, [loading]);
+
+  useEffect(() => {
     const fetchBranding = async () => {
       try {
         const data = await repositories.settings.getById("branding");

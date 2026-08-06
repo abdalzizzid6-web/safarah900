@@ -36,6 +36,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const timer = setTimeout(() => {
+      if (loading) {
+        console.error('[Provider Timeout] AuthProvider stayed loading more than 5 seconds!');
+      }
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, [loading]);
+
+  useEffect(() => {
     let isMounted = true;
     
     // Safety fallback timeout to guarantee loading becomes false within 3.5 seconds

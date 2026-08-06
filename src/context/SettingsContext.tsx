@@ -30,6 +30,15 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
 
   const [loading, setLoading] = useState(true);
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (loading) {
+        console.error('[Provider Timeout] SettingsProvider stayed loading more than 5 seconds!');
+      }
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, [loading]);
+
   const setLogo = (logoUrl: string) => {
     localStorage.setItem('CUSTOM_APP_LOGO', logoUrl);
     setSettings(prev => ({ ...prev, logoUrl }));

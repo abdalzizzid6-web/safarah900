@@ -85,6 +85,11 @@ export const telemetry = {
   },
   logError(type: string, error: any) { 
     metrics.errors.push({ timestamp: Date.now(), message: String(error), type });
-    console.error(`[TELEMETRY]: Error -`, error); 
+    const errStr = String(error);
+    if (errStr.includes('quota') || errStr.includes('timeout') || errStr.includes('RESOURCE_EXHAUSTED')) {
+      console.warn(`[TELEMETRY]: Handled Quota/Timeout -`, error);
+    } else {
+      console.error(`[TELEMETRY]: Error -`, error); 
+    }
   }
 };

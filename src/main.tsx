@@ -192,6 +192,7 @@ if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
 }
 
 try {
+  console.log('[BOOT] Stage 3 OK: createRoot()');
   createRoot(document.getElementById('root')!).render(
     <StrictMode>
       <ErrorBoundary fallback={<div style={{padding: 20, color: 'red'}}>Root Error: Application failed to initialize. Please check console for details.</div>}>

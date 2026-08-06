@@ -10,7 +10,7 @@ const getBaseURL = () => {
 
 const apiClient = axios.create({
   baseURL: getBaseURL(),
-  timeout: 8000,
+  timeout: 25000,
 });
 
 // Register diagnostics
@@ -26,5 +26,18 @@ apiClient.interceptors.request.use((config) => {
   }
   return config;
 });
+
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    console.warn('[Axios Warning / Timeout Handled]', {
+      url: error.config?.url,
+      method: error.config?.method,
+      status: error.response?.status,
+      message: error.message
+    });
+    return Promise.reject(error);
+  }
+);
 
 export default apiClient;

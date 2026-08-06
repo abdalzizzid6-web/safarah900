@@ -66,6 +66,10 @@ const BlockRenderer = ({ block, featuredMatch }: { block: any, featuredMatch: an
 };
 
 export default function PremiumHomePage() {
+  React.useEffect(() => {
+    console.log('[BOOT] Stage 11 OK: PremiumHomePage rendered');
+  }, []);
+
   // React Query V2 states
   const { data: v2Matches, isLoading: matchesLoading } = useMatchesV2();
   const { blocks, loading: layoutLoading } = useHomepageLayout();

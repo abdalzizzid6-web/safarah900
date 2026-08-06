@@ -68,50 +68,41 @@ export const BrandingProvider: React.FC<{children: React.ReactNode}> = ({ childr
   useEffect(() => {
     const timer = setTimeout(() => {
       if (loading) {
-        console.error('[Provider Timeout] BrandingProvider stayed loading more than 5 seconds!');
+        setLoading(false); // Force loading false if somehow stuck
       }
-    }, 5000);
+    }, 10000);
     return () => clearTimeout(timer);
   }, [loading]);
 
   useEffect(() => {
     const fetchBranding = async () => {
       try {
-        const data = await repositories.settings.getById("branding");
-        if (data) {
-          const fetchedData = { ...defaultBranding, ...data } as BrandingSettings;
-          setBranding(fetchedData);
-          try {
-            localStorage.setItem('safara90_cached_branding', JSON.stringify(fetchedData));
-          } catch (e) {
-            console.warn('[BrandingContext] Failed to write fallback cache:', e);
-          }
-        }
-      } catch (err: any) {
-        // Safe, non-verbose check for quota/resource exhausted
-        const isQuota = err?.message?.toLowerCase().includes('quota') || 
-                        err?.message?.toLowerCase().includes('exhausted') || 
-                        err?.code === 'resource-exhausted';
-        if (isQuota) {
-          console.warn("[BrandingContext] Quota limit exceeded. Loading branding from fallback storage...");
-        } else {
-          console.error("Failed to fetch branding settings:", err);
-        }
-
+        // Load cache first if available
         try {
           const cached = localStorage.getItem('safara90_cached_branding');
           if (cached) {
             const parsed = JSON.parse(cached);
             if (parsed && typeof parsed === 'object') {
-              setBranding(parsed);
+              setBranding({ ...defaultBranding, ...parsed });
+              setLoading(false);
             }
           }
-        } catch (cacheErr) {
-          console.warn('[BrandingContext] Failed to load branding from local storage fallback:', cacheErr);
+        } catch (e) {}
+
+        // Set a quick fallback timeout in case Firestore hangs
+        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Branding fetch timeout')), 2000));
+        const fetchPromise = repositories.settings.getById("branding");
+        
+        const data: any = await Promise.race([fetchPromise, timeoutPromise]);
+        if (data) {
+          const fetchedData = { ...defaultBranding, ...data } as BrandingSettings;
+          setBranding(fetchedData);
           try {
-            localStorage.removeItem('safara90_cached_branding');
-          } catch (rmErr) {}
+            localStorage.setItem('safara90_cached_branding', JSON.stringify(fetchedData));
+          } catch (e) {}
         }
+      } catch (err: any) {
+        // Safe handling
       } finally {
         setLoading(false);
       }

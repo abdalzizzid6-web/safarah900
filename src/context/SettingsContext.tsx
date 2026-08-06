@@ -33,9 +33,9 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const timer = setTimeout(() => {
       if (loading) {
-        console.error('[Provider Timeout] SettingsProvider stayed loading more than 5 seconds!');
+        setLoading(false);
       }
-    }, 5000);
+    }, 10000);
     return () => clearTimeout(timer);
   }, [loading]);
 
